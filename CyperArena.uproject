@@ -1,8 +1,15 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.26",
+	"EngineAssociation": "{C45120C7-4F86-8BBA-9E13-5984A4B813AC}",
 	"Category": "",
 	"Description": "",
+	"Modules": [
+		{
+			"Name": "CyperArena",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "PythonScriptPlugin",
