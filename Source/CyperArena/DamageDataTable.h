@@ -9,6 +9,37 @@
 #include "DamageDataTable.generated.h"
 
 
+UENUM(BlueprintType)
+enum class FkncokBackType : uint8
+{
+	TE_OptionA UMETA(DisplayName = "Directional"),
+	TE_OptionB UMETA(DisplayName = "Radial"),
+	TE_OptionC UMETA(DisplayName = "Grab")
+};
+
+UENUM(BlueprintType)
+enum class FtargetControlType : uint8
+{
+	TE_OptionA UMETA(DisplayName = "None"),
+	TE_OptionB UMETA(DisplayName = "Stun"),
+	TE_OptionC UMETA(DisplayName = "Ragdoll")
+};
+
+UENUM(BlueprintType)
+enum class FbuffAndDebuff : uint8
+{
+	TE_OptionA UMETA(DisplayName = "None"),
+	TE_OptionB UMETA(DisplayName = "Heal"),
+	TE_OptionC UMETA(DisplayName = "Poison")
+};
+
+UENUM(BlueprintType)
+enum class FdamageElemental : uint8
+{
+	TE_OptionA UMETA(DisplayName = "None"),
+	TE_OptionB UMETA(DisplayName = "Fire"),
+	TE_OptionC UMETA(DisplayName = "Ice")
+};
 
 USTRUCT(Atomic, BlueprintType)
 struct FdamageData : public FTableRowBase
@@ -23,6 +54,15 @@ public:
 		float base_damage_percent;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FVector knock_back;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FkncokBackType knock_back_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FdamageElemental elemental;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FtargetControlType target_control;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FbuffAndDebuff buff_and_debuff;
+
 };
 
 UCLASS()
