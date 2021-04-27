@@ -10,6 +10,14 @@
 
 
 UENUM(BlueprintType)
+enum class FAnimWeaponLayer : uint8
+{
+	TE_OptionA UMETA(DisplayName = "None"),
+	TE_OptionB UMETA(DisplayName = "Sword"),
+	TE_OptionC UMETA(DisplayName = "Dagger")
+};
+
+UENUM(BlueprintType)
 enum class FkncokBackType : uint8
 {
 	TE_OptionA UMETA(DisplayName = "Directional"),
@@ -63,43 +71,6 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FbuffAndDebuff buff_and_debuff;
 
-};
-
-USTRUCT(BlueprintType)
-struct FPowerIKGroundFootCustom
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-	/** Name of foot joint. This will be tip of IK effect. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Foot)
-	FName BoneName;
-
-	/** How much this effector pulls un-affected parts of body. */
-	UPROPERTY(EditAnywhere, Category = Effector, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "1", UIMin = "0", UIMax = "1"))
-		float PullWeight = 1.0f;
-
-	/** Use normalized PullWeight values in solver. */
-	UPROPERTY(EditAnywhere, Category = Effector, BlueprintReadWrite)
-		bool NormalizePulling = true;
-
-	/** Positive direction scale factor for effector weights. */
-	UPROPERTY(EditAnywhere, Category = Effector, BlueprintReadWrite)
-		FVector PositivePullFactor = FVector(0.0f, 0.0f, 1.0f);
-
-	/** Negative direction scale factor for effector weights. */
-	UPROPERTY(EditAnywhere, Category = Effector, BlueprintReadWrite)
-		FVector NegativePullFactor = FVector(0.0f, 0.0f, 1.0f);
-
-	// wall collision
-	int LimbRootBoneIndex = -1;
-
-	// ray cast debug data
-	FVector RayStart;
-	FVector RayEnd;
-	FVector RayHitPosition;
-	bool RayHit;
-	FVector GroundNormal;
 };
 
 UCLASS()
