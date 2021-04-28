@@ -14,7 +14,8 @@ enum class AnimWeaponLayer : uint8
 {
 	TE_OptionA UMETA(DisplayName = "None"),
 	TE_OptionB UMETA(DisplayName = "Sword"),
-	TE_OptionC UMETA(DisplayName = "Dagger")
+	TE_OptionC UMETA(DisplayName = "Dagger"),
+	TE_OptionD UMETA(DisplayName = "Monster")
 };
 
 UENUM(BlueprintType)
