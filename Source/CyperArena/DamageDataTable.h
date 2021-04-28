@@ -10,7 +10,7 @@
 
 
 UENUM(BlueprintType)
-enum class FAnimWeaponLayer : uint8
+enum class AnimWeaponLayer : uint8
 {
 	TE_OptionA UMETA(DisplayName = "None"),
 	TE_OptionB UMETA(DisplayName = "Sword"),
