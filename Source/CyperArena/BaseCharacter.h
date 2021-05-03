@@ -35,12 +35,16 @@ public:
 		bool is_ragdoll_on_the_ground;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll Face Up", Category = "Base-Ragdoll"))
 		bool is_ragdoll_face_up;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Ragdoll Server Location", Category = "Base-Ragdoll"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "Ragdoll Server Location", Category = "Base-Ragdoll"))
 		FVector ragdoll_server_location;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Last Ragdoll Server Location", Category = "Base-Ragdoll"))
 		FVector last_ragdoll_server_location;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Prev Ragdoll Server Location", Category = "Base-Ragdoll"))
 		FVector prev_ragdoll_server_location;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Replication Delay Count", Category = "Base-Ragdoll"))
+		float replication_delay_count;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Last Replication Delay", Category = "Base-Ragdoll"))
+		float last_replication_delay;
 
 
 private :
@@ -67,10 +71,12 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "Stick to the Ground"))
 	virtual void stickToTheGround(FVector location);
 	//UFUNCTION(Server, UnReliable, BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "CtoS - Target Location"))
-	UFUNCTION(Server, UnReliable)
+	UFUNCTION(BlueprintCallable, Server, UnReliable)
 	void CtoS_targetLocation(ABaseCharacter* target_actor, FVector target_location);
 	virtual void CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location);
 
 private:
 	virtual void ragdoll_ClientOnwer();
+	virtual void ragdoll_ServerOnwer();
+	virtual void ragdoll_SyncLocation();
 };

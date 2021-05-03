@@ -51,10 +51,31 @@ void ABaseCharacter::Tick(float DeltaTime)
 	if (character_state == CharacterState::Ragdoll) {
 		this->SetReplicateMovement(false);
 		if (this->HasAuthority()) {
-
+			if (IsRunningDedicatedServer() == false) {
+				if (IsLocallyControlled()) {
+					// 리슨 서버 소유 액터 or 스탠드얼론일 때
+					if (is_simulation_owner) {
+						ragdoll_ServerOnwer();
+					}
+				}
+				else {
+					// 리슨 서버의 비소유 액터일 경우
+					ragdoll_SyncLocation();
+				}
+			}
 		}
 		else {
-
+			// 클라이언트 소유 액터인 경우
+			if (IsLocallyControlled()) {
+				ragdoll_ClientOnwer();
+			}
+			// AI 캐릭터의 접속이 시뮬레이션 담당 클라이언트인 경우
+			else if (IsPlayerControlled() == false && is_simulation_owner == true) {
+				ragdoll_ClientOnwer();
+			}
+			else {
+				ragdoll_SyncLocation();
+			}
 		}
 	}
 }
@@ -71,6 +92,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABaseCharacter, R_look_rotation);
+	DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
 }
 
 // 캐릭터가 바라보는 방향을 결정하는 변수 설정
@@ -122,10 +144,41 @@ void ABaseCharacter::ragdoll_ClientOnwer() {
 	CtoS_targetLocation(this, ragdoll_server_location);
 }
 
+// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
+void ABaseCharacter::ragdoll_ServerOnwer() {
+	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
+	ragdoll_server_location = sock_location;
+	stickToTheGround(ragdoll_server_location);
+}
+
 // 서버 : 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
 void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location) {
 	target_actor->ragdoll_server_location = target_location;
 	target_actor->stickToTheGround(target_location);
+}
+
+// 래그돌 위치 동기화
+void ABaseCharacter::ragdoll_SyncLocation() {
+
+	// 래그돌 위치 갱신 여부 확인
+	if (ragdoll_server_location == last_ragdoll_server_location) {
+		// 위치 갱신 안되었을 때
+		replication_delay_count += d_time;
+	}
+	else {
+		// 위치 갱신 되었을 때
+		float tmp = replication_delay_count - last_replication_delay;
+		last_replication_delay = replication_delay_count;
+		replication_delay_count = tmp + d_time;
+		prev_ragdoll_server_location = last_ragdoll_server_location;
+	}
+	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
+	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
+	float ease_alpha = UKismetMathLibrary::Min(1.0f, replication_delay_count / last_replication_delay);
+	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	stickToTheGround(predicted_location);
+	last_ragdoll_server_location = ragdoll_server_location;
+	
 }
 
 //void ABaseCharacter::rotateActorTimeline(FRotator target_rotation, float time)
