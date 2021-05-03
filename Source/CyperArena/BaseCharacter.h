@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "Public/Interface_BaseCharacter.h"
 
 #include "BaseCharacter.generated.h"
 
 UCLASS()
-class CYPERARENA_API ABaseCharacter : public ACharacter
+class CYPERARENA_API ABaseCharacter : public ACharacter, public IInterface_BaseCharacter
 {
 	GENERATED_BODY()
 
@@ -26,6 +27,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look", MultiLine = "true", OverrideNativeName = "R_look_rotation"))
 	FRotator R_look_rotation;
 private :
+	UPROPERTY()
 	float d_time;
 protected:
 	// Called when the game starts or when spawned
@@ -38,9 +40,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "Look"))
-	void Look();
-	virtual void Look_Implementation();
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "Look"))
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface", OverrideNativeName = "look"))
+	void look();
+	virtual void look_Implementation() override;
 	/*UFUNCTION(BlueprintCallable, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "rotateActorTimeline"))
 	virtual void rotateActorTimeline(FRotator bpp__target_rotation__pf, float bpp__time__pf);*/
 };

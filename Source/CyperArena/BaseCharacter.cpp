@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "BaseCharacter.h"
@@ -13,7 +13,7 @@ ABaseCharacter::ABaseCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	//¸®ÇÃ¸®ÄÉÀÌ¼Ç ¼³Á¤
+	//ë¦¬í”Œë¦¬ì¼€ì´ì…˜ ì„¤ì •
 	bReplicates = true;
 
 	look_yaw = 0.0f;
@@ -52,22 +52,22 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
-// ¸®ÇÃ¸®ÄÉÀÌ¼Ç °¡´ÉÇÏ°Ô ÇÏ±â
+// ë¦¬í”Œë¦¬ì¼€ì´ì…˜ ê°€ëŠ¥í•˜ê²Œ í•˜ê¸°
 void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABaseCharacter, R_look_rotation);
 }
 
-// Ä³¸¯ÅÍ°¡ ¹Ù¶óº¸´Â ¹æÇâÀ» °áÁ¤ÇÏ´Â º¯¼ö ¼³Á¤
-void ABaseCharacter::Look_Implementation()
+// ìºë¦­í„°ê°€ ë°”ë¼ë³´ëŠ” ë°©í–¥ì„ ê²°ì •í•˜ëŠ” ë³€ìˆ˜ ì„¤ì •
+void ABaseCharacter::look_Implementation()
 {
 	FRotator tmp_rotator1 = UKismetMathLibrary::MakeRotator(0, look_pitch, look_yaw);
 	FRotator tmp_rotator2 = UKismetMathLibrary::NormalizedDeltaRotator(R_look_rotation, AActor::K2_GetActorRotation());
 	FRotator interp_tmp = UKismetMathLibrary::RInterpTo(tmp_rotator1, tmp_rotator2, d_time, 15.000000);
 	look_pitch = UKismetMathLibrary::ClampAngle(interp_tmp.Pitch, -90.000000, 90.000000);
 	look_yaw = UKismetMathLibrary::ClampAngle(interp_tmp.Yaw, -90.000000, 90.000000);
-	UKismetSystemLibrary::PrintString(this, "SDF\n");
+	UKismetSystemLibrary::PrintString(this, "í•œê¸€\n");
 	return;
 }
 
