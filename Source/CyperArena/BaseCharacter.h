@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "Public/Interface_BaseCharacter.h"
+#include "CustomData.h"
 
 #include "BaseCharacter.generated.h"
 
@@ -19,16 +20,32 @@ public:
 	ABaseCharacter();
 
 	UPROPERTY(BlueprintReadOnly, NonTransactional, meta = (Category = "Base-Ragdoll", OverrideNativeName = "PhysicsHandle"))
-	UPhysicsHandleComponent* ragdoll_physics_handle;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Look Yaw", Category = "Base-Look", MultiLine = "true", OverrideNativeName = "look_yaw"))
-	float look_yaw;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Look Pitch", Category = "Base-Look", MultiLine = "true", OverrideNativeName = "look_pitch"))
-	float look_pitch;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look", MultiLine = "true", OverrideNativeName = "R_look_rotation"))
-	FRotator R_look_rotation;
+		UPhysicsHandleComponent* ragdoll_physics_handle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Look Yaw", Category = "Base-Look"))
+		float look_yaw;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Look Pitch", Category = "Base-Look"))
+		float look_pitch;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look"))
+		FRotator R_look_rotation;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
+		CharacterState character_state;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Simulation Owner", Category = "Base-Ragdoll"))
+		bool is_simulation_owner;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll on the Ground", Category = "Base-Ragdoll"))
+		bool is_ragdoll_on_the_ground;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll Face Up", Category = "Base-Ragdoll"))
+		bool is_ragdoll_face_up;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Ragdoll Server Location", Category = "Base-Ragdoll"))
+		FVector ragdoll_server_location;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Last Ragdoll Server Location", Category = "Base-Ragdoll"))
+		FVector last_ragdoll_server_location;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Prev Ragdoll Server Location", Category = "Base-Ragdoll"))
+		FVector prev_ragdoll_server_location;
+
+
 private :
 	UPROPERTY()
-	float d_time;
+		float d_time;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -46,4 +63,14 @@ public:
 	virtual void look_Implementation() override;
 	/*UFUNCTION(BlueprintCallable, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "rotateActorTimeline"))
 	virtual void rotateActorTimeline(FRotator bpp__target_rotation__pf, float bpp__time__pf);*/
+
+	UFUNCTION(BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "Stick to the Ground"))
+	virtual void stickToTheGround(FVector location);
+	//UFUNCTION(Server, UnReliable, BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "CtoS - Target Location"))
+	UFUNCTION(Server, UnReliable)
+	void CtoS_targetLocation(ABaseCharacter* target_actor, FVector target_location);
+	virtual void CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location);
+
+private:
+	virtual void ragdoll_ClientOnwer();
 };

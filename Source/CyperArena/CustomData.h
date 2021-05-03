@@ -12,51 +12,51 @@
 UENUM(BlueprintType)
 enum class CharacterState : uint8
 {
-	TE_OptionA UMETA(DisplayName = "Walk_and_Jump"),
-	TE_OptionB UMETA(DisplayName = "Airbone"),
-	TE_OptionC UMETA(DisplayName = "Ragdoll"),
-	TE_OptionD UMETA(DisplayName = "Down")
+	Walk_and_Jump UMETA(DisplayName = "Walk_and_Jump"),
+	Airbone UMETA(DisplayName = "Airbone"),
+	Ragdoll UMETA(DisplayName = "Ragdoll"),
+	Down UMETA(DisplayName = "Down")
 };
 
 UENUM(BlueprintType)
 enum class AnimWeaponLayer : uint8
 {
-	TE_OptionA UMETA(DisplayName = "None"),
-	TE_OptionB UMETA(DisplayName = "Sword"),
-	TE_OptionC UMETA(DisplayName = "Dagger"),
-	TE_OptionD UMETA(DisplayName = "Monster")
+	None UMETA(DisplayName = "None"),
+	Sword UMETA(DisplayName = "Sword"),
+	Dagger UMETA(DisplayName = "Dagger"),
+	Monster UMETA(DisplayName = "Monster")
 };
 
 UENUM(BlueprintType)
-enum class FkncokBackType : uint8
+enum class KncokBackType : uint8
 {
-	TE_OptionA UMETA(DisplayName = "Directional"),
-	TE_OptionB UMETA(DisplayName = "Radial"),
-	TE_OptionC UMETA(DisplayName = "Grab")
+	Directional UMETA(DisplayName = "Directional"),
+	Radial UMETA(DisplayName = "Radial"),
+	Grab UMETA(DisplayName = "Grab")
 };
 
 UENUM(BlueprintType)
-enum class FtargetControlType : uint8
+enum class TargetControlType : uint8
 {
-	TE_OptionA UMETA(DisplayName = "None"),
-	TE_OptionB UMETA(DisplayName = "Stun"),
-	TE_OptionC UMETA(DisplayName = "Ragdoll")
+	None UMETA(DisplayName = "None"),
+	Stun UMETA(DisplayName = "Stun"),
+	Ragdoll UMETA(DisplayName = "Ragdoll")
 };
 
 UENUM(BlueprintType)
-enum class FbuffAndDebuff : uint8
+enum class BuffAndDebuffType : uint8
 {
-	TE_OptionA UMETA(DisplayName = "None"),
-	TE_OptionB UMETA(DisplayName = "Heal"),
-	TE_OptionC UMETA(DisplayName = "Poison")
+	None UMETA(DisplayName = "None"),
+	Heal UMETA(DisplayName = "Heal"),
+	Poison UMETA(DisplayName = "Poison")
 };
 
 UENUM(BlueprintType)
-enum class FdamageElemental : uint8
+enum class DamageElementalType : uint8
 {
-	TE_OptionA UMETA(DisplayName = "None"),
-	TE_OptionB UMETA(DisplayName = "Fire"),
-	TE_OptionC UMETA(DisplayName = "Ice")
+	None UMETA(DisplayName = "None"),
+	Fire UMETA(DisplayName = "Fire"),
+	Ice UMETA(DisplayName = "Ice")
 };
 
 USTRUCT(Atomic, BlueprintType)
@@ -73,13 +73,13 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FVector knock_back;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FkncokBackType knock_back_type;
+		KncokBackType knock_back_type;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FdamageElemental elemental;
+		DamageElementalType elemental;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FtargetControlType target_control;
+		TargetControlType target_control;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FbuffAndDebuff buff_and_debuff;
+		BuffAndDebuffType buff_and_debuff;
 
 };
 
