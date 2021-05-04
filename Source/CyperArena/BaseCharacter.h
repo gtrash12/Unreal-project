@@ -28,7 +28,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look"))
 		FRotator R_look_rotation;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
-		CharacterState character_state;
+		ECharacterState character_state;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))
+		bool is_on_sprint;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Simulation Owner", Category = "Base-Ragdoll"))
 		bool is_simulation_owner;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll on the Ground", Category = "Base-Ragdoll"))
@@ -45,6 +47,16 @@ public:
 		float replication_delay_count;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Last Replication Delay", Category = "Base-Ragdoll"))
 		float last_replication_delay;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Main Anim Instance", Category = "Base-Ragdoll"))
+		UAnimInstance* main_anim_instance;
+	UPROPERTY(BlueprintReadOnly)
+		UAnimMontage* airbone_b_anim;
+	UPROPERTY(BlueprintReadOnly)
+		UAnimMontage* get_up_f_anim;
+	UPROPERTY(BlueprintReadOnly)
+		UAnimMontage* get_up_b_anim;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "IS On Action", Category = "Base-Combat"))
+		bool is_on_action;
 
 
 private :
@@ -62,21 +74,47 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "Look"))
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface", OverrideNativeName = "look"))
 	void look();
 	virtual void look_Implementation() override;
 	/*UFUNCTION(BlueprintCallable, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "rotateActorTimeline"))
 	virtual void rotateActorTimeline(FRotator bpp__target_rotation__pf, float bpp__time__pf);*/
 
 	UFUNCTION(BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "Stick to the Ground"))
-	virtual void stickToTheGround(FVector location);
-	//UFUNCTION(Server, UnReliable, BlueprintCallable, meta = (Category = "Base-Ragdoll", OverrideNativeName = "CtoS - Target Location"))
-	UFUNCTION(BlueprintCallable, Server, UnReliable)
-	void CtoS_targetLocation(ABaseCharacter* target_actor, FVector target_location);
-	virtual void CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location);
+		virtual void stickToTheGround(FVector location);
 
-private:
-	virtual void ragdoll_ClientOnwer();
-	virtual void ragdoll_ServerOnwer();
-	virtual void ragdoll_SyncLocation();
+	UFUNCTION(BlueprintCallable, Server, UnReliable)
+		void CtoS_targetLocation(ABaseCharacter* target_actor, FVector target_location);
+		virtual void CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
+		void ragdoll_ClientOnwer();
+		virtual void ragdoll_ClientOnwer_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
+		void ragdoll_ServerOnwer();
+		virtual void ragdoll_ServerOnwer_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
+		void ragdoll_SyncLocation();
+		virtual void ragdoll_SyncLocation_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
+		void airboneStart();
+		virtual void airboneStart_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
+		void ragdollGetUp();
+		virtual void ragdollGetUp_Implementation();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Character State"))
+		void setCharacterState(ECharacterState target_character_state);
+		virtual void setCharacterState_Implementation(ECharacterState target_character_state);
+
+	UFUNCTION(BlueprintCallable, Server, UnReliable)
+		void ragdoll_SetOnServer();
+		virtual void ragdoll_SetOnServer_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Character State"))
+		void findClosestPlayer(/*out*/ AActor*& closest_player);
+		virtual void findClosestPlayer_Implementation(AActor*& closest_player);
 };

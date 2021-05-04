@@ -10,16 +10,15 @@
 
 
 UENUM(BlueprintType)
-enum class CharacterState : uint8
+enum class ECharacterState : uint8
 {
 	Walk_and_Jump UMETA(DisplayName = "Walk_and_Jump"),
 	Airbone UMETA(DisplayName = "Airbone"),
-	Ragdoll UMETA(DisplayName = "Ragdoll"),
-	Down UMETA(DisplayName = "Down")
+	Ragdoll UMETA(DisplayName = "Ragdoll")
 };
 
 UENUM(BlueprintType)
-enum class AnimWeaponLayer : uint8
+enum class EAnimWeaponLayer : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Sword UMETA(DisplayName = "Sword"),
@@ -28,7 +27,7 @@ enum class AnimWeaponLayer : uint8
 };
 
 UENUM(BlueprintType)
-enum class KncokBackType : uint8
+enum class EKncokBackType : uint8
 {
 	Directional UMETA(DisplayName = "Directional"),
 	Radial UMETA(DisplayName = "Radial"),
@@ -36,7 +35,7 @@ enum class KncokBackType : uint8
 };
 
 UENUM(BlueprintType)
-enum class TargetControlType : uint8
+enum class ETargetControlType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Stun UMETA(DisplayName = "Stun"),
@@ -44,7 +43,7 @@ enum class TargetControlType : uint8
 };
 
 UENUM(BlueprintType)
-enum class BuffAndDebuffType : uint8
+enum class EBuffAndDebuffType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Heal UMETA(DisplayName = "Heal"),
@@ -52,7 +51,7 @@ enum class BuffAndDebuffType : uint8
 };
 
 UENUM(BlueprintType)
-enum class DamageElementalType : uint8
+enum class EDamageElementalType : uint8
 {
 	None UMETA(DisplayName = "None"),
 	Fire UMETA(DisplayName = "Fire"),
@@ -73,13 +72,13 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FVector knock_back;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		KncokBackType knock_back_type;
+		EKncokBackType knock_back_type;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		DamageElementalType elemental;
+		EDamageElementalType elemental;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TargetControlType target_control;
+		ETargetControlType target_control;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		BuffAndDebuffType buff_and_debuff;
+		EBuffAndDebuffType buff_and_debuff;
 
 };
 
