@@ -8,6 +8,15 @@
 
 #include "CustomData.generated.h"
 
+UENUM(BlueprintType)
+enum class ENetworkOwnerType : uint8
+{
+	ServerOwned UMETA(DisplayName = "ServerOwned"),
+	ListenServerNotOwned UMETA(DisplayName = "ListenServerNotOwned"),
+	DedicatedServer UMETA(DisplayName = "DedicatedServer"),
+	ClientOwned UMETA(DisplayName = "ClientOwned"),
+	ClientNotOwned UMETA(DisplayName = "ClientNotOwned")
+};
 
 UENUM(BlueprintType)
 enum class ECharacterState : uint8

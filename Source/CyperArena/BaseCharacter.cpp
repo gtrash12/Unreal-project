@@ -23,30 +23,54 @@ ABaseCharacter::ABaseCharacter()
 	ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
 	ragdoll_physics_handle->bAutoActivate = false;
 
+	character_state = ECharacterState::Airbone;
 
 	// 애니메이션 설정
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> Airbone_B_Montage(TEXT("AnimMontage'/Game/Animation/Airbone_b_Montage.Airbone_b_Montage'"));
 	if (Airbone_B_Montage.Succeeded())
 		airbone_b_anim = Airbone_B_Montage.Object;
-
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> ALS_CLF_GetUp_Back_Montage_Default(TEXT("AnimMontage'/Game/Animation/Actions/ALS_CLF_GetUp_Back_Montage_Default.ALS_CLF_GetUp_Back_Montage_Default'"));
 	if (ALS_CLF_GetUp_Back_Montage_Default.Succeeded())
 		get_up_b_anim = ALS_CLF_GetUp_Back_Montage_Default.Object;
-
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> ALS_CLF_GetUp_Front_Montage_Default(TEXT("AnimMontage'/Game/Animation/Actions/ALS_CLF_GetUp_Front_Montage_Default.ALS_CLF_GetUp_Front_Montage_Default'"));
 	if (ALS_CLF_GetUp_Front_Montage_Default.Succeeded())
 		get_up_f_anim = ALS_CLF_GetUp_Front_Montage_Default.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> Hit_B_Montage(TEXT("AnimMontage'/Game/Animation/Combat/Hit_B_Montage.Hit_B_Montage'"));
+	if (Hit_B_Montage.Succeeded())
+		hit_b_anim = Hit_B_Montage.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> Hit_F_Montage(TEXT("AnimMontage'/Game/Animation/Combat/Hit_F_Montage.Hit_F_Montage'"));
+	if (Hit_F_Montage.Succeeded())
+		hit_f_anim = Hit_F_Montage.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> Hit_R_Montage(TEXT("AnimMontage'/Game/Animation/Combat/Hit_R_Montage.Hit_R_Montage'"));
+	if (Hit_R_Montage.Succeeded())
+		hit_r_anim = Hit_R_Montage.Object;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> Hit_L_Montage(TEXT("AnimMontage'/Game/Animation/Combat/Hit_L_Montage.Hit_L_Montage'"));
+	if (Hit_L_Montage.Succeeded())
+		hit_l_anim = Hit_L_Montage.Object;
+	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_Hit(TEXT("SoundCue'/Game/Blueprint/SQ_Hit.SQ_Hit'"));
+	if (SQ_Hit.Succeeded())
+		sq_hit = SQ_Hit.Object;
+
+}
+
+// 컴포넌트 초기화 후 함수 바인딩 등
+void ABaseCharacter::PostInitializeComponents() {
+
+	Super::PostInitializeComponents();
+
+	// 캡슐 컴포넌트의 히트 델리게이트에 함수 등록
+	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ABaseCharacter::onCapsuleComponentHit);
+
+	//Make sure the mesh and animbp update after the CharacterBP
+	GetMesh()->AddTickPrerequisiteActor(this);
+	main_anim_instance = GetMesh()->GetAnimInstance();
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	//Make sure the mesh and animbp update after the CharacterBP
-	GetMesh()->AddTickPrerequisiteActor(this);
-	main_anim_instance = GetMesh()->GetAnimInstance();
-
+	getNetworkOwnerType(network_owner_type);
 }
 
 // Called every frame
@@ -67,32 +91,27 @@ void ABaseCharacter::Tick(float DeltaTime)
 	//래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
-		if (this->HasAuthority()) {
-			if (IsRunningDedicatedServer() == false) {
-				if (IsLocallyControlled()) {
-					// 리슨 서버 소유 액터 or 스탠드얼론일 때
-					if (is_simulation_owner) {
-						ragdoll_ServerOnwer_Implementation();
-					}
-				}
-				else {
-					// 리슨 서버의 비소유 액터일 경우
-					ragdoll_SyncLocation_Implementation();
-				}
+
+		switch (network_owner_type)
+		{
+		case ENetworkOwnerType::ServerOwned:
+			if (is_simulation_owner) {
+				ragdoll_ServerOnwer_Implementation();
 			}
-		}
-		else {
-			// 클라이언트 소유 액터인 경우
-			if (IsLocallyControlled()) {
-				ragdoll_ClientOnwer_Implementation();
-			}
-			// AI 캐릭터의 접속이 시뮬레이션 담당 클라이언트인 경우
-			else if (IsPlayerControlled() == false && is_simulation_owner == true) {
-				ragdoll_ClientOnwer_Implementation();
-			}
-			else {
-				ragdoll_SyncLocation_Implementation();
-			}
+			break;
+		case ENetworkOwnerType::ListenServerNotOwned:
+			ragdoll_SyncLocation_Implementation();
+			break;
+		case ENetworkOwnerType::DedicatedServer:
+			break;
+		case ENetworkOwnerType::ClientOwned:
+			ragdoll_ClientOnwer_Implementation();
+			break;
+		case ENetworkOwnerType::ClientNotOwned:
+			ragdoll_SyncLocation_Implementation();
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -109,10 +128,16 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ABaseCharacter, R_look_rotation);
-	//DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
+	DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
+	DOREPLIFETIME(ABaseCharacter, hp);
+	DOREPLIFETIME(ABaseCharacter, knock_back_count);
+	DOREPLIFETIME(ABaseCharacter, knock_back_count_end);
+	DOREPLIFETIME(ABaseCharacter, knock_back_velocity);
 }
 
-// 캐릭터가 바라보는 방향을 결정하는 변수 설정
+/// <summary>
+/// 캐릭터가 바라보는 방향을 결정
+/// </summary>
 void ABaseCharacter::look_Implementation()
 {
 	FRotator tmp_rotator1 = UKismetMathLibrary::MakeRotator(0, look_pitch, look_yaw);
@@ -124,7 +149,79 @@ void ABaseCharacter::look_Implementation()
 	return;
 }
 
-// 래그돌 상태에서 엉덩이 아래로 라인 트레이스 하여 래그돌이 지면에 있을 시 액터를 지면 바로 위로 붙임
+/// <summary>
+/// 피격 액터가 데미지 프로세스를 처리하도록 전달
+/// 체력 연산 후 멀티캐스트 함수 실행
+/// </summary>
+/// <param name="damage_data">전달할 데미지 데이터</param>
+/// <param name="damage_causor">데미지를 입힌 액터</param>
+void ABaseCharacter::applyDamage_Implementation(FdamageData damage_data, AActor* damage_causor)
+{
+	hp -= damage_data.base_damage + damage_data.base_damage_percent * Cast<ABaseCharacter>(damage_causor)->base_power;
+	applyDamage_Multicast(damage_data, damage_causor);
+}
+
+
+/// <summary>
+/// 서버에서 체력연산 후 멀티캐스트로 넉백 등을 처리
+/// </summary>
+/// <param name="damage_data">전달할 데미지 데이터</param>
+/// <param name="damage_causor">데미지를 입힌 액터</param>
+void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData damage_data, AActor* damage_causor)
+{
+	UAnimMontage* hit_anim = nullptr;
+	selectHitAnimation_Implementation(damage_data.knock_back, hit_anim);
+	animation_Sound_Multicast(hit_anim, sq_hit);
+	is_on_action = true;
+}
+
+/// <summary>
+/// 서버에서 애니메이션과 사운드를 멀티캐스트로 실행
+/// </summary>
+/// <param name="anim">애니메이션</param>
+/// <param name="sound">사운드</param>
+void ABaseCharacter::animation_Sound_Multicast_Implementation(UAnimMontage* anim, USoundBase* sound) {
+	PlayAnimMontage(anim);
+	UGameplayStatics::SpawnSoundAtLocation(this, sound, GetActorLocation());
+}
+
+/// <summary>
+/// 입력된 velocity의 방향에 대응되는 피격 애니메이션 출력
+/// </summary>
+/// <param name="velocity">넉백 벨로시티</param>
+/// <param name="hit_anim">출력되는 피격 애니메이션 몽타주</param>
+void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMontage*& hit_anim) {
+	float forward_angle = UKismetMathLibrary::Vector_CosineAngle2D(velocity, GetActorForwardVector());
+	float right_angle = UKismetMathLibrary::Vector_CosineAngle2D(velocity, GetActorRightVector());
+	if (forward_angle > 0.5f)
+		hit_anim = hit_b_anim;
+	else if (forward_angle < -0.5f)
+		hit_anim = hit_f_anim;
+	else if (right_angle > 0.0f)
+		hit_anim = hit_l_anim;
+	else
+		hit_anim = hit_r_anim;
+}
+
+/// <summary>
+/// 넉백 연산 수행 (매 틱 실행)
+/// </summary>
+/// <param name="velocity">넉백 벨로시티</param>
+void ABaseCharacter::knock_BackProcess_Implementation(FVector velocity) {
+	if (knock_back_count_end > 0 && knock_back_count < knock_back_count_end) {
+		knock_back_count = UKismetMathLibrary::Min(knock_back_count_end, knock_back_count + d_time);
+		float ease_alpha = knock_back_count / knock_back_count_end;
+		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
+		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, ease_res);
+		GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
+		
+	}
+}
+
+/// <summary>
+/// 래그돌 상태에서 엉덩이 아래로 라인 트레이스 하여 래그돌이 지면에 있을 시 액터를 지면 바로 위로 붙임
+/// </summary>
+/// <param name="location">액터의 위치</param>
 void ABaseCharacter::stickToTheGround(FVector location) {
 	float capsule_half_height = this->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height);
@@ -153,7 +250,9 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 	}
 }
 
-// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
+/// <summary>
+/// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
+/// </summary>
 void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
@@ -162,19 +261,33 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 }
 
 // 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
+
+/// <summary>
+/// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
+/// </summary>
 void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
 	stickToTheGround(ragdoll_server_location);
 }
 
-// 서버 : 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
+// ( 서버에서 실행 ) : 서버 : 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
+
+/// <summary>
+/// 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
+/// (AI캐릭터의 경우 target_actor 파라미터로 자신을 전달 해서 클라이언트 소유 액터를 통해 자신의 ragdoll_target_location 변수를 업데이트)
+/// </summary>
+/// <param name="target_actor">위치를 업데이트할 액터</param>
+/// <param name="target_location">업데이트할 위치</param>
 void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location) {
 	target_actor->ragdoll_server_location = target_location;
 	target_actor->stickToTheGround(target_location);
 }
 
-// 래그돌 위치 동기화
+/// <summary>
+/// 래그돌 위치 동기화
+/// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
+/// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 
 	// 래그돌 위치 갱신 여부 확인
@@ -198,7 +311,9 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	
 }
 
-// 캐릭터 에어본시 설정 초기화 및 에어본 애니메이션 재생
+/// <summary>
+/// 캐릭터 에어본시 설정 초기화 및 에어본 애니메이션 재생
+/// </summary>
 void ABaseCharacter::airboneStart_Implementation() {
 	USkeletalMeshComponent* mesh = GetMesh();
 
@@ -218,7 +333,9 @@ void ABaseCharacter::airboneStart_Implementation() {
 	
 }
 
-// 래그돌 상태에서 일어서는 설정 초기화 및 애니메이션 재생
+/// <summary>
+/// 래그돌 상태에서 일어서는 설정 초기화 및 애니메이션 재생
+/// </summary>
 void ABaseCharacter::ragdollGetUp_Implementation() {
 	// 무브먼트 리플리케이션 재 실행 후 현재 래그돌 포즈 스냅샷으로 저장
 	SetReplicateMovement(true);
@@ -245,7 +362,10 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 
 }
 
-// 캐릭터 상태에 변화에 따른 세팅값 결정
+/// <summary>
+/// 캐릭터 상태에 변화에 따른 세팅값 결정
+/// </summary>
+/// <param name="target_character_state">목표 캐릭터 상태</param>
 void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_character_state) {
 	if (target_character_state != character_state) {
 		switch (target_character_state)
@@ -271,10 +391,41 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 	}
 }
 
+/// <summary>
+/// 서버에서 래그돌 세팅 수행
+/// </summary>
 void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
+	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+	findClosestPlayer_Implementation(simulation_owner_actor);
+	ragdoll_SetMultiCast_Implementation();
+}
+
+/// <summary>
+/// 멀티캐스트로 래그돌 세팅 동기화
+/// </summary>
+void ABaseCharacter::ragdoll_SetMultiCast_Implementation() {
+	if (network_owner_type != ENetworkOwnerType::DedicatedServer) {
+		prev_ragdoll_server_location = ragdoll_server_location;
+		last_ragdoll_server_location = ragdoll_server_location;
+		replication_delay_count = 0.0f;
+		is_ragdoll_on_the_ground = false;
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
+
+		is_simulation_owner = simulation_owner_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+	}
+	character_state = ECharacterState::Ragdoll;
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	main_anim_instance->Montage_StopGroupByName(0.0f, "DefaultGroup");
 	
 }
 
+/// <summary>
+/// 모든 APlayerController를 순회해 가장 가까이 있는 플레이어의 폰을 출력 ( 서버에서 실행하기 위함 )
+/// </summary>
+/// <param name="closest_player">가장 가까이있는 플레이어 폰</param>
 void ABaseCharacter::findClosestPlayer_Implementation(AActor*& closest_player) {
 	float min_distance = INFINITY;
 	
@@ -282,10 +433,61 @@ void ABaseCharacter::findClosestPlayer_Implementation(AActor*& closest_player) {
 		float tmp_dist = FVector::Distance(entity->GetPawn()->GetActorLocation(), GetActorLocation());
 		if (tmp_dist < min_distance) {
 			min_distance = tmp_dist;
-			closest_player = entity;
+			closest_player = entity->GetPawn();
 		}
 	}
 }
+
+/// <summary>
+/// 현재 액터의 네트워크 소유 관계를 UEnum 타입으로 출력
+/// </summary>
+/// <param name="output">액터의 네트워크 소유 관계</param>
+void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
+	if (HasAuthority()) {
+		if (IsRunningDedicatedServer()) {
+			// 데디케이티드 서버일 때
+			output = ENetworkOwnerType::DedicatedServer;
+		}else{
+			if (IsLocallyControlled()) {
+				// 리슨 서버 소유 액터 or 스탠드얼론일 때
+				output = ENetworkOwnerType::ServerOwned;
+			}
+			else {
+				// 리슨 서버의 비소유 액터일 경우
+				output = ENetworkOwnerType::ListenServerNotOwned;
+			}
+		}
+	}
+	else {
+		if (IsLocallyControlled()) {
+			// 클라이언트 소유 액터인 경우
+			output = ENetworkOwnerType::ClientOwned;
+		}
+		else {
+			// 클라이언트 비소유 액터인 경우
+			output = ENetworkOwnerType::ClientNotOwned;
+		}
+	}
+}
+
+/// <summary>
+/// 캡슐 컴포넌트의 OnComponentHit 델리게이트에 바인딩 될 함수
+/// 에어본 상태에서 블로킹 히트 발생시 래그돌로 전환
+/// </summary>
+/// <param name="HitComp"></param>
+/// <param name="OtherActor"></param>
+/// <param name="OtherComp"></param>
+/// <param name="NormalImpulse"></param>
+/// <param name="Hit"></param>
+void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
+	if (HasAuthority()) {
+		if (character_state == ECharacterState::Airbone)
+			ragdoll_SetOnServer();
+		UKismetSystemLibrary::PrintString(this,TEXT("아아"));
+	}
+}
+
+
 
 //void ABaseCharacter::rotateActorTimeline(FRotator target_rotation, float time)
 //{
