@@ -24,7 +24,7 @@ ABaseCharacter::ABaseCharacter()
 	ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
 	ragdoll_physics_handle->bAutoActivate = false;
 
-	character_state = ECharacterState::Airbone;
+	character_state = ECharacterState::Walk_and_Jump;
 
 	// 애니메이션 설정
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> Airbone_B_Montage(TEXT("AnimMontage'/Game/Animation/Airbone_b_Montage.Airbone_b_Montage'"));
@@ -82,8 +82,12 @@ void ABaseCharacter::Tick(float DeltaTime)
 	d_time = DeltaTime;
 	
 	//바라보기에 필요한 변수 갱신
-	look_Implementation();
-
+	/*IInterface_BaseCharacter * basecharacter_interface = Cast<IInterface_BaseCharacter>(this);
+	if (basecharacter_interface) {
+		basecharacter_interface->look();
+	}*/
+	setLookRotation();
+	current_velocty = GetVelocity();
 	
 	 //에어본시 피지컬 애니메이션의 관절 각 운동량 조절
 	if (character_state == ECharacterState::Airbone) {
@@ -118,6 +122,8 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 	}
 	*/
+
+	knock_BackProcess();
 }
 
 // Called to bind functionality to input
@@ -143,14 +149,13 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 /// <summary>
 /// 캐릭터가 바라보는 방향을 결정
 /// </summary>
-void ABaseCharacter::look_Implementation()
+void ABaseCharacter::setLookRotation_Implementation()
 {
-	FRotator tmp_rotator1 = UKismetMathLibrary::MakeRotator(0, look_pitch, look_yaw);
-	FRotator tmp_rotator2 = UKismetMathLibrary::NormalizedDeltaRotator(R_look_rotation, AActor::K2_GetActorRotation());
+	FRotator tmp_rotator1 = UKismetMathLibrary::MakeRotator(0.0f, look_pitch, look_yaw);
+	FRotator tmp_rotator2 = UKismetMathLibrary::NormalizedDeltaRotator(R_look_rotation, AActor::GetActorRotation());
 	FRotator interp_tmp = UKismetMathLibrary::RInterpTo(tmp_rotator1, tmp_rotator2, d_time, 15.000000);
 	look_pitch = UKismetMathLibrary::ClampAngle(interp_tmp.Pitch, -90.000000, 90.000000);
 	look_yaw = UKismetMathLibrary::ClampAngle(interp_tmp.Yaw, -90.000000, 90.000000);
-	return;
 }
 
 /// <summary>
@@ -187,7 +192,6 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 /// </summary>
 /// <param name="hit_actor">피격 액터</param>
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
-	UKismetSystemLibrary::PrintString(this, TEXT("에헷"));
 	if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			IInterface_PlayerController* controller_interface = Cast<IInterface_PlayerController>(__hit_actor);
@@ -270,7 +274,12 @@ void ABaseCharacter::getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ET
 	__attack_trace_channel = ETraceTypeQuery::TraceTypeQuery4;
 }
 
-
+/// <summary>
+/// 캐릭터 보간 회전
+/// </summary>
+/// <param name="__target_rotation">회전 목표 로테이션</param>
+/// <param name="__delta_time">델타 타임</param>
+/// <param name="__speed">보간 속도</param>
 void ABaseCharacter::rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) {
 	FRotator interp_rotator = UKismetMathLibrary::RInterpTo(GetActorRotation(),__target_rotation,__delta_time,__speed);
 	//GetMovementComponent().repli 
@@ -284,6 +293,62 @@ void ABaseCharacter::rotateActorInterp_Implementation(FRotator __target_rotation
 		SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
 	}
 }
+
+/// <summary>
+/// 캐릭터 상태 반환
+/// </summary>
+/// <param name="__output_character_state">출력 캐릭터 상태</param>
+void ABaseCharacter::getCharacterState_Implementation(/*out*/ ECharacterState& __output_character_state) {
+	__output_character_state = character_state;
+}
+
+/// <summary>
+/// is_on_sprint 변수 반환
+/// 캐릭터가 스프린트 중인지 반환
+/// </summary>
+/// <param name="__output_is_on_sprint">출력 스프린트 여부 변수</param>
+void ABaseCharacter::getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_sprint) {
+	__output_is_on_sprint = is_on_sprint;
+}
+
+/// <summary>
+/// current_velocity 변수 반환
+/// : 무브먼트 벨로시티에 넉백 벨로시티등을 다 합친 벨로시티의 합
+/// </summary>
+/// <param name="__output_current_velocity">출력 current_velocity</param>
+void ABaseCharacter::getCurrentVelocity_Implementation(FVector& __output_current_velocity) {
+	__output_current_velocity = current_velocty;
+}
+
+/// <summary>
+/// 바라보기 관련 변수 반환
+/// </summary>
+/// <param name="__output_look_pitch">출력 피치</param>
+/// <param name="__output_look_yaw">출력 요</param>
+void ABaseCharacter::getLookDirection_Implementation(float& __output_look_pitch, float& __output_look_yaw) {
+	__output_look_pitch = look_pitch;
+	__output_look_yaw = look_yaw;
+}
+
+/// <summary>
+/// 다음 공격시 실행할 애니메이션 몽타주를 변경
+/// </summary>
+/// <param name="__next_attack_anim">다음 실행할 애니메이션 몽타주</param>
+void ABaseCharacter::setNextAttackMontage_Implementation(UAnimMontage* __next_attack_anim) {
+	next_attack_montage = __next_attack_anim;
+}
+
+/// <summary>
+/// 액션을 수행할 수 있을지 말지 결정하는 변수를 업데이트
+/// </summary>
+/// <param name="__target_is_on_action">액션 수행 가능 여부</param>
+void ABaseCharacter::setIsOnAction_Implementation(bool __target_is_on_action) {
+	is_on_action = __target_is_on_action;
+}
+
+// <-- 인터페이스 함수 정의 끝
+
+
 
 // --> 클래스 멤버 함수 정의
 
@@ -305,7 +370,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 	}
 
 	UAnimMontage* hit_anim = nullptr;
-	selectHitAnimation_Implementation(rotated_vector, hit_anim);
+	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
 
 	if (target_damage_data.target_control == ETargetControlType::None) {
@@ -536,7 +601,7 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 		case ECharacterState::Airbone:
 			is_on_sprint = false;
 			is_on_action = false;
-			airboneStart_Implementation();
+			airboneStart();
 			break;
 		case ECharacterState::Ragdoll:
 			is_on_sprint = false;
@@ -554,7 +619,7 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 /// </summary>
 void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
 	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
-	findClosestPlayer_Implementation(simulation_responsible_actor);
+	findClosestPlayer(simulation_responsible_actor);
 	ragdoll_SetMultiCast(simulation_responsible_actor);
 }
 

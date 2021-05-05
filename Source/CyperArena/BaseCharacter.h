@@ -28,9 +28,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look"))
 		FRotator R_look_rotation;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
-		FRotator target_rotation;
+		FRotator rotate_target_rotation;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
-		float rotation_interp_speed;
+		float rotate_interp_speed;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
 		ECharacterState character_state;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
@@ -124,21 +124,85 @@ public:
 
 // --> Interface_BaseCharacter 인터페이스의 함수들 오버라이드 선언
 
-	virtual void look_Implementation() override;
-	virtual void applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor) override;
-	virtual void setDamageData_Implementation(FdamageData __target_damage_data) override;
-	virtual void resetHitActorList_Implementation() override;
-	virtual void attackEvent_Implementation(AActor* __hit_actor) override;
-	virtual void resetNextAttack_Implementation() override;
-	//virtual void getWeapon_Implementation(USkeletalMeshComponent*& __weapon) override;
-	virtual void getDamageData_Implementation(FdamageData& __damage_data) override;
-	virtual void getLookRotation_Implementation(/*out*/ FRotator& __look_rotation) override;
-	virtual void getTargetRotation_Implementation(/*out*/ FRotator& __target_rotation) override;
-	virtual void setPrevSockLoc_Implementation(FVector __start, FVector __end) override;
-	virtual void getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*out*/ FVector& __end) override;
-	virtual void getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) override;
-	virtual void rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) override;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setLookRotation();
+		virtual void setLookRotation_Implementation() override;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void applyDamage(FdamageData __damage_data, AActor* __damage_causor);
+		virtual void applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setDamageData(FdamageData __target_damage_data);
+		virtual void setDamageData_Implementation(FdamageData __target_damage_data) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void resetHitActorList();
+		virtual void resetHitActorList_Implementation() override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void attackEvent(AActor* __hit_actor);
+		virtual void attackEvent_Implementation(AActor* __hit_actor) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void resetNextAttack();
+		virtual void resetNextAttack_Implementation() override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getDamageData(/*out*/ FdamageData& __damage_data);
+		virtual void getDamageData_Implementation(FdamageData& __damage_data) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getLookRotation(/*out*/ FRotator& __look_rotation);
+		virtual void getLookRotation_Implementation(/*out*/ FRotator& __look_rotation) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getTargetRotation(/*out*/ FRotator& __target_rotation);
+		virtual void getTargetRotation_Implementation(/*out*/ FRotator& __target_rotation) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setPrevSockLoc(FVector __start, FVector __end);
+		virtual void setPrevSockLoc_Implementation(FVector __start, FVector __end) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getPrevSockLoc(/*out*/ FVector& __start, /*out*/ FVector& __end);
+		virtual void getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*out*/ FVector& __end) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getAttackTraceChannel(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel);
+		virtual void getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void rotateActorInterp(FRotator __target_rotation, float __delta_time, float __speed);
+		virtual void rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getCharacterState(/*out*/ ECharacterState& __output_character_state);
+		virtual void getCharacterState_Implementation(/*out*/ ECharacterState& __output_character_state) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getIsOnSprint(/*out*/ bool& __output_is_on_sprint);
+		virtual void getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_sprint) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface"))
+		void setCharacterState(ECharacterState target_character_state);
+		virtual void setCharacterState_Implementation(ECharacterState target_character_state);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getCurrentVelocity(FVector& __output_current_velocity);
+		virtual void getCurrentVelocity_Implementation(FVector& __output_current_velocity) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getLookDirection(float& __output_look_pitch, float& __output_look_yaw);
+		virtual void getLookDirection_Implementation(float& __output_look_pitch, float& __output_look_yaw) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setNextAttackMontage(UAnimMontage* __next_attack_anim);
+		virtual void setNextAttackMontage_Implementation(UAnimMontage* __next_attack_anim) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setIsOnAction(bool __target_is_on_action);
+		virtual void setIsOnAction_Implementation(bool __target_is_on_action) override;
 
 // --> 클래스 멤버 함수선언
 
@@ -172,10 +236,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
 		void ragdollGetUp();
 		virtual void ragdollGetUp_Implementation();
-	
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Character State"))
-		void setCharacterState(ECharacterState target_character_state);
-		virtual void setCharacterState_Implementation(ECharacterState target_character_state);
 
 	UFUNCTION(BlueprintCallable, Server, UnReliable)
 		void ragdoll_SetOnServer();

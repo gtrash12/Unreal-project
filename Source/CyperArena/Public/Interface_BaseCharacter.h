@@ -25,7 +25,7 @@ class CYPERARENA_API IInterface_BaseCharacter
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void look();
+		void setLookRotation();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void applyDamage(FdamageData __damage_data, AActor* __damage_causor);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
@@ -36,8 +36,6 @@ public:
 		void attackEvent(AActor* __hit_actor);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetNextAttack();
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void getWeapon(/*out*/ USkeletalMeshComponent*& __weapon);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getDamageData(/*out*/ FdamageData& __damage_data);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
@@ -52,10 +50,26 @@ public:
 		void getAttackTraceChannel(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void rotateActorInterp(FRotator __target_rotation, float __delta_time, float __speed);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getCharacterState(/*out*/ ECharacterState& __output_character_state);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getIsOnSprint(/*out*/ bool& __output_is_on_sprint);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setCharacterState(ECharacterState target_character_state);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getCurrentVelocity(FVector& __output_current_velocity);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getLookDirection(float& __output_look_pitch, float& __output_look_yaw);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setNextAttackMontage(UAnimMontage* __next_attack_anim);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setIsOnAction(bool __target_is_on_action);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void rotateActorTimeline(FRotator __target_rotation, float __time);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void applyKnock_Back(FVector __velocity);
 	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getWeapon(/*out*/ USkeletalMeshComponent*& __weapon);
 };
