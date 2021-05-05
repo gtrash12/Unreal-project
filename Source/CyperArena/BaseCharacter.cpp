@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine.h"
 #include "EngineUtils.h"
+#include "Public/Interface_PlayerController.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -64,13 +65,14 @@ void ABaseCharacter::PostInitializeComponents() {
 	//Make sure the mesh and animbp update after the CharacterBP
 	GetMesh()->AddTickPrerequisiteActor(this);
 	main_anim_instance = GetMesh()->GetAnimInstance();
+	getNetworkOwnerType(network_owner_type);
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	getNetworkOwnerType(network_owner_type);
+	
 }
 
 // Called every frame
@@ -88,6 +90,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		UMeshComponent* mesh = GetMesh();
 		mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
 	}
+	/*
 	//래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
@@ -95,7 +98,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		switch (network_owner_type)
 		{
 		case ENetworkOwnerType::ServerOwned:
-			if (is_simulation_owner) {
+			if (is_simulation_responsible) {
 				ragdoll_ServerOnwer_Implementation();
 			}
 			break;
@@ -114,6 +117,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 			break;
 		}
 	}
+	*/
 }
 
 // Called to bind functionality to input
@@ -131,9 +135,10 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
 	DOREPLIFETIME(ABaseCharacter, hp);
 	DOREPLIFETIME(ABaseCharacter, knock_back_count);
-	DOREPLIFETIME(ABaseCharacter, knock_back_count_end);
-	DOREPLIFETIME(ABaseCharacter, knock_back_velocity);
+	DOREPLIFETIME(ABaseCharacter, simulation_responsible_actor);
 }
+
+/// --> 인터페이스 함수 정의
 
 /// <summary>
 /// 캐릭터가 바라보는 방향을 결정
@@ -145,7 +150,6 @@ void ABaseCharacter::look_Implementation()
 	FRotator interp_tmp = UKismetMathLibrary::RInterpTo(tmp_rotator1, tmp_rotator2, d_time, 15.000000);
 	look_pitch = UKismetMathLibrary::ClampAngle(interp_tmp.Pitch, -90.000000, 90.000000);
 	look_yaw = UKismetMathLibrary::ClampAngle(interp_tmp.Yaw, -90.000000, 90.000000);
-	//UKismetSystemLibrary::PrintString(this, TEXT("한글"));
 	return;
 }
 
@@ -153,26 +157,167 @@ void ABaseCharacter::look_Implementation()
 /// 피격 액터가 데미지 프로세스를 처리하도록 전달
 /// 체력 연산 후 멀티캐스트 함수 실행
 /// </summary>
-/// <param name="damage_data">전달할 데미지 데이터</param>
+/// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Implementation(FdamageData damage_data, AActor* damage_causor)
+void ABaseCharacter::applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor)
 {
-	hp -= damage_data.base_damage + damage_data.base_damage_percent * Cast<ABaseCharacter>(damage_causor)->base_power;
-	applyDamage_Multicast(damage_data, damage_causor);
+	hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * Cast<ABaseCharacter>(__damage_causor)->base_power;
+	applyDamage_Multicast(__target_damage_data, __damage_causor);
 }
+
+/// <summary>
+/// 피격 액터 셋을 초기화하여 다음 공격에 피격될 수 있게 함
+/// </summary>
+void ABaseCharacter::resetHitActorList_Implementation() {
+	hit_actors_list.Reset();
+}
+
+
+/// <summary>
+/// 데미지데이터 업데이트
+/// </summary>
+/// <param name="target_damage_data">타겟 데미지 데이터</param>
+void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_data) {
+	damage_data = __target_damage_data;
+}
+
+/// <summary>
+/// 공격이 적에게 맞았을 때 피격액터에게 데미지 이벤트를 전달
+/// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
+/// </summary>
+/// <param name="hit_actor">피격 액터</param>
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
+	UKismetSystemLibrary::PrintString(this, TEXT("에헷"));
+	if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
+		if (hit_actors_list.Contains(__hit_actor) == false) {
+			IInterface_PlayerController* controller_interface = Cast<IInterface_PlayerController>(__hit_actor);
+			if (controller_interface) {
+				controller_interface->CtoS_applyDamage(__hit_actor, damage_data, this);
+			}
+			hit_actors_list.Add(__hit_actor);
+		}
+	}
+}
+
+/// <summary>
+/// is_on_action을 초기화 시켜 캐릭터가 액션을 수행할 수 있게 하고, 공격 시퀀스를 초기화
+/// </summary>
+void ABaseCharacter::resetNextAttack_Implementation() {
+	next_attack_montage = normal_attack_montage;
+	is_on_action = false;
+}
+
+
+/// <summary>
+/// 데미지 데이터를 전달
+/// </summary>
+/// <param name="__damage_data">출력 데미지 데이터</param>
+void ABaseCharacter::getDamageData_Implementation(FdamageData& __damage_data) {
+	__damage_data = damage_data;
+}
+
+/// <summary>
+/// 바라보는 방향 출력
+/// </summary>
+/// <param name="__look_rotation">출력 로테이션</param>
+void ABaseCharacter::getLookRotation_Implementation(/*out*/ FRotator& __look_rotation) {
+	__look_rotation = R_look_rotation;
+}
+
+
+/// <summary>
+/// 타겟 로테이션을 출력
+/// 경우에 따라 인풋 로테이션과 액터 로테이션을 선택
+/// </summary>
+/// <param name="__target_rotation">출력 타겟 로테이션</param>
+void ABaseCharacter::getTargetRotation_Implementation(/*out*/ FRotator& __target_rotation) {
+	bool is_moving = GetLastMovementInputVector().Size() > 0.0f;
+	if (is_moving) {
+		FRotator input_rotation = UKismetMathLibrary::MakeRotFromX(GetLastMovementInputVector());
+		__target_rotation = input_rotation;
+	}
+	else {
+		__target_rotation = GetActorRotation();
+	}
+}
+
+/// <summary>
+/// 공격 트레이스시 사용할 소켓 이전 위치 변수 업데이트
+/// </summary>
+/// <param name="start">시작 지점 소켓 위치</param>
+/// <param name="end">끝 지점 소켓 위치</param>
+void ABaseCharacter::setPrevSockLoc_Implementation(FVector __start, FVector __end) {
+	prev_attack_sock_start_loc = __start;
+	prev_attack_sock_end_loc = __end;
+}
+
+/// <summary>
+/// 공격 트레이스시 사용할 소켓 이전 위치 변수 전달
+/// </summary>
+/// <param name="__start"></param>
+/// <param name="__end"></param>
+void ABaseCharacter::getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*out*/ FVector& __end) {
+	__start = prev_attack_sock_start_loc;
+	__end = prev_attack_sock_end_loc;
+}
+
+
+/// <summary>
+/// 어택 트레이스에 사용할 트레이스 채널을 반환
+/// </summary>
+/// <param name="__attack_trace_channel">출력 어택 트레이스 채널</param>
+void ABaseCharacter::getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) {
+	__attack_trace_channel = ETraceTypeQuery::TraceTypeQuery4;
+}
+
+
+void ABaseCharacter::rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) {
+	FRotator interp_rotator = UKismetMathLibrary::RInterpTo(GetActorRotation(),__target_rotation,__delta_time,__speed);
+	//GetMovementComponent().repli 
+	if (HasAuthority()) {
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
+		}
+	}
+	else {
+		CtoS_setRotation(interp_rotator);
+		SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
+	}
+}
+
+// --> 클래스 멤버 함수 정의
 
 
 /// <summary>
 /// 서버에서 체력연산 후 멀티캐스트로 넉백 등을 처리
 /// </summary>
-/// <param name="damage_data">전달할 데미지 데이터</param>
+/// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData damage_data, AActor* damage_causor)
+void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor)
 {
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FVector rotated_vector;
+	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	else {
+		FQuat rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation()).Quaternion();
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat, target_damage_data.knock_back);
+	}
+
 	UAnimMontage* hit_anim = nullptr;
-	selectHitAnimation_Implementation(damage_data.knock_back, hit_anim);
+	selectHitAnimation_Implementation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
-	is_on_action = true;
+
+	if (target_damage_data.target_control == ETargetControlType::None) {
+		knock_Back(rotated_vector);
+	}
+	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
+		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		FTimerHandle timer_handle;
+		GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
+			setCharacterState(ECharacterState::Airbone);
+			}), 0.1f, false);
+	}
 }
 
 /// <summary>
@@ -207,14 +352,28 @@ void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMo
 /// 넉백 연산 수행 (매 틱 실행)
 /// </summary>
 /// <param name="velocity">넉백 벨로시티</param>
-void ABaseCharacter::knock_BackProcess_Implementation(FVector velocity) {
+void ABaseCharacter::knock_BackProcess_Implementation() {
 	if (knock_back_count_end > 0 && knock_back_count < knock_back_count_end) {
 		knock_back_count = UKismetMathLibrary::Min(knock_back_count_end, knock_back_count + d_time);
 		float ease_alpha = knock_back_count / knock_back_count_end;
 		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
 		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, ease_res);
 		GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
-		
+		UKismetMathLibrary::Add_VectorVector(current_velocty, knock_back_delta);
+	}
+}
+
+/// <summary>
+/// 넉백프로세스에서 사용되는 변수 초기화
+/// </summary>
+void ABaseCharacter::knock_Back_Implementation(FVector velocity) {
+	float vel_length = velocity.Size();
+	knock_back_count = 0;
+	knock_back_velocity = velocity;
+	knock_back_count_end = vel_length / 300.0f;
+	is_on_action = true;
+	if (velocity.Z > 0) {
+		LaunchCharacter(UKismetMathLibrary::MakeVector(0.0f,0.0f,velocity.Z),false,false);
 	}
 }
 
@@ -260,7 +419,6 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	CtoS_targetLocation(this, ragdoll_server_location);
 }
 
-// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
 
 /// <summary>
 /// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
@@ -271,7 +429,6 @@ void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
 	stickToTheGround(ragdoll_server_location);
 }
 
-// ( 서버에서 실행 ) : 서버 : 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
 
 /// <summary>
 /// 클라이언트 소유 액터에게 위치를 전달받으면 변수를 업데이트해서 리플리케이트
@@ -384,6 +541,7 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 		case ECharacterState::Ragdoll:
 			is_on_sprint = false;
 			is_on_action = false;
+			ragdoll_SetOnServer();
 			break;
 		default:
 			break;
@@ -396,25 +554,24 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 /// </summary>
 void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
 	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
-	findClosestPlayer_Implementation(simulation_owner_actor);
-	ragdoll_SetMultiCast_Implementation();
+	findClosestPlayer_Implementation(simulation_responsible_actor);
+	ragdoll_SetMultiCast(simulation_responsible_actor);
 }
 
 /// <summary>
 /// 멀티캐스트로 래그돌 세팅 동기화
 /// </summary>
-void ABaseCharacter::ragdoll_SetMultiCast_Implementation() {
-	if (network_owner_type != ENetworkOwnerType::DedicatedServer) {
+void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
+	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 		prev_ragdoll_server_location = ragdoll_server_location;
 		last_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count = 0.0f;
 		is_ragdoll_on_the_ground = false;
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 
-		is_simulation_owner = simulation_owner_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		is_simulation_responsible = simulation_responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
 	}
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -443,29 +600,53 @@ void ABaseCharacter::findClosestPlayer_Implementation(AActor*& closest_player) {
 /// </summary>
 /// <param name="output">액터의 네트워크 소유 관계</param>
 void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
-	if (HasAuthority()) {
-		if (IsRunningDedicatedServer()) {
-			// 데디케이티드 서버일 때
-			output = ENetworkOwnerType::DedicatedServer;
-		}else{
-			if (IsLocallyControlled()) {
-				// 리슨 서버 소유 액터 or 스탠드얼론일 때
-				output = ENetworkOwnerType::ServerOwned;
-			}
-			else {
-				// 리슨 서버의 비소유 액터일 경우
-				output = ENetworkOwnerType::ListenServerNotOwned;
-			}
+	//if (HasAuthority()) {
+	//	if (UKismetSystemLibrary::IsDedicatedServer(this)) {
+	//		// 데디케이티드 서버일 때
+	//		output = ENetworkOwnerType::DedicatedServer;
+	//	}else{
+	//		if (IsLocallyControlled()) {
+	//			// 리슨 서버 소유 액터 or 스탠드얼론일 때
+	//			if (IsPlayerControlled()) {
+	//				// 리슨 서버로 실행중인 플레이어일때
+	//				output = ENetworkOwnerType::ListenServerPlayer;
+	//			}
+	//			else {
+	//				//
+	//				output = ENetworkOwnerType::ServerOwned;
+	//			}
+	//		}
+	//		else {
+	//			// 리슨 서버의 비소유 액터일 경우
+	//			output = ENetworkOwnerType::ListenServerNotOwned;
+	//		}
+	//	}
+	//}
+	//else {
+	//	if (IsLocallyControlled()) {
+	//		// 클라이언트 소유 액터인 경우
+	//		output = ENetworkOwnerType::ClientOwned;
+	//	}
+	//	else {
+	//		// 클라이언트 비소유 액터인 경우
+	//		output = ENetworkOwnerType::ClientNotOwned;
+	//	}
+	//}
+
+	if (IsPlayerControlled()) {
+		if (IsLocallyControlled()) {
+			output = ENetworkOwnerType::OwnedPlayer;
+		}
+		else {
+			output = ENetworkOwnerType::RemotePlayer;
 		}
 	}
 	else {
 		if (IsLocallyControlled()) {
-			// 클라이언트 소유 액터인 경우
-			output = ENetworkOwnerType::ClientOwned;
+			output = ENetworkOwnerType::OwnedAI;
 		}
 		else {
-			// 클라이언트 비소유 액터인 경우
-			output = ENetworkOwnerType::ClientNotOwned;
+			output = ENetworkOwnerType::RemoteAI;
 		}
 	}
 }
@@ -488,6 +669,10 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 }
 
 
+
+void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation) {
+	SetActorRotation(__target_rotation.Quaternion(), ETeleportType::TeleportPhysics);
+}
 
 //void ABaseCharacter::rotateActorTimeline(FRotator target_rotation, float time)
 //{

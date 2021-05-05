@@ -9,7 +9,7 @@
 #include "Interface_BaseCharacter.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(BlueprintType)
 class UInterface_BaseCharacter : public UInterface
 {
 	GENERATED_BODY()
@@ -24,36 +24,38 @@ class CYPERARENA_API IInterface_BaseCharacter
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface", OverrideNativeName = "rotateActorTimeline"))
-		void rotateActorTimeline(FRotator target_rotation, float time);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface", OverrideNativeName = "look"))
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void look();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getWeapon"))
-		void getWeapon(/*out*/ USkeletalMeshComponent*& weapon);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getDamageData"))
-		void getDamageData(/*out*/ FdamageData& damage_data);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "setDamageData"))
-		void setDamageData(FdamageData damage_data);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "rotateActorInterp"))
-		void rotateActorInterp(FRotator target_rotation, float delta_time, float speed);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getLookRotation"))
-		void getLookRotation(/*out*/ FRotator& look_rotation);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getTargetRotation"))
-		void getTargetRotation(/*out*/ FRotator& target_rotation);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "knock_Back"))
-		void knock_Back(FVector velocity);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "resetHitActorList"))
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void applyDamage(FdamageData __damage_data, AActor* __damage_causor);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setDamageData(FdamageData __target_damage_data);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetHitActorList();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "applyDamage"))
-		void applyDamage(FdamageData damage_data, AActor* damage_causor);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "setPrevSockLoc"))
-		void setPrevSockLoc(FVector start, FVector end);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getPrevSockLoc"))
-		void getPrevSockLoc(/*out*/ FVector& start, /*out*/ FVector& end);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "attackEvent"))
-		void attackEvent(const AActor* hit_actor__const);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "getAttackTraceChannel"))
-		void getAttackTraceChannel(/*out*/ TEnumAsByte<ETraceTypeQuery>& NewParam);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta = (Category = "Base-Interface", OverrideNativeName = "ResetNextAttack"))
-		void ResetNextAttack();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void attackEvent(AActor* __hit_actor);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void resetNextAttack();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getWeapon(/*out*/ USkeletalMeshComponent*& __weapon);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getDamageData(/*out*/ FdamageData& __damage_data);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getLookRotation(/*out*/ FRotator& __look_rotation);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getTargetRotation(/*out*/ FRotator& __target_rotation);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setPrevSockLoc(FVector __start, FVector __end);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getPrevSockLoc(/*out*/ FVector& __start, /*out*/ FVector& __end);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getAttackTraceChannel(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void rotateActorInterp(FRotator __target_rotation, float __delta_time, float __speed);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void rotateActorTimeline(FRotator __target_rotation, float __time);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void applyKnock_Back(FVector __velocity);
+	
 };

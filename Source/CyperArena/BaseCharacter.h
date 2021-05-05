@@ -10,7 +10,7 @@
 
 #include "BaseCharacter.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class CYPERARENA_API ABaseCharacter : public ACharacter, public IInterface_BaseCharacter
 {
 	GENERATED_BODY()
@@ -27,6 +27,10 @@ public:
 		float look_pitch;
 	UPROPERTY(BlueprintReadWrite, Replicated, meta = (DisplayName = "R Look Rotation", Category = "Base-Look"))
 		FRotator R_look_rotation;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
+		FRotator target_rotation;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
+		float rotation_interp_speed;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
 		ECharacterState character_state;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
@@ -37,10 +41,14 @@ public:
 		float base_power;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))
 		bool is_on_sprint;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-CharacterState")
+		float walk_speed;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-CharacterState")
+		float sprint_speed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (DisplayName = "Is Simulation Owner", Category = "Base-Ragdoll"))
-		bool is_simulation_owner;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (DisplayName = "Simulation Owner Actor", Category = "Base-Ragdoll"))
-		AActor* simulation_owner_actor;
+		bool is_simulation_responsible;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Replicated, meta = (DisplayName = "Simulation Owner Actor", Category = "Base-Ragdoll"))
+		AActor* simulation_responsible_actor;
 	UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll on the Ground", Category = "Base-Ragdoll"))
 		bool is_ragdoll_on_the_ground;
 	UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Is Ragdoll Face Up", Category = "Base-Ragdoll"))
@@ -79,13 +87,24 @@ public:
 		bool is_on_action;
 	UPROPERTY(BlueprintReadWrite, Replicated, meta = (Category = "Base-Combat"))
 		float knock_back_count;
-	UPROPERTY(BlueprintReadWrite, Replicated, meta = (Category = "Base-Combat"))
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		float knock_back_count_end;
-	UPROPERTY(BlueprintReadWrite, Replicated, meta = (Category = "Base-Combat"))
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		FVector knock_back_velocity;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		FVector current_velocty;
-
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
+		TSet<AActor*> hit_actors_list;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
+		FdamageData damage_data;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (Category = "Base-Combat"))
+		UAnimMontage* normal_attack_montage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (Category = "Base-Combat"))
+		UAnimMontage* next_attack_montage;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
+		FVector prev_attack_sock_start_loc;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
+		FVector prev_attack_sock_end_loc;
 
 private :
 	UPROPERTY()
@@ -103,14 +122,25 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "Look"))
-	// Interface_BaseCharacter 인터페이스의 함수들 오버라이드 선언
-	void look();
+// --> Interface_BaseCharacter 인터페이스의 함수들 오버라이드 선언
+
 	virtual void look_Implementation() override;
-	void applyDamage(FdamageData damage_data, AActor* damage_causor);
-	virtual void applyDamage_Implementation(FdamageData damage_data, AActor* damage_causor);
+	virtual void applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor) override;
+	virtual void setDamageData_Implementation(FdamageData __target_damage_data) override;
+	virtual void resetHitActorList_Implementation() override;
+	virtual void attackEvent_Implementation(AActor* __hit_actor) override;
+	virtual void resetNextAttack_Implementation() override;
+	//virtual void getWeapon_Implementation(USkeletalMeshComponent*& __weapon) override;
+	virtual void getDamageData_Implementation(FdamageData& __damage_data) override;
+	virtual void getLookRotation_Implementation(/*out*/ FRotator& __look_rotation) override;
+	virtual void getTargetRotation_Implementation(/*out*/ FRotator& __target_rotation) override;
+	virtual void setPrevSockLoc_Implementation(FVector __start, FVector __end) override;
+	virtual void getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*out*/ FVector& __end) override;
+	virtual void getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) override;
+	virtual void rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) override;
 
 
+// --> 클래스 멤버 함수선언
 
 
 	/*UFUNCTION(BlueprintCallable, meta = (Category = "Base", CppFromBpEvent, OverrideNativeName = "rotateActorTimeline"))
@@ -152,8 +182,8 @@ public:
 		virtual void ragdoll_SetOnServer_Implementation();
 
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
-		void ragdoll_SetMultiCast();
-		virtual void ragdoll_SetMultiCast_Implementation();
+		void ragdoll_SetMultiCast(AActor* responsible_actor);
+		virtual void ragdoll_SetMultiCast_Implementation(AActor* responsible_actor);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Character State"))
 		void findClosestPlayer(/*out*/ AActor*& closest_player);
@@ -166,8 +196,8 @@ public:
 		virtual void onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
-		void applyDamage_Multicast(FdamageData damage_data, AActor* damage_causor);
-		virtual void applyDamage_Multicast_Implementation(FdamageData damage_data, AActor* damage_causor);
+		void applyDamage_Multicast(FdamageData target_damage_data, AActor* damage_causor);
+		virtual void applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 		void animation_Sound_Multicast(UAnimMontage* anim, USoundBase* sound);
@@ -178,6 +208,14 @@ public:
 		virtual void selectHitAnimation_Implementation(FVector velocity, UAnimMontage*& hit_anim);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
-		void knock_BackProcess(FVector velocity);
-		virtual void knock_BackProcess_Implementation(FVector velocity);
+		void knock_BackProcess();
+		virtual void knock_BackProcess_Implementation();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
+		void knock_Back(FVector velocity);
+		virtual void knock_Back_Implementation(FVector velocity);
+
+	UFUNCTION(BlueprintCallable, Server, UnReliable)
+		void CtoS_setRotation(FRotator __target_rotation);
+		virtual void CtoS_setRotation_Implementation(FRotator __target_rotation);
 };

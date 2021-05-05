@@ -11,11 +11,10 @@
 UENUM(BlueprintType)
 enum class ENetworkOwnerType : uint8
 {
-	ServerOwned UMETA(DisplayName = "ServerOwned"),
-	ListenServerNotOwned UMETA(DisplayName = "ListenServerNotOwned"),
-	DedicatedServer UMETA(DisplayName = "DedicatedServer"),
-	ClientOwned UMETA(DisplayName = "ClientOwned"),
-	ClientNotOwned UMETA(DisplayName = "ClientNotOwned")
+	OwnedAI UMETA(DisplayName = "OwnedAI"),
+	RemoteAI UMETA(DisplayName = "RemoteAI"),
+	OwnedPlayer UMETA(DisplayName = "OwnedPlayer"),
+	RemotePlayer UMETA(DisplayName = "RemotePlayer")
 };
 
 UENUM(BlueprintType)
@@ -36,7 +35,7 @@ enum class EAnimWeaponLayer : uint8
 };
 
 UENUM(BlueprintType)
-enum class EKncokBackType : uint8
+enum class EKnockBackType : uint8
 {
 	Directional UMETA(DisplayName = "Directional"),
 	Radial UMETA(DisplayName = "Radial"),
@@ -81,7 +80,7 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FVector knock_back;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		EKncokBackType knock_back_type;
+		EKnockBackType knock_back_type;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EDamageElementalType elemental;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
