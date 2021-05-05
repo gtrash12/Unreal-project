@@ -145,8 +145,8 @@ public:
 		virtual void attackEvent_Implementation(AActor* __hit_actor) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void resetNextAttack();
-		virtual void resetNextAttack_Implementation() override;
+		void resetNextAttack(bool __is_on_action__toggle);
+		virtual void resetNextAttack_Implementation(bool __is_on_action__toggle) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getDamageData(/*out*/ FdamageData& __damage_data);

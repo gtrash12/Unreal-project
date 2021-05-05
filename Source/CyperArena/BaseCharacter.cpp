@@ -87,7 +87,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 		basecharacter_interface->look();
 	}*/
 	setLookRotation();
-	current_velocty = GetVelocity();
 	
 	 //에어본시 피지컬 애니메이션의 관절 각 운동량 조절
 	if (character_state == ECharacterState::Airbone) {
@@ -166,7 +165,7 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// <param name="damage_causor">데미지를 입힌 액터</param>
 void ABaseCharacter::applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor)
 {
-	hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * Cast<ABaseCharacter>(__damage_causor)->base_power;
+	hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * 10.0f;
 	applyDamage_Multicast(__target_damage_data, __damage_causor);
 }
 
@@ -192,7 +191,23 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 /// </summary>
 /// <param name="hit_actor">피격 액터</param>
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
-	if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
+	bool flag = false;
+	/*if (HasAuthority()) {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
+			if (__hit_actor->GetOwner() == GetOwner()) {
+				flag = true;
+			}
+		}
+	}
+	else {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+			if (__hit_actor->GetOwner() == GetOwner()) {
+				flag = true;
+			}
+		}
+	}
+
+	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			IInterface_PlayerController* controller_interface = Cast<IInterface_PlayerController>(__hit_actor);
 			if (controller_interface) {
@@ -200,15 +215,16 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
-	}
+	}*/
 }
 
 /// <summary>
 /// is_on_action을 초기화 시켜 캐릭터가 액션을 수행할 수 있게 하고, 공격 시퀀스를 초기화
 /// </summary>
-void ABaseCharacter::resetNextAttack_Implementation() {
+void ABaseCharacter::resetNextAttack_Implementation(bool __is_on_action__toggle) {
 	next_attack_montage = normal_attack_montage;
-	is_on_action = false;
+	if (__is_on_action__toggle)
+		is_on_action = !is_on_action;
 }
 
 
@@ -317,7 +333,7 @@ void ABaseCharacter::getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_s
 /// </summary>
 /// <param name="__output_current_velocity">출력 current_velocity</param>
 void ABaseCharacter::getCurrentVelocity_Implementation(FVector& __output_current_velocity) {
-	__output_current_velocity = current_velocty;
+	__output_current_velocity = UKismetMathLibrary::Add_VectorVector(GetVelocity(), current_velocty);
 }
 
 /// <summary>
@@ -363,7 +379,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	else {
 		FQuat rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation()).Quaternion();
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat, target_damage_data.knock_back);
@@ -419,12 +435,24 @@ void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMo
 /// <param name="velocity">넉백 벨로시티</param>
 void ABaseCharacter::knock_BackProcess_Implementation() {
 	if (knock_back_count_end > 0 && knock_back_count < knock_back_count_end) {
-		knock_back_count = UKismetMathLibrary::Min(knock_back_count_end, knock_back_count + d_time);
-		float ease_alpha = knock_back_count / knock_back_count_end;
-		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
-		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, ease_res);
-		GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
-		UKismetMathLibrary::Add_VectorVector(current_velocty, knock_back_delta);
+		if(HasAuthority()){
+			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
+			float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::SinusoidalOut);
+			knock_back_count += d_time;
+			float ease_alpha = knock_back_count / knock_back_count_end;
+			float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::SinusoidalOut);
+			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
+			FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
+			GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
+			current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X*ease_res*4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+			if (ease_res <= 0.0) {
+				knock_back_count_end = 0.0f;
+				current_velocty = FVector::ZeroVector;
+			}
+		}
+		else {
+
+		}
 	}
 }
 
@@ -435,7 +463,7 @@ void ABaseCharacter::knock_Back_Implementation(FVector velocity) {
 	float vel_length = velocity.Size();
 	knock_back_count = 0;
 	knock_back_velocity = velocity;
-	knock_back_count_end = vel_length / 300.0f;
+	knock_back_count_end = vel_length / 500.0f;
 	is_on_action = true;
 	if (velocity.Z > 0) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(0.0f,0.0f,velocity.Z),false,false);
