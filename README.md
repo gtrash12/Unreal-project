@@ -11,7 +11,7 @@
 - 구르기 : Spacebar
 - 점프 : Shift + Spacebar
 - 걷기 : ctrl
-- 락온 타게팅 : 마우스 휠 버튼
+- 타게팅 : 마우스 휠 버튼
 - 락온 타게팅 오른쪽에 위치한 타겟으로 전환 : 마우스 휠 위로 회전
 - 락온 타게팅 왼쪽에 위치한 타겟으로 전환 : 마우스 휠 아래로 회전
 
@@ -89,3 +89,19 @@ PowerIK 플러그인 사용
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
 전,후,좌,우의 4방향 피격모션에 로코모션을 블렌딩해서 넉백시 밀려나면서도 균형을 잡으려는 매우 자연스러운 모션 구현
+
+
+# 락온타게팅 시스템
+
+![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
+
+내적을 이용하여 플레이어가 보는 방향에서 가장 가까운 적을 타게팅하며, 휠을 통해 우측, 좌측에 있는 적으로 타게팅을 선택해서 전환할 수 있음
+
+![락온 릴리즈(sm)](https://user-images.githubusercontent.com/12960463/117236828-836f3c80-ae64-11eb-8c3d-ef1bade18afc.gif)
+
+일정 시간 적이 시야에서 사라지면 타게팅을 해제하고 체력바 위젯을 숨김
+
+![몬스터 사망(sm)](https://user-images.githubusercontent.com/12960463/117236948-cc26f580-ae64-11eb-91d2-6a16058f0c3d.gif)
+
+
+또, 몬스터가 사망하면 타게팅을 해제
