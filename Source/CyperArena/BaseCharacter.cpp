@@ -451,7 +451,19 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 			}
 		}
 		else {
-
+			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
+			float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::SinusoidalOut);
+			knock_back_count += d_time;
+			float ease_alpha = knock_back_count / knock_back_count_end;
+			float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f, ease_alpha, EEasingFunc::SinusoidalOut);
+			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
+			FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
+			GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
+			current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X * ease_res * 4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+			if (ease_res <= 0.0) {
+				knock_back_count_end = 0.0f;
+				current_velocty = FVector::ZeroVector;
+			}
 		}
 	}
 }
