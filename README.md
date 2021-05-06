@@ -8,7 +8,7 @@
 - 찌르기 : 우클릭
 - 대쉬공격 : 달리는 중 좌클릭 or 구르기 중 좌클릭
 - 달리기 : Shift
-- 구르기 : Spacebar
+- 구르기, 일어서기 : Spacebar
 - 점프 : Shift + Spacebar
 - 걷기 : ctrl
 - 타게팅 : 마우스 휠 버튼
