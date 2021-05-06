@@ -2,13 +2,8 @@
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
 # 주요 파일
--  블루프린트 베이스 캐릭터
-https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_BaseCharacter.uasset
-- 블루프린트 베이스 캐릭터를 상속받는 플레이어 캐릭터
-https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter.uasset
-- 블루프린트 베이스 캐릭터를 상속받는 적(AI) 캐릭터
-https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp.uasset
-- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일
+## c++ 파일
+- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일 ( WIP )
 https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
 https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
 - 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
@@ -16,6 +11,14 @@ https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/CustomDat
 - c++ 인터페이스 파일
 https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
 https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
+
+## 블루프린트 파일
+-  블루프린트 베이스 캐릭터
+https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_BaseCharacter.uasset
+- 블루프린트 베이스 캐릭터를 상속받는 플레이어 캐릭터
+https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter.uasset
+- 블루프린트 베이스 캐릭터를 상속받는 적(AI) 캐릭터
+https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp.uasset
 -  플레이어 콘트롤러 블루프린트
 https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/Controller_PlayerCharacter_cpp.uasset
 - 모든 액션의 데미지 데이터를 정의한 테이블
