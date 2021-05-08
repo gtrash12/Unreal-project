@@ -85,7 +85,7 @@ public:
 		ENetworkOwnerType network_owner_type;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "IS On Action", Category = "Base-Combat"))
 		bool is_on_action;
-	UPROPERTY(BlueprintReadWrite, Replicated, meta = (Category = "Base-Combat"))
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		float knock_back_count;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		float knock_back_count_end;

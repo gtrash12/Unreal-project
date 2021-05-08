@@ -139,7 +139,6 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(ABaseCharacter, R_look_rotation);
 	DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
 	DOREPLIFETIME(ABaseCharacter, hp);
-	DOREPLIFETIME(ABaseCharacter, knock_back_count);
 	DOREPLIFETIME(ABaseCharacter, simulation_responsible_actor);
 }
 
@@ -333,7 +332,8 @@ void ABaseCharacter::getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_s
 /// </summary>
 /// <param name="__output_current_velocity">출력 current_velocity</param>
 void ABaseCharacter::getCurrentVelocity_Implementation(FVector& __output_current_velocity) {
-	__output_current_velocity = UKismetMathLibrary::Add_VectorVector(GetVelocity(), current_velocty);
+	//__output_current_velocity = UKismetMathLibrary::Add_VectorVector(GetVelocity(), current_velocty);
+	__output_current_velocity = GetVelocity();
 }
 
 /// <summary>
@@ -471,21 +471,16 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 		knock_back_count += d_time;
 		float ease_alpha = knock_back_count / knock_back_count_end;
 		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
-
-		UKismetSystemLibrary::PrintString(this, GetMovementComponent()->GetLastInputVector().ToString());
 		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
-		//GetCharacterMovement()->addinput
 		GetCharacterMovement()->MaxWalkSpeed = knock_back_velocity.Size()*ease_res*4;
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f %f"), ease_res,ease_alpha));
 		GetCharacterMovement()->MaxAcceleration = 1000000.f;
-		AddMovementInput(knock_back_velocity.GetSafeNormal(), 1.0f);
-		//GetCharacterMovement()->K2_GetInputVector
-		//current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X*ease_res*4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+		AddMovementInput(knock_back_velocity, 1.0f);
 		if (ease_alpha >= 1.0f) {
 			knock_back_count_end = 0.0f;
-			current_velocty = FVector::ZeroVector;
-			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
-			//GetCharacterMovement()->bForceMaxAccel = false;
+			if(is_on_sprint)
+				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+			else
+				GetCharacterMovement()->MaxWalkSpeed = walk_speed;
 			GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		}
 	}
