@@ -1,6 +1,37 @@
 # Unreal-project
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
+# 주요 파일
+## c++ 파일
+- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일 ( WIP )
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
+- 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/CustomData.h
+- c++ 인터페이스 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
+
+## 블루프린트 파일
+-  블루프린트 베이스 캐릭터
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_BaseCharacter.uasset
+- 블루프린트 베이스 캐릭터를 상속받는 플레이어 캐릭터
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter.uasset
+- 블루프린트 베이스 캐릭터를 상속받는 적(AI) 캐릭터
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp.uasset
+-  플레이어 콘트롤러 블루프린트
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/Controller_PlayerCharacter_cpp.uasset
+- 모든 액션의 데미지 데이터를 정의한 테이블
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/DamageDataTable.uasset
+- 모든 휴머노이드 형식의 액터들이 상속받아 override만으로 쉽게 애니메이션을 구현할 수 있는 베이스 애니메이션 블루프린트
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/Player_Anim_BP.uasset
+
+- 그외 접두사에 따라
+  - AN : 애님 노티파이
+  - NS : 애님 노티파이 스테이트
+  - EQS : 환경 쿼리 시스템
+  - Task : 비헤이비어 트리의 태스크
+
 # 조작법
 - 이동 : WASD
 - 공격 : 좌클릭
@@ -16,8 +47,8 @@
 - 락온 타게팅 왼쪽에 위치한 타겟으로 전환 : 마우스 휠 아래로 회전
 
 
-# 특징
-# 네트워크 래그돌 동기화 시스템
+# 핵심 기능
+## 네트워크 래그돌 동기화 시스템
 ![마영전 래그돌 위치 동기화 안됨](https://user-images.githubusercontent.com/12960463/117229348-d2fa3c00-ae55-11eb-8c94-daab355dfa7a.gif)
 
 마비노기 영웅전에서는 래그돌 위치 동기화가 정확히 이루어지지 않아 위와같이 래그돌 상태에서 부활을 통해 캐릭터가 살아날 시 서버의 위치로 클라이언트의 위치가 조정되는 움직임을 보입니다.
@@ -62,18 +93,17 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
 
-# 그 외 특징
-# 발 IK
+## 발 IK
 ![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
 PowerIK 플러그인 사용
 
-# 디렉셔널 로코모션 & 기울이기 & 블렌딩
+## 디렉셔널 로코모션 & 기울이기 & 블렌딩
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
-엉덩이의 방향이 매우 자유분방한 모션을 자연스럽게 블렌딩하는 것은 꽤 힘든 작업이었음
-기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
--180도 와 180도 에서의 블렌딩을 자연스럽게 하기 위해 백워드 디렉션을 함께 구해서 사용
--90~-180, 90~180도 구간에서는 백워드 디렉션을 구해 -90~90도로 변환한 뒤 린 계산
+- 엉덩이의 방향이 매우 자유분방한 모션을 자연스럽게 블렌딩하는 것은 꽤 힘든 작업이었음
+- 기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
+- 180도 와 180도 에서의 블렌딩을 자연스럽게 하기 위해 백워드 디렉션을 함께 구해서 사용
+- 90 ~ -180, 90 ~ 180도 구간에서는 백워드 디렉션을 구해 -90 ~ 90도로 변환한 뒤 린 계산
 
 ![디렉셔널 로코모션 블렌딩2](https://user-images.githubusercontent.com/12960463/117235046-0b534780-ae61-11eb-93de-7e2f9104c2bb.gif)
 
@@ -84,14 +114,14 @@ PowerIK 플러그인 사용
 
 착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
 
-# 전방향 피격모션 & 발동작 블렌딩
+## 전방향 피격모션 & 발동작 블렌딩
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
 전,후,좌,우의 4방향 피격모션에 로코모션을 블렌딩해서 넉백시 밀려나면서도 균형을 잡으려는 매우 자연스러운 모션 구현
 
 
-# 락온타게팅 시스템
+## 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
 
@@ -107,7 +137,7 @@ PowerIK 플러그인 사용
 또, 몬스터가 사망하면 타게팅을 해제
 
 
-# 카메라 위치 조정
+## 카메라 위치 조정
 
 ![카메라 위치 조정](https://user-images.githubusercontent.com/12960463/117242789-e8c92a80-ae70-11eb-9c74-ab0ccb0a2107.gif)
 
