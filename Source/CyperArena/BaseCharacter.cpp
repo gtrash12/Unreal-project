@@ -434,36 +434,59 @@ void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMo
 /// </summary>
 /// <param name="velocity">넉백 벨로시티</param>
 void ABaseCharacter::knock_BackProcess_Implementation() {
-	if (knock_back_count_end > 0 && knock_back_count < knock_back_count_end) {
-		if(HasAuthority()){
-			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
-			float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::SinusoidalOut);
-			knock_back_count += d_time;
-			float ease_alpha = knock_back_count / knock_back_count_end;
-			float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::SinusoidalOut);
-			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
-			FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
-			GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
-			current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X*ease_res*4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
-			if (ease_res <= 0.0) {
-				knock_back_count_end = 0.0f;
-				current_velocty = FVector::ZeroVector;
-			}
-		}
-		else {
-			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
-			float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::SinusoidalOut);
-			knock_back_count += d_time;
-			float ease_alpha = knock_back_count / knock_back_count_end;
-			float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f, ease_alpha, EEasingFunc::SinusoidalOut);
-			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
-			FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
-			GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
-			current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X * ease_res * 4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
-			if (ease_res <= 0.0) {
-				knock_back_count_end = 0.0f;
-				current_velocty = FVector::ZeroVector;
-			}
+	//if (knock_back_count_end > 0 && knock_back_count < knock_back_count_end) {
+	//	if(HasAuthority()){
+	//		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
+	//		float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::EaseOut);
+	//		knock_back_count += d_time;
+	//		float ease_alpha = knock_back_count / knock_back_count_end;
+	//		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
+	//		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
+	//		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
+	//		GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
+	//		current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X*ease_res*4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+	//		if (ease_res <= 0.0) {
+	//			knock_back_count_end = 0.0f;
+	//			current_velocty = FVector::ZeroVector;
+	//		}
+	//	}
+	//	else {
+	//		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f : %f"), knock_back_count, knock_back_count_end));
+	//		float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::EaseOut);
+	//		knock_back_count += d_time;
+	//		float ease_alpha = knock_back_count / knock_back_count_end;
+	//		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f, ease_alpha, EEasingFunc::EaseOut);
+	//		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f "), prev));
+	//		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
+	//		GetMovementComponent()->MoveUpdatedComponent(knock_back_delta, GetActorRotation(), true);
+	//		current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X * ease_res * 4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+	//		if (ease_res <= 0.0) {
+	//			knock_back_count_end = 0.0f;
+	//			current_velocty = FVector::ZeroVector;
+	//		}
+	//	}
+	//}
+	if (knock_back_count_end > 0) {
+		float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::EaseOut);
+		knock_back_count += d_time;
+		float ease_alpha = knock_back_count / knock_back_count_end;
+		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f,ease_alpha,EEasingFunc::EaseOut);
+
+		UKismetSystemLibrary::PrintString(this, GetMovementComponent()->GetLastInputVector().ToString());
+		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_velocity, prev - ease_res);
+		//GetCharacterMovement()->addinput
+		GetCharacterMovement()->MaxWalkSpeed = knock_back_velocity.Size()*ease_res*4;
+		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f %f"), ease_res,ease_alpha));
+		GetCharacterMovement()->MaxAcceleration = 1000000.f;
+		AddMovementInput(knock_back_velocity.GetSafeNormal(), 1.0f);
+		//GetCharacterMovement()->K2_GetInputVector
+		//current_velocty = UKismetMathLibrary::MakeVector(knock_back_velocity.X*ease_res*4, knock_back_velocity.Y * ease_res * 4, GetVelocity().Z);
+		if (ease_alpha >= 1.0f) {
+			knock_back_count_end = 0.0f;
+			current_velocty = FVector::ZeroVector;
+			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+			//GetCharacterMovement()->bForceMaxAccel = false;
+			GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		}
 	}
 }
@@ -480,6 +503,7 @@ void ABaseCharacter::knock_Back_Implementation(FVector velocity) {
 	if (velocity.Z > 0) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(0.0f,0.0f,velocity.Z),false,false);
 	}
+	
 }
 
 /// <summary>
