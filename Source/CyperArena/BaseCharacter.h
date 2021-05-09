@@ -86,11 +86,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "IS On Action", Category = "Base-Combat"))
 		bool is_on_action;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
-		float knock_back_count;
+		float knock_back_speed;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
-		float knock_back_count_end;
-	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
-		FVector knock_back_velocity;
+		FVector knock_back_unit_vector;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		FVector current_velocty;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
