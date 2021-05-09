@@ -71,5 +71,5 @@ public:
 		void applyKnock_Back(FVector __velocity);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void getWeapon(/*out*/ USkeletalMeshComponent*& __weapon);
+		void getWeapon(/*out*/ UMeshComponent*& __weapon);
 };

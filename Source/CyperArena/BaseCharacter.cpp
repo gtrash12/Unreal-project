@@ -65,14 +65,13 @@ void ABaseCharacter::PostInitializeComponents() {
 	//Make sure the mesh and animbp update after the CharacterBP
 	GetMesh()->AddTickPrerequisiteActor(this);
 	main_anim_instance = GetMesh()->GetAnimInstance();
-	getNetworkOwnerType(network_owner_type);
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	getNetworkOwnerType(network_owner_type);
 }
 
 // Called every frame
@@ -84,7 +83,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	//바라보기에 필요한 변수 갱신
 	/*IInterface_BaseCharacter * basecharacter_interface = Cast<IInterface_BaseCharacter>(this);
 	if (basecharacter_interface) {
-		basecharacter_interface->look();
+		basecharacter_interface->setLookRotation();
 	}*/
 	setLookRotation();
 	
@@ -191,30 +190,35 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 /// <param name="hit_actor">피격 액터</param>
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	bool flag = false;
-	/*if (HasAuthority()) {
+	if (HasAuthority()) {
+		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asd fasd asd %i"), network_owner_type));
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
-			if (__hit_actor->GetOwner() == GetOwner()) {
+			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asd fasd asd %i"), flag));
+			if (__hit_actor->GetOwner() != GetOwner()) {
 				flag = true;
 			}
 		}
 	}
 	else {
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
-			if (__hit_actor->GetOwner() == GetOwner()) {
+			if (__hit_actor->GetOwner() != GetOwner()) {
 				flag = true;
 			}
 		}
 	}
-
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%i"), flag));
 	if (flag) {
+		for (auto j : hit_actors_list) {
+			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%s"), *j->GetName()));
+		}
 		if (hit_actors_list.Contains(__hit_actor) == false) {
-			IInterface_PlayerController* controller_interface = Cast<IInterface_PlayerController>(__hit_actor);
-			if (controller_interface) {
-				controller_interface->CtoS_applyDamage(__hit_actor, damage_data, this);
+			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asdfifg")));
+			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
-	}*/
+	}
 }
 
 /// <summary>
@@ -773,7 +777,7 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 	if (HasAuthority()) {
 		if (character_state == ECharacterState::Airbone)
 			ragdoll_SetOnServer();
-		UKismetSystemLibrary::PrintString(this,TEXT("아아"));
+		//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
 	}
 }
 
