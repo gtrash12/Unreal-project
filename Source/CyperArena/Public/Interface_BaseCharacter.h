@@ -66,11 +66,10 @@ public:
 		void setIsOnAction(bool __target_is_on_action);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void applyKnock_Back(FVector __velocity);
-
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void rotateActorWithInTime(FRotator __target_rotation, float __time);
-	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getBasePower(float& __output_base_power);
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(/*out*/ UMeshComponent*& __weapon);

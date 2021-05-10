@@ -188,7 +188,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface"))
 		void setCharacterState(ECharacterState target_character_state);
-		virtual void setCharacterState_Implementation(ECharacterState target_character_state);
+		virtual void setCharacterState_Implementation(ECharacterState target_character_state)override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getCurrentVelocity(FVector& __output_current_velocity);
@@ -208,11 +208,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface"))
 		void applyKnock_Back(FVector velocity);
-		virtual void applyKnock_Back_Implementation(FVector velocity);
+		virtual void applyKnock_Back_Implementation(FVector velocity)override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void rotateActorWithInTime(FRotator __target_rotation, float __time);
-		virtual void rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time);
+		virtual void rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time)override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getBasePower(float& __output_base_power);
+		virtual void getBasePower_Implementation(float& __output_base_power)override;
 
 // --> 클래스 멤버 함수선언
 

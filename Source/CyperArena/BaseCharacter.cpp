@@ -163,8 +163,12 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// <param name="damage_causor">데미지를 입힌 액터</param>
 void ABaseCharacter::applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor)
 {
-	hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * 10.0f;
-	applyDamage_Multicast(__target_damage_data, __damage_causor);
+	float causor_power;
+	if (__damage_causor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
+		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
+		applyDamage_Multicast(__target_damage_data, __damage_causor);
+	}
 }
 
 /// <summary>
@@ -359,6 +363,26 @@ void ABaseCharacter::setNextAttackMontage_Implementation(UAnimMontage* __next_at
 /// <param name="__target_is_on_action">액션 수행 가능 여부</param>
 void ABaseCharacter::setIsOnAction_Implementation(bool __target_is_on_action) {
 	is_on_action = __target_is_on_action;
+}
+
+/// <summary>
+/// 액터를 일정 시간동안 목표 로테이션으로 회전시킴
+/// </summary>
+/// <param name="__target_rotation">목표 로테이션</param>
+/// <param name="__time">회전에 걸리는 시간</param>
+void ABaseCharacter::rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time) {
+	rotate_target_rotation = __target_rotation;
+	rotate_original_rotation = GetActorRotation();
+	rotate_interp_time_end = __time;
+	rotate_interp_time = 0;
+}
+
+/// <summary>
+/// 베이스 파워 반환
+/// </summary>
+/// <param name="__output_base_power"></param>
+void ABaseCharacter::getBasePower_Implementation(float& __output_base_power) {
+	__output_base_power = base_power;
 }
 
 // <-- 인터페이스 함수 정의 끝
@@ -803,23 +827,24 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 	}
 }
 
+/// <summary>
+/// 무기 컴포넌트에 동적 바인딩 될 함수
+/// </summary>
+/// <param name="OverlappedComp"></param>
+/// <param name="OtherActor"></param>
+/// <param name="OtherComp"></param>
+/// <param name="OtherBodyIndex"></param>
+/// <param name="bFromSweep"></param>
+/// <param name="SweepResult"></param>
 void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	attackEvent(OtherActor);
 }
 
 
+/// <summary>
+/// 클라이언트의 로테이션을 서버로 전송해서 동기화
+/// </summary>
+/// <param name="__target_rotation"></param>
 void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation) {
 	SetActorRotation(__target_rotation.Quaternion(), ETeleportType::TeleportPhysics);
 }
-
-
-void ABaseCharacter::rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time) {
-	rotate_target_rotation = __target_rotation;
-	rotate_original_rotation = GetActorRotation();
-	rotate_interp_time_end = __time;
-	rotate_interp_time = 0;
-}
-//void ABaseCharacter::rotateActorTimeline(FRotator target_rotation, float time)
-//{
-//
-//}
