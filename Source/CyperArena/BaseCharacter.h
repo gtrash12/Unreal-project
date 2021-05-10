@@ -269,7 +269,7 @@ public:
 	UFUNCTION()
 		virtual void onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
 		void applyDamage_Multicast(FdamageData target_damage_data, AActor* damage_causor);
 		virtual void applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor);
 
@@ -277,7 +277,7 @@ public:
 		void applyDamage_Multicast_Exec(FdamageData target_damage_data, AActor* damage_causor);
 		virtual void applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
 		void animation_Sound_Multicast(UAnimMontage* anim, USoundBase* sound);
 		virtual void animation_Sound_Multicast_Implementation(UAnimMontage* anim, USoundBase* sound);
 
