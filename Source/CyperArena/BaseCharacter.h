@@ -269,6 +269,10 @@ public:
 		void applyDamage_Multicast(FdamageData target_damage_data, AActor* damage_causor);
 		virtual void applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
+		void applyDamage_Multicast_Exec(FdamageData target_damage_data, AActor* damage_causor);
+		virtual void applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor);
+
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 		void animation_Sound_Multicast(UAnimMontage* anim, USoundBase* sound);
 		virtual void animation_Sound_Multicast_Implementation(UAnimMontage* anim, USoundBase* sound);

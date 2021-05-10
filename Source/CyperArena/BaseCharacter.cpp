@@ -375,6 +375,16 @@ void ABaseCharacter::setIsOnAction_Implementation(bool __target_is_on_action) {
 /// <param name="damage_causor">데미지를 입힌 액터</param>
 void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor)
 {
+	applyDamage_Multicast_Exec(target_damage_data, damage_causor);
+}
+
+/// <summary>
+/// 어플라이 데미지 멀티캐스트의 실제 구현
+/// 블루프린트에서 오버라이딩 할 수 있게 하기 위함
+/// </summary>
+/// <param name="target_damage_data"></param>
+/// <param name="damage_causor"></param>
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor) {
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
@@ -437,6 +447,10 @@ void ABaseCharacter::rotateProcess_Implementation() {
 		SetActorRotation(ease_res, ETeleportType::None);
 		if (ease_alpha >= 1.0f) {
 			rotate_interp_time_end = 0.0f;
+			SetActorRotation(rotate_target_rotation, ETeleportType::TeleportPhysics);
+		}
+		else {
+			SetActorRotation(ease_res, ETeleportType::TeleportPhysics);
 		}
 	}
 }
