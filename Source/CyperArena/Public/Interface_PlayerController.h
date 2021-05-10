@@ -32,4 +32,5 @@ public:
 		void CtoS_applyDamage(const AActor* damaged_actor, FdamageData damage_data, AActor* damage_causor);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void findDamageData(FName __damage_id, FdamageData& __output_damage_data);
+
 };

@@ -27,7 +27,6 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshC
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		weapon->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 		weapon->OnComponentBeginOverlap.AddDynamic(base_character, &ABaseCharacter::onWeaponBeginOverlap);
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%i"), weapon->OnComponentBeginOverlap.IsBound()));
 	}
 }
 
@@ -43,6 +42,5 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyEnd(USkeletalMeshComponent* MeshCom
 		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon);
 		weapon->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 		weapon->OnComponentBeginOverlap.RemoveDynamic(base_character, &ABaseCharacter::onWeaponBeginOverlap);
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%i"), weapon->OnComponentBeginOverlap.IsBound()));
 	}
 }

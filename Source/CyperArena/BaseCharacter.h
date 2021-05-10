@@ -30,7 +30,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
 		FRotator rotate_target_rotation;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
-		float rotate_interp_speed;
+		float rotate_interp_time_end;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
+		float rotate_interp_time;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Look"))
+		FRotator rotate_original_rotation;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
 		ECharacterState character_state;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
@@ -202,6 +206,14 @@ public:
 		void setIsOnAction(bool __target_is_on_action);
 		virtual void setIsOnAction_Implementation(bool __target_is_on_action) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Interface"))
+		void applyKnock_Back(FVector velocity);
+		virtual void applyKnock_Back_Implementation(FVector velocity);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void rotateActorWithInTime(FRotator __target_rotation, float __time);
+		virtual void rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time);
+
 // --> 클래스 멤버 함수선언
 
 
@@ -265,13 +277,9 @@ public:
 		void selectHitAnimation(FVector velocity, /*out*/UAnimMontage*& hit_anim);
 		virtual void selectHitAnimation_Implementation(FVector velocity, UAnimMontage*& hit_anim);
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Tick"))
 		void knock_BackProcess();
 		virtual void knock_BackProcess_Implementation();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
-		void knock_Back(FVector velocity);
-		virtual void knock_Back_Implementation(FVector velocity);
 
 	UFUNCTION(BlueprintCallable, Server, UnReliable)
 		void CtoS_setRotation(FRotator __target_rotation);
@@ -280,4 +288,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
 		void onWeaponBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 		virtual void onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Tick"))
+		void rotateProcess();
+		virtual void rotateProcess_Implementation();
+
 };

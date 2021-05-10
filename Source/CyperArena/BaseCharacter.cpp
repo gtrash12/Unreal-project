@@ -71,7 +71,6 @@ void ABaseCharacter::PostInitializeComponents() {
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	getNetworkOwnerType(network_owner_type);
 }
 
 // Called every frame
@@ -122,6 +121,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	*/
 
 	knock_BackProcess();
+	rotateProcess();
 }
 
 // Called to bind functionality to input
@@ -190,10 +190,9 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 /// <param name="hit_actor">피격 액터</param>
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	bool flag = false;
+	getNetworkOwnerType(network_owner_type);
 	if (HasAuthority()) {
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asd fasd asd %i"), network_owner_type));
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
-			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asd fasd asd %i"), flag));
 			if (__hit_actor->GetOwner() != GetOwner()) {
 				flag = true;
 			}
@@ -206,13 +205,8 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 			}
 		}
 	}
-	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%i"), flag));
 	if (flag) {
-		for (auto j : hit_actors_list) {
-			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%s"), *j->GetName()));
-		}
 		if (hit_actors_list.Contains(__hit_actor) == false) {
-			UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("asdfifg")));
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
 			}
@@ -300,6 +294,7 @@ void ABaseCharacter::getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ET
 /// <param name="__delta_time">델타 타임</param>
 /// <param name="__speed">보간 속도</param>
 void ABaseCharacter::rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) {
+	rotate_interp_time_end = 0;
 	FRotator interp_rotator = UKismetMathLibrary::RInterpTo(GetActorRotation(),__target_rotation,__delta_time,__speed);
 	//GetMovementComponent().repli 
 	if (HasAuthority()) {
@@ -394,7 +389,8 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 	animation_Sound_Multicast(hit_anim, sq_hit);
 
 	if (target_damage_data.target_control == ETargetControlType::None) {
-		knock_Back(rotated_vector);
+		rotate_interp_time = 0;
+		applyKnock_Back(rotated_vector);
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
@@ -431,6 +427,18 @@ void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMo
 		hit_anim = hit_l_anim;
 	else
 		hit_anim = hit_r_anim;
+}
+
+void ABaseCharacter::rotateProcess_Implementation() {
+	if (rotate_interp_time_end > 0) {
+		rotate_interp_time += d_time;
+		float ease_alpha = rotate_interp_time / rotate_interp_time_end;
+		FRotator ease_res = UKismetMathLibrary::REase(rotate_original_rotation, rotate_target_rotation, ease_alpha, true,EEasingFunc::EaseOut);
+		SetActorRotation(ease_res, ETeleportType::None);
+		if (ease_alpha >= 1.0f) {
+			rotate_interp_time_end = 0.0f;
+		}
+	}
 }
 
 /// <summary>
@@ -478,7 +486,7 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 /// <summary>
 /// 넉백프로세스에서 사용되는 변수 초기화
 /// </summary>
-void ABaseCharacter::knock_Back_Implementation(FVector velocity) {
+void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
 	float vel_length = velocity.Size();
 	knock_back_unit_vector = UKismetMathLibrary::MakeVector(velocity.X, velocity.Y, 0);
 	knock_back_speed = knock_back_unit_vector.Size();
@@ -782,9 +790,7 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 }
 
 void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	//UKismetSystemLibrary::PrintString(this, TEXT("크큭"));
 	attackEvent(OtherActor);
-	
 }
 
 
@@ -792,6 +798,13 @@ void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation)
 	SetActorRotation(__target_rotation.Quaternion(), ETeleportType::TeleportPhysics);
 }
 
+
+void ABaseCharacter::rotateActorWithInTime_Implementation(FRotator __target_rotation, float __time) {
+	rotate_target_rotation = __target_rotation;
+	rotate_original_rotation = GetActorRotation();
+	rotate_interp_time_end = __time;
+	rotate_interp_time = 0;
+}
 //void ABaseCharacter::rotateActorTimeline(FRotator target_rotation, float time)
 //{
 //
