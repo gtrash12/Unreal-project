@@ -276,4 +276,8 @@ public:
 	UFUNCTION(BlueprintCallable, Server, UnReliable)
 		void CtoS_setRotation(FRotator __target_rotation);
 		virtual void CtoS_setRotation_Implementation(FRotator __target_rotation);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
+		void onWeaponBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		virtual void onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

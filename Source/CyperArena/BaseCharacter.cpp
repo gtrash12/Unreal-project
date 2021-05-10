@@ -781,6 +781,11 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 	}
 }
 
+void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	//UKismetSystemLibrary::PrintString(this, TEXT("크큭"));
+	attackEvent(OtherActor);
+	
+}
 
 
 void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation) {

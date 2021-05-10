@@ -9,8 +9,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
-	Super::NotifyBegin(MeshComp,Animation,TotalDuration);
-	//UKismetSystemLibrary::PrintString(GetWorld(), TEXT("SDGASD"));
 	
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
@@ -30,7 +28,6 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp
 }
 
 void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
-	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime);
 	AActor* actor = MeshComp->GetOwner();
 	if(MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
@@ -59,7 +56,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 		halfsize = UKismetMathLibrary::Quat_UnrotateVector(trace_rotation.Quaternion(), prev_sock_start - prev_sock_end) / 2;
 		halfsize.Y += half_width;
 		halfsize.Z += half_height;
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_mid, cur_mid, halfsize, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::Persistent, hit_results, true, FLinearColor::Blue, FLinearColor::Green, 30.0f);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_mid, cur_mid, halfsize, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		IInterface_BaseCharacter::Execute_setPrevSockLoc(actor, cur_sock_start, cur_sock_end);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
