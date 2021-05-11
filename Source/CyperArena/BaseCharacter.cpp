@@ -102,10 +102,10 @@ void ABaseCharacter::Tick(float DeltaTime)
 		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			switch (network_owner_type)
 			{
-			case ENetworkOwnerType::OwnedAI:
+			//case ENetworkOwnerType::OwnedAI:
 			case ENetworkOwnerType::RemoteAI:
 				if (is_simulation_responsible) {
-					ragdoll_ServerOnwer_Implementation();
+					ragdoll_ClientOnwer_Implementation();
 				}
 				else {
 					ragdoll_SyncLocation_Implementation();
@@ -645,11 +645,6 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
-	UKismetSystemLibrary::PrintString(this, ragdoll_server_location.ToString());
-	if (ragdoll_physics_handle->IsValidLowLevel() == false) {
-		UKismetSystemLibrary::PrintString(this, TEXT("ASDF"));
-		return;
-	}
 	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
@@ -705,7 +700,7 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	if (main_anim_instance->IsValidLowLevel()) {
 		main_anim_instance->SavePoseSnapshot(TEXT("RagdollPose"));
 	}
-	UKismetSystemLibrary::PrintString(this, TEXT("일어날끄야"));
+	//UKismetSystemLibrary::PrintString(this, TEXT("일어날끄야"));
 	// 무브먼트 모드를 walking 으로 변경 후 엉덩이 방향에 따라 일어서는 애니메이션 몽타주 재생
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	if (is_ragdoll_face_up) {
@@ -780,6 +775,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		//UKismetSystemLibrary::PrintString(this, TEXT("ㅇ마ㅏ람ㄴ"));
 	}
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -871,8 +867,7 @@ void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
 void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
 	if (HasAuthority()) {
 		if (character_state == ECharacterState::Airbone) {
-			UKismetSystemLibrary::PrintString(this, TEXT("아아"));
-			ragdoll_SetOnServer();
+			setCharacterState(ECharacterState::Ragdoll);
 		}
 		//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
 	}

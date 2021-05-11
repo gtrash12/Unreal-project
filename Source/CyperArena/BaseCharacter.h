@@ -37,17 +37,17 @@ public:
 		FRotator rotate_original_rotation;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
 		ECharacterState character_state;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
 		float hp;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Max Hp", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Max Hp", Category = "Base-CharacterState"))
 		float max_hp;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Base Power", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Base Power", Category = "Base-CharacterState"))
 		float base_power;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))
 		bool is_on_sprint;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-CharacterState")
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float walk_speed;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-CharacterState")
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float sprint_speed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (DisplayName = "Is Simulation Owner", Category = "Base-Ragdoll"))
 		bool is_simulation_responsible;
