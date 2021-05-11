@@ -21,7 +21,7 @@ ABaseCharacter::ABaseCharacter()
 
 	ragdoll_physics_handle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 	ragdoll_physics_handle->CreationMethod = EComponentCreationMethod::Native;
-	//ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
+	ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
 	//ragdoll_physics_handle->bAutoActivate = false;
 
 	character_state = ECharacterState::Walk_and_Jump;
@@ -72,10 +72,6 @@ void ABaseCharacter::PostInitializeComponents() {
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	FTimerHandle timer_handle;
-	GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
-		getNetworkOwnerType(network_owner_type);
-		}), 1.0f, false);
 	
 }
 
@@ -101,29 +97,32 @@ void ABaseCharacter::Tick(float DeltaTime)
 	//래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
-
-		switch (network_owner_type)
-		{
-		case ENetworkOwnerType::OwnedAI:
-		case ENetworkOwnerType::RemoteAI:
-			if (is_simulation_responsible) {
-				ragdoll_ServerOnwer_Implementation();
-			}
-			else {
+		getNetworkOwnerType(network_owner_type);
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type,ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			switch (network_owner_type)
+			{
+			case ENetworkOwnerType::OwnedAI:
+			case ENetworkOwnerType::RemoteAI:
+				if (is_simulation_responsible) {
+					ragdoll_ServerOnwer_Implementation();
+				}
+				else {
+					ragdoll_SyncLocation_Implementation();
+				}
+				break;
+			case ENetworkOwnerType::OwnedPlayer:
+				if (UKismetSystemLibrary::IsStandalone(this))
+					ragdoll_ServerOnwer_Implementation();
+				else
+					ragdoll_ClientOnwer_Implementation();
+				break;
+			case ENetworkOwnerType::RemotePlayer:
 				ragdoll_SyncLocation_Implementation();
+				break;
+			default:
+				break;
 			}
-			break;
-		case ENetworkOwnerType::OwnedPlayer:
-			if( UKismetSystemLibrary::IsStandalone(this))
-				ragdoll_ServerOnwer_Implementation();
-			else
-				ragdoll_ClientOnwer_Implementation();
-			break;
-		case ENetworkOwnerType::RemotePlayer:
-			ragdoll_SyncLocation_Implementation();
-			break;
-		default:
-			break;
 		}
 	}
 	
@@ -424,6 +423,7 @@ void ABaseCharacter::getBasePower_Implementation(float& __output_base_power) {
 /// <param name="damage_causor">데미지를 입힌 액터</param>
 void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor)
 {
+	getNetworkOwnerType(network_owner_type);
 	applyDamage_Multicast_Exec(target_damage_data, damage_causor);
 }
 
@@ -577,15 +577,15 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 	float capsule_half_height = this->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height);
 	FHitResult trace_result(ForceInit);
-	FCollisionQueryParams collision_params;
-	GetWorld()->LineTraceSingleByChannel(trace_result, location, trace_end, ECollisionChannel::ECC_GameTraceChannel1, collision_params);
-
+	//FCollisionQueryParams collision_params;
+	GetWorld()->LineTraceSingleByChannel(trace_result, location, trace_end, ECC_GameTraceChannel1);
 	// 라인트레이스 결과에 따른 액터의 방향과 위치 설정
 	if (trace_result.IsValidBlockingHit()) {
 		is_ragdoll_on_the_ground = true;
 		// 엉덩이가 위를 향하고 있으면 액터의 방향을 180도 회전 ( 일어서는 애니메이션을 위함 )
-		FRotator sock_rotator = GetMesh()->GetSocketRotation("pelvis");
+		FRotator sock_rotator = GetMesh()->GetSocketRotation(TEXT("pelvis"));
 		is_ragdoll_face_up = sock_rotator.Roll < 0.0f;
+
 		sock_rotator.Roll = 0;
 		sock_rotator.Pitch = 0;
 		if (is_ragdoll_face_up) 
@@ -608,8 +608,13 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
-	stickToTheGround(ragdoll_server_location);
-	CtoS_targetLocation(this, ragdoll_server_location);
+	stickToTheGround(sock_location);
+	/*if(network_owner_type == ENetworkOwnerType::OwnedPlayer)
+		CtoS_targetLocation(this, ragdoll_server_location);*/
+	//if (GetWorld()->GetFirstPlayerController()->GetPawn()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+	//	IInterface_BaseCharacter::exectue(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
+	//}
+	Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 }
 
 
@@ -632,6 +637,7 @@ void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
 void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_actor, FVector target_location) {
 	target_actor->ragdoll_server_location = target_location;
 	target_actor->stickToTheGround(target_location);
+	//target_actor->ragdoll_server_location = target_location;
 }
 
 /// <summary>
@@ -639,6 +645,7 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
+	UKismetSystemLibrary::PrintString(this, ragdoll_server_location.ToString());
 	if (ragdoll_physics_handle->IsValidLowLevel() == false) {
 		UKismetSystemLibrary::PrintString(this, TEXT("ASDF"));
 		return;
@@ -762,15 +769,17 @@ void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
 /// </summary>
 void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
 	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
-		prev_ragdoll_server_location = ragdoll_server_location;
-		last_ragdoll_server_location = ragdoll_server_location;
+		ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+		prev_ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+		last_ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
 		replication_delay_count = 0.0f;
+		last_replication_delay = 0.2f;
 		is_ragdoll_on_the_ground = false;
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 
-		is_simulation_responsible = simulation_responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
 	}
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
