@@ -65,12 +65,18 @@ void ABaseCharacter::PostInitializeComponents() {
 	//Make sure the mesh and animbp update after the CharacterBP
 	GetMesh()->AddTickPrerequisiteActor(this);
 	main_anim_instance = GetMesh()->GetAnimInstance();
+	GetCharacterMovement()->bOrientRotationToMovement = 0;
 }
 
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	FTimerHandle timer_handle;
+	GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
+		getNetworkOwnerType(network_owner_type);
+		}), 1.0f, false);
+	
 }
 
 // Called every frame
@@ -326,7 +332,12 @@ void ABaseCharacter::getCharacterState_Implementation(/*out*/ ECharacterState& _
 /// </summary>
 /// <param name="__output_is_on_sprint">출력 스프린트 여부 변수</param>
 void ABaseCharacter::getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_sprint) {
-	__output_is_on_sprint = is_on_sprint;
+	if (knock_back_speed > 0) {
+		__output_is_on_sprint = false;
+	}
+	else {
+		__output_is_on_sprint = is_on_sprint;
+	}
 }
 
 /// <summary>
@@ -336,7 +347,19 @@ void ABaseCharacter::getIsOnSprint_Implementation(/*out*/ bool& __output_is_on_s
 /// <param name="__output_current_velocity">출력 current_velocity</param>
 void ABaseCharacter::getCurrentVelocity_Implementation(FVector& __output_current_velocity) {
 	//__output_current_velocity = UKismetMathLibrary::Add_VectorVector(GetVelocity(), current_velocty);
-	__output_current_velocity = GetVelocity();
+	//__output_current_velocity = GetVelocity();
+	//__output_current_velocity = GetCharacterMovement()->Velocity;
+	if (network_owner_type == ENetworkOwnerType::RemoteAI) {
+		if (current_velocty.Size() > 0) {
+			__output_current_velocity = current_velocty;
+		}
+		else {
+			__output_current_velocity = GetVelocity();
+		}
+	}
+	else {
+		__output_current_velocity = GetVelocity();
+	}
 }
 
 /// <summary>
@@ -502,11 +525,14 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 			GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		}
 	}*/
-	if (knock_back_speed > 0.1f) {
+	if (knock_back_speed > 0) {
 		//knock_back_unit_vector = UKismetMathLibrary::VInterpTo(knock_back_unit_vector, FVector::ZeroVector, d_time, 5);
 		knock_back_speed = UKismetMathLibrary::FInterpTo(knock_back_speed, 0, d_time, 5);
-		if (knock_back_speed <= 10) {
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("ASDF %f"),knock_back_speed));
+		if (knock_back_speed <= 5.0f) {
 			knock_back_unit_vector = FVector::ZeroVector;
+			if (network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = FVector::ZeroVector;
 			knock_back_speed = 0;
 			if (is_on_sprint)
 				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
@@ -517,7 +543,11 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 		else {
 			GetCharacterMovement()->MaxWalkSpeed = knock_back_speed * 4;
 			AddMovementInput(knock_back_unit_vector, 1.0f);
+			if(network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = knock_back_unit_vector * (GetCharacterMovement()->MaxWalkSpeed);
+			//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("ASDF %f"), GetCharacterMovement()->MaxWalkSpeed));
 		}
+		//UKismetSystemLibrary::PrintString(this, GetCharacterMovement()->Velocity.ToString());
 	}
 }
 
@@ -525,6 +555,7 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 /// 넉백프로세스에서 사용되는 변수 초기화
 /// </summary>
 void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
+	//UKismetSystemLibrary::PrintString(this, TEXT("아아"));
 	float vel_length = velocity.Size();
 	knock_back_unit_vector = UKismetMathLibrary::MakeVector(velocity.X, velocity.Y, 0);
 	knock_back_speed = knock_back_unit_vector.Size();
