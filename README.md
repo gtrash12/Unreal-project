@@ -3,7 +3,7 @@
 
 # 주요 파일
 ## c++ 파일
-- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일 ( WIP )
+- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
 - 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
@@ -11,8 +11,16 @@
 - c++ 인터페이스 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
-
+- anim notify state c++ 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_Collision_Bind.h 
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_2Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_2Sock_Trace.cpp
 ## 블루프린트 파일
+- c++ 베이스 캐릭터를 상속받는 플레이어 캐릭터
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter_cpp.uasset
+- c++ 베이스 캐릭터를 상속받는 적(AI) 캐릭터
+  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp_cpp.uasset
 -  블루프린트 베이스 캐릭터
   - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_BaseCharacter.uasset
 - 블루프린트 베이스 캐릭터를 상속받는 플레이어 캐릭터
