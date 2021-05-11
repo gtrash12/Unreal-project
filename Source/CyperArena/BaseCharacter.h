@@ -19,7 +19,7 @@ public:
 	// Sets default values for this character's properties
 	ABaseCharacter();
 
-	UPROPERTY(BlueprintReadOnly, NonTransactional, meta = (Category = "Base-Ragdoll", OverrideNativeName = "PhysicsHandle"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Ragdoll")
 		UPhysicsHandleComponent* ragdoll_physics_handle;
 	UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Look Yaw", Category = "Base-Look"))
 		float look_yaw;

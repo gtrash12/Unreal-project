@@ -21,8 +21,8 @@ ABaseCharacter::ABaseCharacter()
 
 	ragdoll_physics_handle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 	ragdoll_physics_handle->CreationMethod = EComponentCreationMethod::Native;
-	ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
-	ragdoll_physics_handle->bAutoActivate = false;
+	//ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
+	//ragdoll_physics_handle->bAutoActivate = false;
 
 	character_state = ECharacterState::Walk_and_Jump;
 
@@ -114,7 +114,10 @@ void ABaseCharacter::Tick(float DeltaTime)
 			}
 			break;
 		case ENetworkOwnerType::OwnedPlayer:
-			ragdoll_ClientOnwer_Implementation();
+			if( UKismetSystemLibrary::IsStandalone(this))
+				ragdoll_ServerOnwer_Implementation();
+			else
+				ragdoll_ClientOnwer_Implementation();
 			break;
 		case ENetworkOwnerType::RemotePlayer:
 			ragdoll_SyncLocation_Implementation();
@@ -575,13 +578,11 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height);
 	FHitResult trace_result(ForceInit);
 	FCollisionQueryParams collision_params;
-	GetWorld()->LineTraceSingleByChannel(trace_result, location, trace_end, ECC_Visibility, collision_params);
+	GetWorld()->LineTraceSingleByChannel(trace_result, location, trace_end, ECollisionChannel::ECC_GameTraceChannel1, collision_params);
 
 	// 라인트레이스 결과에 따른 액터의 방향과 위치 설정
 	if (trace_result.IsValidBlockingHit()) {
-		if (is_ragdoll_on_the_ground == false) {
-			is_ragdoll_on_the_ground = true;
-		}
+		is_ragdoll_on_the_ground = true;
 		// 엉덩이가 위를 향하고 있으면 액터의 방향을 180도 회전 ( 일어서는 애니메이션을 위함 )
 		FRotator sock_rotator = GetMesh()->GetSocketRotation("pelvis");
 		is_ragdoll_face_up = sock_rotator.Roll < 0.0f;
@@ -589,8 +590,11 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 		sock_rotator.Pitch = 0;
 		if (is_ragdoll_face_up) 
 			sock_rotator.Yaw -= 180.0f;
+		
 		FVector landed_location = UKismetMathLibrary::MakeVector(location.X, location.Y, trace_result.Location.Z + capsule_half_height);
-		SetActorLocationAndRotation(landed_location,sock_rotator);
+		SetActorLocation(landed_location);
+		SetActorRotation(sock_rotator);
+		//UKismetSystemLibrary::PrintString(this, sock_rotator.ToString());
 	}
 	else {
 		is_ragdoll_on_the_ground = false;
@@ -635,7 +639,11 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
-
+	if (ragdoll_physics_handle->IsValidLowLevel() == false) {
+		UKismetSystemLibrary::PrintString(this, TEXT("ASDF"));
+		return;
+	}
+	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
 		// 위치 갱신 안되었을 때
@@ -648,7 +656,9 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 		replication_delay_count = tmp + d_time;
 		prev_ragdoll_server_location = last_ragdoll_server_location;
 	}
+	
 	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
+	//if(ragdoll_physics_handle->IsActive())
 	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 	float ease_alpha = UKismetMathLibrary::Min(1.0f, replication_delay_count / last_replication_delay);
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
@@ -670,7 +680,7 @@ void ABaseCharacter::airboneStart_Implementation() {
 	FVector vel = GetVelocity();
 	FVector forward = GetActorForwardVector();
 	float speed_rate = vel.Size()/2000;
-	if (FVector::DotProduct(vel, forward) >= 0) {
+	if (FVector::DotProduct(vel, forward) < 0) {
 		PlayAnimMontage(airbone_b_anim, speed_rate);
 	}
 	else {
