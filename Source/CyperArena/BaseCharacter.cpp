@@ -97,34 +97,33 @@ void ABaseCharacter::Tick(float DeltaTime)
 		UMeshComponent* mesh = GetMesh();
 		mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
 	}
-	/*
+	
 	//래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
 
 		switch (network_owner_type)
 		{
-		case ENetworkOwnerType::ServerOwned:
+		case ENetworkOwnerType::OwnedAI:
+		case ENetworkOwnerType::RemoteAI:
 			if (is_simulation_responsible) {
 				ragdoll_ServerOnwer_Implementation();
 			}
+			else {
+				ragdoll_SyncLocation_Implementation();
+			}
 			break;
-		case ENetworkOwnerType::ListenServerNotOwned:
-			ragdoll_SyncLocation_Implementation();
-			break;
-		case ENetworkOwnerType::DedicatedServer:
-			break;
-		case ENetworkOwnerType::ClientOwned:
+		case ENetworkOwnerType::OwnedPlayer:
 			ragdoll_ClientOnwer_Implementation();
 			break;
-		case ENetworkOwnerType::ClientNotOwned:
+		case ENetworkOwnerType::RemotePlayer:
 			ragdoll_SyncLocation_Implementation();
 			break;
 		default:
 			break;
 		}
 	}
-	*/
+	
 
 	knock_BackProcess();
 	rotateProcess();
@@ -677,7 +676,7 @@ void ABaseCharacter::airboneStart_Implementation() {
 	else {
 		PlayAnimMontage(airbone_b_anim, -speed_rate);
 	}
-	
+	character_state = ECharacterState::Airbone;
 }
 
 /// <summary>
@@ -689,7 +688,7 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	if (main_anim_instance->IsValidLowLevel()) {
 		main_anim_instance->SavePoseSnapshot(TEXT("RagdollPose"));
 	}
-
+	UKismetSystemLibrary::PrintString(this, TEXT("일어날끄야"));
 	// 무브먼트 모드를 walking 으로 변경 후 엉덩이 방향에 따라 일어서는 애니메이션 몽타주 재생
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	if (is_ragdoll_face_up) {
@@ -852,8 +851,10 @@ void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
 /// <param name="Hit"></param>
 void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
 	if (HasAuthority()) {
-		if (character_state == ECharacterState::Airbone)
+		if (character_state == ECharacterState::Airbone) {
+			UKismetSystemLibrary::PrintString(this, TEXT("아아"));
 			ragdoll_SetOnServer();
+		}
 		//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
 	}
 }
