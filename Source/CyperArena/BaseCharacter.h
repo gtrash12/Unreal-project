@@ -37,10 +37,14 @@ public:
 		FRotator rotate_original_rotation;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Character State", Category = "Base-CharacterState"))
 		ECharacterState character_state;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, meta = (DisplayName = "Hp", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, Category = "Base-CharacterState")
 		float hp;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Max Hp", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float max_hp;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, Category = "Base-CharacterState")
+		float stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float max_stamina;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Base Power", Category = "Base-CharacterState"))
 		float base_power;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))

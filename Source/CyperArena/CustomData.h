@@ -22,7 +22,8 @@ enum class ECharacterState : uint8
 {
 	Walk_and_Jump UMETA(DisplayName = "Walk_and_Jump"),
 	Airbone UMETA(DisplayName = "Airbone"),
-	Ragdoll UMETA(DisplayName = "Ragdoll")
+	Ragdoll UMETA(DisplayName = "Ragdoll"),
+	Death UMETA(DisplayName = "Death")
 };
 
 UENUM(BlueprintType)

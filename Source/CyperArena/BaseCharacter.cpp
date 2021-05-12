@@ -72,7 +72,8 @@ void ABaseCharacter::PostInitializeComponents() {
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	max_hp = hp;
+	stamina = max_stamina;
 }
 
 // Called every frame
@@ -745,6 +746,10 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 			is_on_action = false;
 			ragdoll_SetOnServer();
 			break;
+		case ECharacterState::Death:
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 		default:
 			break;
 		}
