@@ -562,6 +562,7 @@ void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
 	knock_back_unit_vector = UKismetMathLibrary::MakeVector(velocity.X, velocity.Y, 0);
 	knock_back_speed = knock_back_unit_vector.Size();
 	knock_back_unit_vector = knock_back_unit_vector.GetSafeNormal();
+	rotate_interp_time_end = 0;
 	is_on_action = true;
 	if (velocity.Z > 0) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(0.0f,0.0f,velocity.Z),false,false);
