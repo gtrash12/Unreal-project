@@ -66,6 +66,15 @@ enum class EDamageElementalType : uint8
 	Ice UMETA(DisplayName = "Ice")
 };
 
+UENUM(BlueprintType)
+enum class EAttackType : uint8
+{
+	Slash UMETA(DisplayName = "Slash"),
+	Sting UMETA(DisplayName = "Sting"),
+	Bash UMETA(DisplayName = "Bash"),
+	Magic UMETA(DisplayName = "Magic")
+};
+
 USTRUCT(Atomic, BlueprintType)
 struct FdamageData : public FTableRowBase
 {
@@ -87,6 +96,8 @@ public:
 		ETargetControlType target_control;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EBuffAndDebuffType buff_and_debuff;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EAttackType attack_type;
 
 };
 

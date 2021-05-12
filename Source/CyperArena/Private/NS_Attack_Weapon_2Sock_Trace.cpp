@@ -50,7 +50,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 		cur_mid = (cur_sock_start + cur_sock_end) * 0.5f;
 		
 		if (cur_mid == prev_mid)
-			trace_rotation = actor->GetActorRotation();
+			return;
 		else
 			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_mid, cur_mid);
 		halfsize = UKismetMathLibrary::Quat_UnrotateVector(trace_rotation.Quaternion(), prev_sock_start - prev_sock_end) / 2;

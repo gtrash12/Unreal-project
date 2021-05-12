@@ -31,7 +31,6 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		FdamageData damage_data;
 		FVector cur_sock_loc;
 		FRotator trace_rotation;
 		TArray<FHitResult> hit_results;
@@ -39,7 +38,7 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 		cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
 
 		if (cur_sock_loc == prev_sock_loc)
-			trace_rotation = actor->GetActorRotation();
+			return;
 		else
 			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
 		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
@@ -48,5 +47,6 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor());
 			}
 		}
+		prev_sock_loc = cur_sock_loc;
 	}
 }
