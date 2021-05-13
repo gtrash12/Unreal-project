@@ -16,6 +16,10 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_2Sock_Trace.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_2Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_1Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
 ## 블루프린트 파일
 - c++ 베이스 캐릭터를 상속받는 플레이어 캐릭터
   - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter_cpp.uasset
@@ -91,6 +95,10 @@ spacebar를 누르면 래그돌 상태에서 일어서며 래그돌이 해제되
 
 위는 플레이어 캐릭터의 경우이고
 AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가장 가까이 있는 플레이어를 찾아 해당 플레이어를 소유한 클라이언트에서 래그돌 연산을 수행하게됩니다.
+
+![몬스터 다운,기상(sm)](https://user-images.githubusercontent.com/12960463/118161935-2292c600-b45b-11eb-8d0f-0ff7b0546ae5.gif)
+
+몬스터도 동일한 시스템을 적용해서 래그돌을 사망 모션 뿐만 아니라 다운 모션으로도 활용
 
 이 시스템의 장점
 - 래그돌 애니메이션과 특유의 불규칙한 움직임을 거의 온전히 유지하면서 위치를 거의 완벽하게 동기화 시켜줌
