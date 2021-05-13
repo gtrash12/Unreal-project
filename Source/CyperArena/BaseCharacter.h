@@ -43,6 +43,8 @@ public:
 		float max_hp;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, Category = "Base-CharacterState")
 		float stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Replicated, Category = "Base-CharacterState")
+		float cur_max_stamina;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float max_stamina;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Base Power", Category = "Base-CharacterState"))
@@ -107,6 +109,16 @@ public:
 		UAnimMontage* normal_attack_montage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		UAnimMontage* next_attack_montage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		FName normal_attack_id;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		FName next_attack_id;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		FName normal_smash_id;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		FName next_smash_id;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		FName dash_attack_id;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		FVector prev_attack_sock_start_loc;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
@@ -221,6 +233,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getBasePower(float& __output_base_power);
 		virtual void getBasePower_Implementation(float& __output_base_power)override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setNextAttackID(FName __next_action_id);
+		virtual void setNextAttackID_Implementation(FName __next_action_id) override;
 
 // --> 클래스 멤버 함수선언
 

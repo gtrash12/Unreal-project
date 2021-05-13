@@ -70,7 +70,10 @@ public:
 		void rotateActorWithInTime(FRotator __target_rotation, float __time);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getBasePower(float& __output_base_power);
-	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setNextAttackID(FName __next_action_id);
+
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(/*out*/ UMeshComponent*& __weapon);
 };

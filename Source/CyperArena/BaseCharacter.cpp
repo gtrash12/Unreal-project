@@ -147,6 +147,8 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(ABaseCharacter, ragdoll_server_location);
 	DOREPLIFETIME(ABaseCharacter, hp);
 	DOREPLIFETIME(ABaseCharacter, simulation_responsible_actor);
+	DOREPLIFETIME(ABaseCharacter, stamina);
+	DOREPLIFETIME(ABaseCharacter, cur_max_stamina);
 }
 
 /// --> 인터페이스 함수 정의
@@ -234,6 +236,7 @@ void ABaseCharacter::resetNextAttack_Implementation(bool __is_on_action__toggle)
 	next_attack_montage = normal_attack_montage;
 	if (__is_on_action__toggle)
 		is_on_action = !is_on_action;
+	next_attack_id = normal_attack_id;
 }
 
 
@@ -408,6 +411,14 @@ void ABaseCharacter::rotateActorWithInTime_Implementation(FRotator __target_rota
 /// <param name="__output_base_power"></param>
 void ABaseCharacter::getBasePower_Implementation(float& __output_base_power) {
 	__output_base_power = base_power;
+}
+
+/// <summary>
+/// 다음 기본공격 id 설정
+/// </summary>
+/// <param name="__next_action_id"></param>
+void ABaseCharacter::setNextAttackID_Implementation(FName __next_action_id) {
+	next_attack_id = __next_action_id;
 }
 
 // <-- 인터페이스 함수 정의 끝
@@ -750,6 +761,7 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 			GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
+			character_state = ECharacterState::Death;
 		default:
 			break;
 		}

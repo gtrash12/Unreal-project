@@ -16,13 +16,13 @@ class UInterface_PlayerController : public UInterface
 };
 
 /**
- * 
+ *
  */
 class CYPERARENA_API IInterface_PlayerController
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+		// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void releaseLock_ON();
@@ -32,5 +32,6 @@ public:
 		void CtoS_applyDamage(const AActor* damaged_actor, FdamageData damage_data, AActor* damage_causor);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void findDamageData(FName __damage_id, FdamageData& __output_damage_data);
-
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void findActionData(FName __action_id, FActionData& __output_action_data);
 };

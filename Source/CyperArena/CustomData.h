@@ -103,6 +103,27 @@ public:
 };
 
 
+USTRUCT(Atomic, BlueprintType)
+struct FActionData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UAnimMontage* anim_montage;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina_penalty;
+	/// <summary>
+	/// 라스트 인풋으로 회전하는데 걸리는 시간
+	/// 0보다 작으면 회전하지 않음
+	/// </summary>
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float rotate_time;
+};
+
 /*
 UCLASS()
 class CYPERARENA_API ACustomData : public AActor
