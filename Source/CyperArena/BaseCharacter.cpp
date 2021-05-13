@@ -103,7 +103,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			switch (network_owner_type)
 			{
-			//case ENetworkOwnerType::OwnedAI:
+			case ENetworkOwnerType::OwnedAI:
 			case ENetworkOwnerType::RemoteAI:
 				if (is_simulation_responsible) {
 					ragdoll_ClientOnwer_Implementation();
@@ -730,7 +730,8 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	mesh->SetSimulatePhysics(false);
 	is_on_action = false;
-
+	if(ragdoll_physics_handle->IsValidLowLevel())
+		ragdoll_physics_handle->ReleaseComponent();
 }
 
 /// <summary>
