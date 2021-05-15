@@ -702,6 +702,7 @@ void ABaseCharacter::airboneStart_Implementation() {
 		PlayAnimMontage(airbone_b_anim, -speed_rate);
 	}
 	character_state = ECharacterState::Airbone;
+	UKismetSystemLibrary::PrintString(this, TEXT("에어본"));
 }
 
 /// <summary>
