@@ -162,3 +162,5 @@ PowerIK 플러그인 사용
 
 ![데모레벨초입](https://user-images.githubusercontent.com/12960463/118310475-a1563480-b529-11eb-80b6-7e6bdc3e4f20.gif)
 ![데모레벨전투](https://user-images.githubusercontent.com/12960463/118310458-9bf8ea00-b529-11eb-8ba0-9f58d192846f.gif)
+![보스 Idle](https://user-images.githubusercontent.com/12960463/118364188-60662a80-b5d2-11eb-89d9-93200f5138b2.gif)
+![보스 공격 패턴1](https://user-images.githubusercontent.com/12960463/118364184-58a68600-b5d2-11eb-9104-50a2fade0bc2.gif)
