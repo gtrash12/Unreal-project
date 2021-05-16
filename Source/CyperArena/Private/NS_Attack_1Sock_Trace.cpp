@@ -23,12 +23,14 @@ void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
 	}
-	prev_sock_loc = MeshComp->GetSocketLocation(socket_name);
+	//prev_sock_loc = MeshComp->GetSocketLocation(socket_name);
 }
 
 void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
 	AActor* actor = MeshComp->GetOwner();
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	if (actor->HasAuthority() == true)
 		return;
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		FVector cur_sock_loc;
@@ -41,7 +43,8 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 			return;
 		else
 			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::Persistent, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor());

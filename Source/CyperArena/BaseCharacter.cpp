@@ -160,7 +160,7 @@ void ABaseCharacter::setLookRotation_Implementation()
 {
 	FRotator tmp_rotator1 = UKismetMathLibrary::MakeRotator(0.0f, look_pitch, look_yaw);
 	FRotator tmp_rotator2 = UKismetMathLibrary::NormalizedDeltaRotator(R_look_rotation, AActor::GetActorRotation());
-	FRotator interp_tmp = UKismetMathLibrary::RInterpTo(tmp_rotator1, tmp_rotator2, d_time, 15.000000);
+	FRotator interp_tmp = UKismetMathLibrary::RInterpTo(tmp_rotator1, tmp_rotator2, d_time, 5.000000);
 	look_pitch = UKismetMathLibrary::ClampAngle(interp_tmp.Pitch, -90.000000, 90.000000);
 	look_yaw = UKismetMathLibrary::ClampAngle(interp_tmp.Yaw, -90.000000, 90.000000);
 }
@@ -205,8 +205,9 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
 	if (HasAuthority()) {
-		if (network_owner_type == ENetworkOwnerType::OwnedPlayer || network_owner_type == ENetworkOwnerType::OwnedAI) {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
 			if (__hit_actor->GetOwner() != GetOwner()) {
 				flag = true;
 			}
@@ -218,11 +219,17 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 				flag = true;
 			}
 		}
+		if (network_owner_type == ENetworkOwnerType::RemoteAI) {
+			if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+				flag = true;
+			}
+		}
 	}
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
+				UKismetSystemLibrary::PrintString(this, TEXT("때림"));
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
