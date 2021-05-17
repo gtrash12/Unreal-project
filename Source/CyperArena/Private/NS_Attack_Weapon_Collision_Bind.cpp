@@ -16,7 +16,7 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshC
 	if (base_character == nullptr)
 		return;
 	FdamageData damage_data;
-	UMeshComponent* weapon;
+	UPrimitiveComponent* weapon;
 	if (MeshComp->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
 	{
 		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
@@ -37,7 +37,7 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyEnd(USkeletalMeshComponent* MeshCom
 	ABaseCharacter* base_character = Cast<ABaseCharacter>(actor);
 	if (base_character == nullptr)
 		return;
-	UMeshComponent* weapon;
+	UPrimitiveComponent* weapon;
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon);
 		weapon->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);

@@ -75,5 +75,5 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void getWeapon(/*out*/ UMeshComponent*& __weapon);
+		void getWeapon(/*out*/ UPrimitiveComponent*& __weapon);
 };

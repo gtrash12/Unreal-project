@@ -26,7 +26,7 @@ public:
 		float half_width;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float half_height;
-		UMeshComponent* weapon;
+		UPrimitiveComponent* weapon;
 		TEnumAsByte<ETraceTypeQuery> trace_channel;
 
 	//UFUNCTION(BlueprintNativeEvent)
