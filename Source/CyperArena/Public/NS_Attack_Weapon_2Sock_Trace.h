@@ -19,6 +19,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName damage_id;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName weapon_key;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName socket_start;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName socket_end;

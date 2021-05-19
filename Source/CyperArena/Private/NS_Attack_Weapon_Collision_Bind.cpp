@@ -22,7 +22,7 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshC
 		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
 	}
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon);
+		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		weapon->OnComponentBeginOverlap.AddDynamic(base_character, &ABaseCharacter::onWeaponBeginOverlap);
@@ -39,7 +39,7 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyEnd(USkeletalMeshComponent* MeshCom
 		return;
 	UPrimitiveComponent* weapon;
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon);
+		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		weapon->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 		weapon->OnComponentBeginOverlap.RemoveDynamic(base_character, &ABaseCharacter::onWeaponBeginOverlap);
 	}

@@ -19,7 +19,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp
 		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
 	}
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon);
+		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setPrevSockLoc(actor, weapon->GetSocketLocation(socket_start), weapon->GetSocketLocation(socket_end));
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);

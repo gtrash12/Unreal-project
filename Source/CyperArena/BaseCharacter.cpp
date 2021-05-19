@@ -205,6 +205,11 @@ void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_da
 void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
+	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
+		UKismetSystemLibrary::PrintString(this, TEXT("ASDFASDFGHHH"));
+		return;
+	}
+		
 	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
 	if (HasAuthority()) {
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
@@ -428,6 +433,16 @@ void ABaseCharacter::setNextAttackID_Implementation(FName __next_action_id) {
 	next_attack_id = __next_action_id;
 }
 
+/// <summary>
+/// attack_collisions TMap 에서 키와 매칭되는 프리미티브 컴포넌트를 반환
+/// </summary>
+/// <param name="__key">활성화 할 프리미티브 컴포넌트 키</param>
+/// <param name="__weapon">반환 피리미티브 컴포넌트</param>
+void ABaseCharacter::getWeapon_Implementation(FName __key, /*out*/ UPrimitiveComponent*& __weapon) {
+	if(attack_collisions.Contains(__key))
+		__weapon = attack_collisions[__key];
+}
+
 // <-- 인터페이스 함수 정의 끝
 
 
@@ -457,9 +472,20 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	FVector rotated_vector;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
-	else {
-		FQuat rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation()).Quaternion();
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat, target_damage_data.knock_back);
+	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		float distance = UKismetMathLibrary::Vector_Distance(damage_causor->GetActorLocation(), GetActorLocation());
+		rotated_vector.X *= distance;
+		rotated_vector.Y *= distance;
 	}
 
 	UAnimMontage* hit_anim = nullptr;
@@ -893,10 +919,11 @@ void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
 /// <param name="Hit"></param>
 void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
 	if (HasAuthority()) {
-		if (character_state == ECharacterState::Airbone) {
+		if (character_state == ECharacterState::Airbone && OtherActor->IsA(ABaseCharacter::StaticClass()) == false) {
 			setCharacterState(ECharacterState::Ragdoll);
 		}
-		//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
+		
+			//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
 	}
 }
 

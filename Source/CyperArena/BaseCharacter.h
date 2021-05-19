@@ -123,6 +123,8 @@ public:
 		FVector prev_attack_sock_start_loc;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		FVector prev_attack_sock_end_loc;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		TMap<FName, UPrimitiveComponent*> attack_collisions;
 
 private :
 	UPROPERTY()
@@ -238,6 +240,9 @@ public:
 		void setNextAttackID(FName __next_action_id);
 		virtual void setNextAttackID_Implementation(FName __next_action_id) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);
+		virtual void getWeapon_Implementation(FName __key, /*out*/ UPrimitiveComponent*& __weapon) override;
 // --> 클래스 멤버 함수선언
 
 

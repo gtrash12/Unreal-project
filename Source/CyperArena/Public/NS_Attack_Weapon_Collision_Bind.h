@@ -17,6 +17,8 @@ class CYPERARENA_API UNS_Attack_Weapon_Collision_Bind : public UAnimNotifyState
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName damage_id;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName weapon_key;
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) override;
 	virtual void NotifyEnd(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation) override;

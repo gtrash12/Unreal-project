@@ -40,7 +40,12 @@ enum class EKnockBackType : uint8
 {
 	Directional UMETA(DisplayName = "Directional"),
 	Radial UMETA(DisplayName = "Radial"),
-	Grab UMETA(DisplayName = "Grab")
+	Grab UMETA(DisplayName = "Grab"),
+	RadialDistance UMETA(DisplayName = "RadialDistance"),
+	RadialDistanceReverse UMETA(DisplayName = "RadialDistanceReverse"),
+	RadialXY UMETA(DisplayName = "RadialXY"),
+	RadialXYDistance UMETA(DisplayName = "RadialXYDistance"),
+	RadialXYDistanceReverse UMETA(DisplayName = "RadialXYDistanceReverse")
 };
 
 UENUM(BlueprintType)
@@ -73,7 +78,8 @@ enum class EAttackType : uint8
 	Slash UMETA(DisplayName = "Slash"),
 	Sting UMETA(DisplayName = "Sting"),
 	Bash UMETA(DisplayName = "Bash"),
-	Magic UMETA(DisplayName = "Magic")
+	Magic UMETA(DisplayName = "Magic"),
+	Earthquake UMETA(DisplayName = "Earthquake")
 };
 
 USTRUCT(Atomic, BlueprintType)
