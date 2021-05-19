@@ -206,7 +206,6 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
 	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
-		UKismetSystemLibrary::PrintString(this, TEXT("ASDFASDFGHHH"));
 		return;
 	}
 		
@@ -234,7 +233,6 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
-				UKismetSystemLibrary::PrintString(this, TEXT("때림"));
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
@@ -322,16 +320,20 @@ void ABaseCharacter::getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ET
 /// <param name="__speed">보간 속도</param>
 void ABaseCharacter::rotateActorInterp_Implementation(FRotator __target_rotation, float __delta_time, float __speed) {
 	rotate_interp_time_end = 0;
-	FRotator interp_rotator = UKismetMathLibrary::RInterpTo(GetActorRotation(),__target_rotation,__delta_time,__speed);
+	FRotator interp_rotator = UKismetMathLibrary::RInterpTo(GetActorRotation(),__target_rotation, d_time,__speed);
 	//GetMovementComponent().repli 
+	getNetworkOwnerType(network_owner_type);
 	if (HasAuthority()) {
-		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
-			SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
-		}
+		SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
 	}
 	else {
-		CtoS_setRotation(interp_rotator);
-		SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
+		if (network_owner_type == ENetworkOwnerType::RemoteAI) {
+			SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
+		}
+		else {
+			CtoS_setRotation(interp_rotator);
+			SetActorRotation(interp_rotator.Quaternion(), ETeleportType::TeleportPhysics);
+		}
 	}
 }
 
@@ -499,9 +501,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
 		FTimerHandle timer_handle;
-		GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
+		/*GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
 			setCharacterState(ECharacterState::Airbone);
-			}), 0.1f, false);
+			}), 0.1f, false);*/
+		setCharacterState(ECharacterState::Airbone);
 	}
 }
 
