@@ -493,18 +493,21 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
-
+	rotate_interp_time = 0;
 	if (target_damage_data.target_control == ETargetControlType::None) {
-		rotate_interp_time = 0;
 		applyKnock_Back(rotated_vector);
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
-		FTimerHandle timer_handle;
+		//FTimerHandle timer_handle;
 		/*GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
 			setCharacterState(ECharacterState::Airbone);
 			}), 0.1f, false);*/
-		setCharacterState(ECharacterState::Airbone);
+		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
+			setCharacterState(ECharacterState::Airbone);
+			}));
+		//setCharacterState(ECharacterState::Airbone);
+		knock_back_speed = 0;
 	}
 }
 
@@ -624,10 +627,11 @@ void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
 /// <param name="location">액터의 위치</param>
 void ABaseCharacter::stickToTheGround(FVector location) {
 	float capsule_half_height = this->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height);
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height);
 	FHitResult trace_result(ForceInit);
 	//FCollisionQueryParams collision_params;
-	GetWorld()->LineTraceSingleByChannel(trace_result, location, trace_end, ECC_GameTraceChannel1);
+	GetWorld()->LineTraceSingleByChannel(trace_result, trace_start, trace_end, ECC_GameTraceChannel1);
 	// 라인트레이스 결과에 따른 액터의 방향과 위치 설정
 	if (trace_result.IsValidBlockingHit()) {
 		is_ragdoll_on_the_ground = true;
@@ -923,7 +927,9 @@ void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
 void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
 	if (HasAuthority()) {
 		if (character_state == ECharacterState::Airbone && OtherActor->IsA(ABaseCharacter::StaticClass()) == false) {
-			setCharacterState(ECharacterState::Ragdoll);
+			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
+				setCharacterState(ECharacterState::Ragdoll);
+				}));
 		}
 		
 			//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
