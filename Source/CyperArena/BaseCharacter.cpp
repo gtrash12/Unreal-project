@@ -216,6 +216,9 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 				flag = true;
 			}
 		}
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+
+		}
 	}
 	else {
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
@@ -498,6 +501,17 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 		applyKnock_Back(rotated_vector);
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
+		knock_back_unit_vector = FVector::ZeroVector;
+		if (network_owner_type == ENetworkOwnerType::RemoteAI)
+			current_velocty = FVector::ZeroVector;
+		knock_back_speed = 0;
+		if (is_on_sprint)
+			GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+		else
+			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+		GetCharacterMovement()->MaxAcceleration = 2048.0f;
+
+		ConsumeMovementInputVector();
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
 		//FTimerHandle timer_handle;
 		/*GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
@@ -505,9 +519,9 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 			}), 0.1f, false);*/
 		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
 			setCharacterState(ECharacterState::Airbone);
+			//LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
 			}));
 		//setCharacterState(ECharacterState::Airbone);
-		knock_back_speed = 0;
 	}
 }
 
