@@ -21,7 +21,7 @@ ABaseCharacter::ABaseCharacter()
 
 	ragdoll_physics_handle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 	ragdoll_physics_handle->CreationMethod = EComponentCreationMethod::Native;
-	ragdoll_physics_handle->InterpolationSpeed = 10000000272564224.000000f;
+	ragdoll_physics_handle->InterpolationSpeed = 5;
 	//ragdoll_physics_handle->bAutoActivate = false;
 
 	character_state = ECharacterState::Walk_and_Jump;
@@ -497,6 +497,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
 	rotate_interp_time = 0;
+	UKismetSystemLibrary::PrintString(this, TEXT("ASDASDF"));
 	if (target_damage_data.target_control == ETargetControlType::None) {
 		applyKnock_Back(rotated_vector);
 	}
@@ -510,7 +511,6 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 		else
 			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
 		GetCharacterMovement()->MaxAcceleration = 2048.0f;
-
 		ConsumeMovementInputVector();
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
 		//FTimerHandle timer_handle;
@@ -681,7 +681,21 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	//if (GetWorld()->GetFirstPlayerController()->GetPawn()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 	//	IInterface_BaseCharacter::exectue(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
 	//}
-	Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+	if (replication_delay_count >= last_replication_delay) {
+		replication_delay_count += d_time;
+		replication_delay_count -= last_replication_delay;
+		last_replication_delay = 0.2f;
+		UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
+		if (GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).Size() > 5) {
+			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+		}
+	}
+	else {
+		replication_delay_count += d_time;
+	}
+	/*if (GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).Size() > 5) {
+		Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+	}*/
 }
 
 
@@ -728,9 +742,10 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	
 	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
 	//if(ragdoll_physics_handle->IsActive())
-	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
-	float ease_alpha = UKismetMathLibrary::Min(1.0f, replication_delay_count / last_replication_delay);
+	float ease_alpha = replication_delay_count / last_replication_delay;
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f %f %f"), replication_delay_count, last_replication_delay, ease_alpha));
+	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 	stickToTheGround(predicted_location);
 	last_ragdoll_server_location = ragdoll_server_location;
 	
@@ -839,10 +854,10 @@ void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
 void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
 	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 		ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
-		prev_ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
-		last_ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+		prev_ragdoll_server_location = ragdoll_server_location;
+		last_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count = 0.0f;
-		last_replication_delay = 0.2f;
+		last_replication_delay = 0.1f;
 		is_ragdoll_on_the_ground = false;
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -940,7 +955,7 @@ void ABaseCharacter::getNetworkOwnerType(/*out*/ ENetworkOwnerType& output) {
 /// <param name="Hit"></param>
 void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit){
 	if (HasAuthority()) {
-		if (character_state == ECharacterState::Airbone && OtherActor->IsA(ABaseCharacter::StaticClass()) == false) {
+		if (character_state == ECharacterState::Airbone && OtherActor != nullptr && OtherActor->IsA(ABaseCharacter::StaticClass()) == false) {
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
 				setCharacterState(ECharacterState::Ragdoll);
 				}));
