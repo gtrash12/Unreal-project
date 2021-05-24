@@ -21,7 +21,7 @@ ABaseCharacter::ABaseCharacter()
 
 	ragdoll_physics_handle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 	ragdoll_physics_handle->CreationMethod = EComponentCreationMethod::Native;
-	ragdoll_physics_handle->InterpolationSpeed = 5;
+	ragdoll_physics_handle->InterpolationSpeed = 10;
 	//ragdoll_physics_handle->bAutoActivate = false;
 
 	character_state = ECharacterState::Walk_and_Jump;
@@ -60,7 +60,7 @@ void ABaseCharacter::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 
 	// 캡슐 컴포넌트의 히트 델리게이트에 함수 등록
-	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ABaseCharacter::onCapsuleComponentHit);
+	//GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ABaseCharacter::onCapsuleComponentHit);
 
 	//Make sure the mesh and animbp update after the CharacterBP
 	GetMesh()->AddTickPrerequisiteActor(this);
@@ -93,8 +93,21 @@ void ABaseCharacter::Tick(float DeltaTime)
 	if (character_state == ECharacterState::Airbone) {
 		UMeshComponent* mesh = GetMesh();
 		mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
+		
+		FHitResult trace_result(ForceInit);
+		FVector location = GetActorLocation();
+		float capsule_half_height = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height + 10);
+		FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height+20);
+		TArray<AActor*> tmp;
+		bool tracebool;
+		tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::Persistent, trace_result, true);
+		bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + GetVelocity()*d_time, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::Persistent, trace_result, true);
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%d %d"), trace_result.GetNumOverlapHits(), trace_r)));
+		if (tracebool) {
+			setCharacterState(ECharacterState::Ragdoll);
+		}
 	}
-	
 	//래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
@@ -216,8 +229,10 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 				flag = true;
 			}
 		}
-		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
-
+		if (UKismetSystemLibrary::IsStandalone(this)) {
+			if (network_owner_type == ENetworkOwnerType::OwnedAI) {
+				flag = true;
+			}
 		}
 	}
 	else {
@@ -497,7 +512,6 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
 	rotate_interp_time = 0;
-	UKismetSystemLibrary::PrintString(this, TEXT("ASDASDF"));
 	if (target_damage_data.target_control == ETargetControlType::None) {
 		applyKnock_Back(rotated_vector);
 	}
@@ -641,7 +655,7 @@ void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
 /// <param name="location">액터의 위치</param>
 void ABaseCharacter::stickToTheGround(FVector location) {
 	float capsule_half_height = this->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height);
+	FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height+ 10);
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height);
 	FHitResult trace_result(ForceInit);
 	//FCollisionQueryParams collision_params;
@@ -685,9 +699,10 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 		replication_delay_count += d_time;
 		replication_delay_count -= last_replication_delay;
 		last_replication_delay = 0.2f;
-		UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
-		if (GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).Size() > 5) {
+		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 1) {
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+			prev_ragdoll_server_location = ragdoll_server_location;
 		}
 	}
 	else {
@@ -744,8 +759,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	//if(ragdoll_physics_handle->IsActive())
 	float ease_alpha = replication_delay_count / last_replication_delay;
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
-	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%f %f %f"), replication_delay_count, last_replication_delay, ease_alpha));
-	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
+	ragdoll_physics_handle->SetTargetLocation(predicted_location);
 	stickToTheGround(predicted_location);
 	last_ragdoll_server_location = ragdoll_server_location;
 	
@@ -757,7 +771,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 void ABaseCharacter::airboneStart_Implementation() {
 	USkeletalMeshComponent* mesh = GetMesh();
 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	mesh->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
 	//CastChecked<UAnimMontage>(CastChecked<UDynamicClass>(ABP_BaseCharacter_C__pf503790866::StaticClass())->UsedAssets[6]
@@ -771,7 +785,6 @@ void ABaseCharacter::airboneStart_Implementation() {
 		PlayAnimMontage(airbone_b_anim, -speed_rate);
 	}
 	character_state = ECharacterState::Airbone;
-	UKismetSystemLibrary::PrintString(this, TEXT("에어본"));
 }
 
 /// <summary>
@@ -783,7 +796,6 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	if (main_anim_instance->IsValidLowLevel()) {
 		main_anim_instance->SavePoseSnapshot(TEXT("RagdollPose"));
 	}
-	//UKismetSystemLibrary::PrintString(this, TEXT("일어날끄야"));
 	// 무브먼트 모드를 walking 으로 변경 후 엉덩이 방향에 따라 일어서는 애니메이션 몽타주 재생
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	if (is_ragdoll_face_up) {
@@ -862,9 +874,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
-		//UKismetSystemLibrary::PrintString(this, TEXT("ㅇ마ㅏ람ㄴ"));
 	}
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -960,8 +970,6 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 				setCharacterState(ECharacterState::Ragdoll);
 				}));
 		}
-		
-			//UKismetSystemLibrary::PrintString(this,TEXT("아아"));
 	}
 }
 
