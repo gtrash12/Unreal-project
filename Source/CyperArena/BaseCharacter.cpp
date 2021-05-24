@@ -100,11 +100,9 @@ void ABaseCharacter::Tick(float DeltaTime)
 		FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height + 10);
 		FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height+20);
 		TArray<AActor*> tmp;
-		bool tracebool;
-		tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::Persistent, trace_result, true);
-		bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + GetVelocity()*d_time, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::Persistent, trace_result, true);
-		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%d %d"), trace_result.GetNumOverlapHits(), trace_r)));
-		if (tracebool) {
+		bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
+		bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + GetVelocity()*d_time, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
+		if (tracebool || tracebool2) {
 			setCharacterState(ECharacterState::Ragdoll);
 		}
 	}
