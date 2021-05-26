@@ -512,8 +512,17 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
 	rotate_interp_time = 0;
+	if (character_state == ECharacterState::Ragdoll) {
+		ragdollGetUp();
+		setCharacterState(ECharacterState::Airbone);
+	}
 	if (target_damage_data.target_control == ETargetControlType::None) {
-		applyKnock_Back(rotated_vector);
+		if (character_state == ECharacterState::Walk_and_Jump) {
+			applyKnock_Back(rotated_vector);
+		}
+		else {
+			LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		}
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
 		knock_back_unit_vector = FVector::ZeroVector;
@@ -536,10 +545,15 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 				setCharacterState(ECharacterState::Airbone);
 				}));
 		}
-		else if (character_state == ECharacterState::Ragdoll) {
-			GetMesh()->AddImpulse(UKismetMathLibrary::MakeVector(rotated_vector.X * 20, rotated_vector.Y * 20, rotated_vector.Z*12), TEXT("pelvis"), true);
-		}
 		//setCharacterState(ECharacterState::Airbone);
+	}
+	if (character_state == ECharacterState::Ragdoll) {
+		/*if (is_simulation_responsible) {
+			GetMesh()->AddImpulse(UKismetMathLibrary::MakeVector(rotated_vector.X * 2 * 1/d_time, rotated_vector.Y * 2 * 1 / d_time, rotated_vector.Z * 1 / d_time), TEXT("pelvis"), true);
+		}
+		else {
+			replication_delay_count = last_replication_delay;
+		}*/
 	}
 }
 
@@ -745,7 +759,7 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
-	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+	
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
 		// 위치 갱신 안되었을 때
@@ -764,7 +778,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	float ease_alpha = replication_delay_count / last_replication_delay;
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
 	ragdoll_physics_handle->SetTargetLocation(predicted_location);
-	stickToTheGround(predicted_location);
+	stickToTheGround(ragdoll_server_location);
 	last_ragdoll_server_location = ragdoll_server_location;
 	
 }
@@ -880,6 +894,8 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
 	}
+	if(is_simulation_responsible == false)
+		ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	main_anim_instance->Montage_StopGroupByName(0.0f, "DefaultGroup");
