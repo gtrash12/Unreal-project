@@ -90,6 +90,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	setLookRotation();
 	
 	 //에어본시 피지컬 애니메이션의 관절 각 운동량 조절
+	// 중력 트레이스와 예측 트레이스를 투 개를 이용해 매 틱 충돌판정
 	if (character_state == ECharacterState::Airbone) {
 		UMeshComponent* mesh = GetMesh();
 		mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
@@ -101,7 +102,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height+20);
 		TArray<AActor*> tmp;
 		bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
-		bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + GetVelocity()*d_time, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
+		bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetActorLocation(), GetActorLocation() + GetVelocity()*(d_time*2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 		if (tracebool || tracebool2) {
 			setCharacterState(ECharacterState::Ragdoll);
 		}
@@ -110,6 +111,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	else if (character_state == ECharacterState::Ragdoll) {
 		SetReplicateMovement(false);
 		getNetworkOwnerType(network_owner_type);
+		is_on_action = false;
 		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type,ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
 		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			switch (network_owner_type)
@@ -529,10 +531,14 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 		/*GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
 			setCharacterState(ECharacterState::Airbone);
 			}), 0.1f, false);*/
-		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
-			setCharacterState(ECharacterState::Airbone);
-			//LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
-			}));
+		if (character_state == ECharacterState::Walk_and_Jump) {
+			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
+				setCharacterState(ECharacterState::Airbone);
+				}));
+		}
+		else if (character_state == ECharacterState::Ragdoll) {
+			GetMesh()->AddImpulse(UKismetMathLibrary::MakeVector(rotated_vector.X * 20, rotated_vector.Y * 20, rotated_vector.Z*12), TEXT("pelvis"), true);
+		}
 		//setCharacterState(ECharacterState::Airbone);
 	}
 }

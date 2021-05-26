@@ -125,6 +125,8 @@ public:
 		FVector prev_attack_sock_end_loc;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
 		TMap<FName, UPrimitiveComponent*> attack_collisions;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
+		int durability_level = 0;
 
 private :
 	UPROPERTY()

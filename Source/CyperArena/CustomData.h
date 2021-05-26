@@ -105,6 +105,8 @@ public:
 		EBuffAndDebuffType buff_and_debuff;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EAttackType attack_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		uint8 durability_level;
 
 };
 
