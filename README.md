@@ -3,7 +3,7 @@
 
 # 주요 파일
 ## c++ 파일
-- 블루프린트 베이스 캐릭터를 c++ 로 컨버팅 한 클래스 파일
+- 최상위 베이스 캐릭터 클래스 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
 - 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
