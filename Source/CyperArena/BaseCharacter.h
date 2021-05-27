@@ -271,8 +271,8 @@ public:
 		virtual void ragdoll_SyncLocation_Implementation();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
-		void airboneStart();
-		virtual void airboneStart_Implementation();
+		void airboneStart(FVector __velocity);
+		virtual void airboneStart_Implementation(FVector __velocity);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Ragdoll"))
 		void ragdollGetUp();
@@ -328,4 +328,13 @@ public:
 		void rotateProcess();
 		virtual void rotateProcess_Implementation();
 
+		virtual bool airbone_HitChk(FVector __velocity);
+
+	UFUNCTION(BlueprintCallable, Server, UnReliable)
+		void CtoS_setCharacterState(ECharacterState __target_character_state);
+		virtual void CtoS_setCharacterState_Implementation(ECharacterState __target_character_state);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
+		void Multicast_setCharacterState(ECharacterState __target_character_state);
+		virtual void Multicast_setCharacterState_Implementation(ECharacterState __target_character_state);
 };
