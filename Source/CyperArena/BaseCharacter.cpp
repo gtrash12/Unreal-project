@@ -482,22 +482,27 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor) {
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation());
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
 	}
 	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(damage_causor->GetActorLocation(), GetActorLocation());
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
-		float distance = UKismetMathLibrary::Vector_Distance(damage_causor->GetActorLocation(), GetActorLocation());
+		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
 		rotated_vector.X *= distance;
 		rotated_vector.Y *= distance;
+	}
+	else {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
 
 	UAnimMontage* hit_anim = nullptr;

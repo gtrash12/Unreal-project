@@ -107,6 +107,8 @@ public:
 		EAttackType attack_type;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		uint8 durability_level;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FVector knock_back_offset;
 
 };
 
