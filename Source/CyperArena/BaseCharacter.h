@@ -245,6 +245,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);
 		virtual void getWeapon_Implementation(FName __key, /*out*/ UPrimitiveComponent*& __weapon) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getDurabilityLevel(uint8& __output_durability_level);
+		virtual void getDurabilityLevel_Implementation(uint8& __output_durability_level) override;
 // --> 클래스 멤버 함수선언
 
 

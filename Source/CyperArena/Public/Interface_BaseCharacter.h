@@ -72,6 +72,8 @@ public:
 		void getBasePower(float& __output_base_power);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void setNextAttackID(FName __next_action_id);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getDurabilityLevel(uint8& __output_durability_level);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);

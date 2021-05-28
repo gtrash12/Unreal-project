@@ -455,6 +455,10 @@ void ABaseCharacter::getWeapon_Implementation(FName __key, /*out*/ UPrimitiveCom
 		__weapon = attack_collisions[__key];
 }
 
+void ABaseCharacter::getDurabilityLevel_Implementation(uint8& __output_durability_level) {
+	__output_durability_level = durability_level;
+}
+
 // <-- 인터페이스 함수 정의 끝
 
 
@@ -481,6 +485,10 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 /// <param name="damage_causor"></param>
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor) {
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	if (durability_level >= target_damage_data.durability_level) {
+		animation_Sound_Multicast(nullptr, sq_hit);
+		return;
+	}
 	FVector rotated_vector;
 	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
 	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
@@ -508,6 +516,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
+
 	rotate_interp_time = 0;
 	if (character_state == ECharacterState::Ragdoll) {
 		ragdollGetUp();
@@ -565,7 +574,8 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData targe
 /// <param name="anim">애니메이션</param>
 /// <param name="sound">사운드</param>
 void ABaseCharacter::animation_Sound_Multicast_Implementation(UAnimMontage* anim, USoundBase* sound) {
-	PlayAnimMontage(anim);
+	if(anim != nullptr)
+		PlayAnimMontage(anim);
 	UGameplayStatics::SpawnSoundAtLocation(this, sound, GetActorLocation());
 }
 
