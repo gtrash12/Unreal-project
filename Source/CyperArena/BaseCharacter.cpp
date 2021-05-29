@@ -176,13 +176,18 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor)
+void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor)
 {
+	FdamageData __target_damage_data;
 	float causor_power;
+	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
+	{
+		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, __target_damage_data);
+	}
 	if (__damage_causor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
 		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
-		applyDamage_Multicast(__target_damage_data, __damage_causor);
+		applyDamage_Multicast(__target_damage_id, __damage_causor);
 	}
 }
 
@@ -200,6 +205,14 @@ void ABaseCharacter::resetHitActorList_Implementation() {
 /// <param name="target_damage_data">타겟 데미지 데이터</param>
 void ABaseCharacter::setDamageData_Implementation(FdamageData __target_damage_data) {
 	damage_data = __target_damage_data;
+}
+
+/// <summary>
+/// 데미지 아이디 업데이트
+/// </summary>
+/// <param name="__target_damage_id"></param>
+void ABaseCharacter::setDamageID_Implementation(FName __target_damage_id) {
+	damage_id = __target_damage_id;
 }
 
 /// <summary>
@@ -242,7 +255,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
-				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this);
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
@@ -471,10 +484,10 @@ void ABaseCharacter::getDurabilityLevel_Implementation(uint8& __output_durabilit
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor)
+void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor)
 {
 	getNetworkOwnerType(network_owner_type);
-	applyDamage_Multicast_Exec(target_damage_data, damage_causor);
+	applyDamage_Multicast_Exec(__target_damage_id, damage_causor);
 }
 
 /// <summary>
@@ -483,8 +496,13 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FdamageData target_dam
 /// </summary>
 /// <param name="target_damage_data"></param>
 /// <param name="damage_causor"></param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor) {
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FdamageData target_damage_data;
+	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
+	{
+		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
+	}
 	if (durability_level >= target_damage_data.durability_level) {
 		animation_Sound_Multicast(nullptr, sq_hit);
 		return;

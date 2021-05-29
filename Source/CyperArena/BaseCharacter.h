@@ -105,6 +105,8 @@ public:
 		TSet<AActor*> hit_actors_list;
 	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		FdamageData damage_data;
+	UPROPERTY(BlueprintReadWrite, meta = (Category = "Base-Combat"))
+		FName damage_id;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (Category = "Base-Combat"))
 		UAnimMontage* normal_attack_montage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (Category = "Base-Combat"))
@@ -151,12 +153,16 @@ public:
 		virtual void setLookRotation_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void applyDamage(FdamageData __damage_data, AActor* __damage_causor);
-		virtual void applyDamage_Implementation(FdamageData __target_damage_data, AActor* __damage_causor) override;
+		void applyDamage(FName __target_damage_id, AActor* __damage_causor);
+		virtual void applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void setDamageData(FdamageData __target_damage_data);
 		virtual void setDamageData_Implementation(FdamageData __target_damage_data) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setDamageID(FName __target_damage_id);
+		virtual void setDamageID_Implementation(FName __target_damage_id) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetHitActorList();
@@ -301,12 +307,12 @@ public:
 		virtual void onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
-		void applyDamage_Multicast(FdamageData target_damage_data, AActor* damage_causor);
-		virtual void applyDamage_Multicast_Implementation(FdamageData target_damage_data, AActor* damage_causor);
+		void applyDamage_Multicast(FName __target_damage_id, AActor* damage_causor);
+		virtual void applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
-		void applyDamage_Multicast_Exec(FdamageData target_damage_data, AActor* damage_causor);
-		virtual void applyDamage_Multicast_Exec_Implementation(FdamageData target_damage_data, AActor* damage_causor);
+		void applyDamage_Multicast_Exec(FName __target_damage_id, AActor* damage_causor);
+		virtual void applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
 		void animation_Sound_Multicast(UAnimMontage* anim, USoundBase* sound);

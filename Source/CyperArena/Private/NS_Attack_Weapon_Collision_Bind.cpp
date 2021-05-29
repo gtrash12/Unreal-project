@@ -24,7 +24,8 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshC
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
-		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		//IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
 		weapon->OnComponentBeginOverlap.AddDynamic(base_character, &ABaseCharacter::onWeaponBeginOverlap);
 		weapon->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	}

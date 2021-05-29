@@ -25,6 +25,7 @@ void UNS_Attack_Collision_Create::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
 		USphereComponent* collision1 = NewObject<USphereComponent>(actor, USphereComponent::StaticClass(), FName("attack_collision"));
 		UKismetSystemLibrary::PrintString(actor, "ASDF");
 		if (collision1 != nullptr) {

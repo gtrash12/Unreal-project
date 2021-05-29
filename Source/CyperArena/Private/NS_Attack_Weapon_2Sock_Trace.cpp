@@ -23,6 +23,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setPrevSockLoc(actor, weapon->GetSocketLocation(socket_start), weapon->GetSocketLocation(socket_end));
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
 		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
 	}
 }

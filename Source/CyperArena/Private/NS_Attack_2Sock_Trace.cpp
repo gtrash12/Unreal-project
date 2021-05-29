@@ -21,6 +21,7 @@ void UNS_Attack_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
 		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
 	}
 	prev_sock_start_loc = MeshComp->GetSocketLocation(socket_start_name);
