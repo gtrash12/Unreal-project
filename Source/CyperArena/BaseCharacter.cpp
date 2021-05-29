@@ -48,7 +48,7 @@ ABaseCharacter::ABaseCharacter()
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> Hit_L_Montage(TEXT("AnimMontage'/Game/Animation/Combat/Hit_L_Montage.Hit_L_Montage'"));
 	if (Hit_L_Montage.Succeeded())
 		hit_l_anim = Hit_L_Montage.Object;
-	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_Hit(TEXT("SoundCue'/Game/Blueprint/SQ_Hit.SQ_Hit'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_Hit(TEXT("SoundCue'/Game/SFX/SQ_Hit.SQ_Hit'"));
 	if (SQ_Hit.Succeeded())
 		sq_hit = SQ_Hit.Object;
 
