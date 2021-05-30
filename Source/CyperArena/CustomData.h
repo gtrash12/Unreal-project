@@ -112,6 +112,13 @@ public:
 
 };
 
+UENUM(BlueprintType)
+enum class EActionRotateType : uint8
+{
+	Target UMETA(DisplayName = "Target"),
+	Input UMETA(DisplayName = "Input"),
+	Static UMETA(DisplayName = "Static")
+};
 
 USTRUCT(Atomic, BlueprintType)
 struct FActionData : public FTableRowBase
@@ -128,10 +135,15 @@ public:
 		float stamina_penalty;
 	/// <summary>
 	/// 라스트 인풋으로 회전하는데 걸리는 시간
-	/// 0보다 작으면 회전하지 않음
 	/// </summary>
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		float rotate_time;
+
+	/// <summary>
+	/// 액션 시 회전 방향 결정
+	/// </summary>
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EActionRotateType action_rotate_type;
 };
 
 /*
