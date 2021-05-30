@@ -24,4 +24,8 @@ class CYPERARENA_API IInterface_General
 public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void interaction(AActor* causor);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void popInteractionInfo(AActor* causor);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void removeInteractionInfo(AActor* causor);
 };
