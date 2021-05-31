@@ -94,8 +94,8 @@ void ABaseCharacter::Tick(float DeltaTime)
 	if (character_state == ECharacterState::Airbone) {
 		//UMeshComponent* mesh = GetMesh();
 		//mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
-
-		if (airbone_HitChk(GetVelocity())) {
+		FVector dummy;
+		if (airbone_HitChk(GetVelocity(), dummy)) {
 			setCharacterState(ECharacterState::Ragdoll);
 		}
 	}
@@ -540,11 +540,14 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		ragdollGetUp();
 		setCharacterState(ECharacterState::Airbone);
 	}
-	if (airbone_HitChk(rotated_vector)) {
-		rotated_vector *= -1;
+	FVector hitnormal;
+	if (airbone_HitChk(rotated_vector, hitnormal)) {
+		/*rotated_vector *= -1;
 		if (rotated_vector.Z < 0) {
 			rotated_vector.Z *= -1;
-		}
+		}*/
+		float rotated_std = rotated_vector.Size();
+		rotated_vector = hitnormal * rotated_std;
 	}
 	if (target_damage_data.target_control == ETargetControlType::None) {
 		if (character_state == ECharacterState::Walk_and_Jump) {
@@ -866,7 +869,7 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	USkeletalMeshComponent* mesh = GetMesh();
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	mesh->SetSimulatePhysics(false);
 	is_on_action = false;
 	if(ragdoll_physics_handle->IsValidLowLevel())
@@ -884,7 +887,7 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 		case ECharacterState::Walk_and_Jump:
 			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			//GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			character_state = ECharacterState::Walk_and_Jump;
 			break;
 		case ECharacterState::Airbone:
@@ -928,54 +931,18 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		is_ragdoll_on_the_ground = false;
 		FVector tmpvec = GetVelocity();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		GetMesh()->RecreatePhysicsState();
-	/*	getNetworkOwnerType(network_owner_type);
-		switch (network_owner_type)
-		{
-		case ENetworkOwnerType::OwnedAI:
-		case ENetworkOwnerType::RemoteAI:
-			if (is_simulation_responsible) {
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-			}
-			else {
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
-			}
-			break;
-		case ENetworkOwnerType::OwnedPlayer:
-			if (UKismetSystemLibrary::IsStandalone(this))
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-			else
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-			break;
-		case ENetworkOwnerType::RemotePlayer:
-			if (HasAuthority()) {
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
-			}
-			else {
-				GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
-			}
-			break;
-		default:
-			break;
-		}*/
+		//GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		//GetMesh()->RecreatePhysicsState();
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
-		//GetMesh()->SetPhysicsLinearVelocity(tmpvec,false,"pelvis");
-		//GetMesh()->SetCollisionProfileName("ragdoll");
-		//GetMesh()->UpdateOverlaps();
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+
 		if (is_simulation_responsible) {
-			//GetMesh()->AddImpulse(tmpvec * 5, TEXT("pelvis"), true);
-			//GetMesh()->AddImpulse(tmpvec, "pelvis", true);
 			tmpvec.Z = 0;
-			//GetMesh()->AddImpulse(tmpvec * 5, TEXT("pelvis"), true);
-			/*FTimerHandle timer_handle;
-			GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&,tmpvec]() {
-				GetMesh()->AddImpulse(tmpvec *5, TEXT("pelvis"),true);
-				}), 0.1f, false);*/
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, tmpvec]() {
-				GetMesh()->AddImpulse(tmpvec * 5, TEXT("pelvis"), true);
+				//GetMesh()->AddImpulse(tmpvec * 50, TEXT("pelvis"), true);
+				//GetMesh()->recalc
 				}));
+			//GetMesh()->ShouldUpdateTransform(false);
 		}
 	}
 	character_state = ECharacterState::Ragdoll;
@@ -1104,7 +1071,7 @@ void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation)
 /// </summary>
 /// <param name="__velocity"> 예측에 쓰일 벨로시티</param>
 /// <returns></returns>
-bool ABaseCharacter::airbone_HitChk(FVector __velocity) {
+bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
 	FHitResult trace_result(ForceInit);
 	FVector location = GetActorLocation();
 	float capsule_half_height = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -1112,8 +1079,16 @@ bool ABaseCharacter::airbone_HitChk(FVector __velocity) {
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height + 20);
 	TArray<AActor*> tmp;
 	bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
+	if (tracebool) {
+		__hitnormal = trace_result.ImpactNormal;
+		return true;
+	}
 	bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetMesh()->GetSocketLocation(TEXT("pelvis")), GetActorLocation() + __velocity * (d_time * 2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
-	return tracebool || tracebool2;
+	if (tracebool2) {
+		__hitnormal = trace_result.ImpactNormal;
+		return true;
+	}
+	return false;
 }
 
 void ABaseCharacter::CtoS_setCharacterState_Implementation(ECharacterState __target_character_state) {

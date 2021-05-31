@@ -338,7 +338,7 @@ public:
 		void rotateProcess();
 		virtual void rotateProcess_Implementation();
 
-		virtual bool airbone_HitChk(FVector __velocity);
+		virtual bool airbone_HitChk(FVector __velocity, FVector& __hitnormal);
 
 	UFUNCTION(BlueprintCallable, Server, UnReliable)
 		void CtoS_setCharacterState(ECharacterState __target_character_state);
