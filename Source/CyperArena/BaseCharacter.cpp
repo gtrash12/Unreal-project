@@ -530,7 +530,6 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	else {
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
-
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);
 	animation_Sound_Multicast(hit_anim, sq_hit);
