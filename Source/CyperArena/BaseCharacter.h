@@ -128,7 +128,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
 		TMap<FName, UPrimitiveComponent*> attack_collisions;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
-		int durability_level = 0;
+		float durability_level = 1;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
+		bool is_dodge = 0;
 
 private :
 	UPROPERTY()
@@ -255,6 +257,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getDurabilityLevel(uint8& __output_durability_level);
 		virtual void getDurabilityLevel_Implementation(uint8& __output_durability_level) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void setIsDodge(bool __target_is_dodge);
+		virtual void setIsDodge_Implementation(bool __target_is_dodge) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void getIsDodge(bool& __output_is_dodge);
+		virtual void getIsDodge_Implementation(bool& __output_is_dodge) override;
 // --> 클래스 멤버 함수선언
 
 

@@ -81,7 +81,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	d_time = DeltaTime;
-	
+
 	//바라보기에 필요한 변수 갱신
 	/*IInterface_BaseCharacter * basecharacter_interface = Cast<IInterface_BaseCharacter>(this);
 	if (basecharacter_interface) {
@@ -252,6 +252,16 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 			}
 		}
 	}
+	if (flag && damage_data.attack_type != EAttackType::Earthquake) {
+		if (__hit_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			bool hit_actor_is_dodge;
+			IInterface_BaseCharacter::Execute_getIsDodge(__hit_actor, hit_actor_is_dodge);
+			if (hit_actor_is_dodge) {
+				flag = false;
+			}
+		}
+	}
+
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
@@ -470,6 +480,14 @@ void ABaseCharacter::getWeapon_Implementation(FName __key, /*out*/ UPrimitiveCom
 
 void ABaseCharacter::getDurabilityLevel_Implementation(uint8& __output_durability_level) {
 	__output_durability_level = durability_level;
+}
+
+void ABaseCharacter::setIsDodge_Implementation(bool __target_is_dodge) {
+	is_dodge = __target_is_dodge;
+}
+
+void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
+	__output_is_dodge = is_dodge;
 }
 
 // <-- 인터페이스 함수 정의 끝
