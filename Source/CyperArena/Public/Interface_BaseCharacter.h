@@ -80,6 +80,8 @@ public:
 		void setIsDodge(bool __target_is_dodge);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getIsDodge(bool& __output_is_dodge);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void useItem(FName __item_id);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);

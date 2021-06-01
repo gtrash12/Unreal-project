@@ -187,6 +187,7 @@ void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor
 	if (__damage_causor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
 		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
+		hp = UKismetMathLibrary::Max(0, hp);
 		applyDamage_Multicast(__target_damage_id, __damage_causor);
 	}
 }

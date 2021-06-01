@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
+#include "Engine/Texture.h"
 
 #include "CustomData.generated.h"
 
@@ -146,6 +147,34 @@ public:
 		EActionRotateType action_rotate_type;
 };
 
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	Consumables UMETA(DisplayName = "Consumables"),
+	Raw UMETA(DisplayName = "Raw"),
+	Key UMETA(DisplayName = "Key"),
+	Equipment_Weapon UMETA(DisplayName = "Equipment_Weapon"),
+	Equipment_Head UMETA(DisplayName = "Equipment_Head"),
+	Equipment_Upperbody UMETA(DisplayName = "Equipment_Upperbody"),
+	Equipment_Pants UMETA(DisplayName = "Equipment_Pants"),
+	Equipment_Shoes UMETA(DisplayName = "Equipment_Shoes"),
+	Equipment_Gloves UMETA(DisplayName = "Equipment_Gloves")
+};
+
+USTRUCT(Atomic, BlueprintType)
+struct FItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UTexture2D* icon;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemType item_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float value;
+};
 /*
 UCLASS()
 class CYPERARENA_API ACustomData : public AActor
