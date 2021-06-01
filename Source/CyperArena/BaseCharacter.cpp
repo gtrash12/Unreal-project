@@ -1070,7 +1070,7 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 /// <param name="bFromSweep"></param>
 /// <param name="SweepResult"></param>
 void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	UKismetSystemLibrary::PrintString(this, SweepResult.BoneName.ToString());
+	//UKismetSystemLibrary::PrintString(this, SweepResult.BoneName.ToString());
 	attackEvent(OtherActor);
 }
 
