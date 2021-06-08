@@ -1070,7 +1070,29 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 /// <param name="bFromSweep"></param>
 /// <param name="SweepResult"></param>
 void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	//UKismetSystemLibrary::PrintString(this, SweepResult.BoneName.ToString());
+	if (OtherComp->IsA<USkeletalMeshComponent>()) {
+		//UPhysicsAsset asd = Cast<USkeletalMeshComponent>(OtherComp)->GetPhysicsAsset()->physics;
+		FName tmp = Cast<USkeletalMeshComponent>(OtherComp)->GetBoneName(OtherBodyIndex);
+		if (tmp.ToString() == "None" && tmp.ToString().Contains("ik"))
+			return;
+		if (OtherBodyIndex <= 1)
+			return;
+		//if(Cast<USkeletalMeshComponent>(OtherActor)->getbones)
+		Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowSimulatePhysics(tmp, true);
+		Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0.5f);
+		OtherComp->AddImpulse(FVector::OneVector * 100, tmp);
+		FTimerHandle timer_handle;
+		GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&, OtherComp]() {
+			//Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0);
+			Cast<USkeletalMeshComponent>(OtherComp)->SetSimulatePhysics(false);
+			}), 1, false);
+		UKismetSystemLibrary::PrintString(this, tmp.ToString());
+		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%d"), OtherBodyIndex));
+		
+	}
+	else {
+		return;
+	}
 	attackEvent(OtherActor);
 }
 
