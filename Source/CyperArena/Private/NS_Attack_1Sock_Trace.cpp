@@ -19,6 +19,7 @@ void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
 	}
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
@@ -43,14 +44,18 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 		else
 			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
 		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::Persistent, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				UKismetSystemLibrary::PrintString(actor, TEXT("asdff"));
-				UKismetSystemLibrary::PrintString(actor, i.BoneName.ToString());
-				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor());
+				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
 			}
 		}
 		prev_sock_loc = cur_sock_loc;
 	}
+}
+
+void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
 }

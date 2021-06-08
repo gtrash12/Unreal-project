@@ -155,8 +155,8 @@ public:
 		virtual void setLookRotation_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void applyDamage(FName __target_damage_id, AActor* __damage_causor);
-		virtual void applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor) override;
+		void applyDamage(FName __target_damage_id, AActor* __damage_causor, FName __hit_bone_name);
+		virtual void applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor, FName __hit_bone_name) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void setDamageData(FdamageData __target_damage_data);
@@ -171,8 +171,8 @@ public:
 		virtual void resetHitActorList_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void attackEvent(AActor* __hit_actor);
-		virtual void attackEvent_Implementation(AActor* __hit_actor) override;
+		void attackEvent(AActor* __hit_actor, FName __hit_bone_name);
+		virtual void attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetNextAttack(bool __is_on_action__toggle);
@@ -317,12 +317,12 @@ public:
 		virtual void onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
-		void applyDamage_Multicast(FName __target_damage_id, AActor* damage_causor);
-		virtual void applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor);
+		void applyDamage_Multicast(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name);
+		virtual void applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
-		void applyDamage_Multicast_Exec(FName __target_damage_id, AActor* damage_causor);
-		virtual void applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor);
+		void applyDamage_Multicast_Exec(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name);
+		virtual void applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
 		void animation_Sound_Multicast(UAnimMontage* anim, USoundBase* sound);

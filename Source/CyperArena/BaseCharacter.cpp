@@ -176,7 +176,7 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor)
+void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor, FName __hit_bone_name)
 {
 	FdamageData __target_damage_data;
 	float causor_power;
@@ -188,7 +188,7 @@ void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor
 		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
 		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
 		hp = UKismetMathLibrary::Max(0, hp);
-		applyDamage_Multicast(__target_damage_id, __damage_causor);
+		applyDamage_Multicast(__target_damage_id, __damage_causor, __hit_bone_name);
 	}
 }
 
@@ -221,7 +221,8 @@ void ABaseCharacter::setDamageID_Implementation(FName __target_damage_id) {
 /// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
 /// </summary>
 /// <param name="hit_actor">피격 액터</param>
-void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) {
+
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
 	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
@@ -262,11 +263,14 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor) {
 			}
 		}
 	}
+	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 2 )) {
+		flag = false;
+	}
 
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
-				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this);
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name);
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
@@ -503,10 +507,10 @@ void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor)
+void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name)
 {
 	getNetworkOwnerType(network_owner_type);
-	applyDamage_Multicast_Exec(__target_damage_id, damage_causor);
+	applyDamage_Multicast_Exec(__target_damage_id, damage_causor, __hit_bone_name);
 }
 
 /// <summary>
@@ -515,7 +519,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// </summary>
 /// <param name="target_damage_data"></param>
 /// <param name="damage_causor"></param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FdamageData target_damage_data;
 	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
@@ -523,6 +527,19 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
 	}
 	if (durability_level >= target_damage_data.durability_level) {
+		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
+		if (character_state == ECharacterState::Walk_and_Jump) {
+			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
+			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(__hit_bone_name, 0.5f);
+			GetMesh()->AddImpulse(FVector::OneVector * 300, __hit_bone_name);
+			FTimerHandle timer_handle;
+			GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
+				if (character_state == ECharacterState::Walk_and_Jump) {
+					GetMesh()->SetSimulatePhysics(false);
+				}
+				}), 0.7f, false);
+		}
+		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
 		return;
 	}
@@ -1070,30 +1087,30 @@ void ABaseCharacter::onCapsuleComponentHit(UPrimitiveComponent* HitComp, AActor*
 /// <param name="bFromSweep"></param>
 /// <param name="SweepResult"></param>
 void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	if (OtherComp->IsA<USkeletalMeshComponent>()) {
-		//UPhysicsAsset asd = Cast<USkeletalMeshComponent>(OtherComp)->GetPhysicsAsset()->physics;
-		FName tmp = Cast<USkeletalMeshComponent>(OtherComp)->GetBoneName(OtherBodyIndex);
-		if (tmp.ToString() == "None" && tmp.ToString().Contains("ik"))
-			return;
-		if (OtherBodyIndex <= 1)
-			return;
-		//if(Cast<USkeletalMeshComponent>(OtherActor)->getbones)
-		Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowSimulatePhysics(tmp, true);
-		Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0.5f);
-		OtherComp->AddImpulse(FVector::OneVector * 100, tmp);
-		FTimerHandle timer_handle;
-		GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&, OtherComp]() {
-			//Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0);
-			Cast<USkeletalMeshComponent>(OtherComp)->SetSimulatePhysics(false);
-			}), 1, false);
-		UKismetSystemLibrary::PrintString(this, tmp.ToString());
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%d"), OtherBodyIndex));
-		
-	}
-	else {
-		return;
-	}
-	attackEvent(OtherActor);
+	//if (OtherComp->IsA<USkeletalMeshComponent>()) {
+	//	//UPhysicsAsset asd = Cast<USkeletalMeshComponent>(OtherComp)->GetPhysicsAsset()->physics;
+	//	FName tmp = Cast<USkeletalMeshComponent>(OtherComp)->GetBoneName(OtherBodyIndex);
+	//	if (tmp.ToString() == "None" && tmp.ToString().Contains("ik"))
+	//		return;
+	//	if (OtherBodyIndex <= 1)
+	//		return;
+	//	//if(Cast<USkeletalMeshComponent>(OtherActor)->getbones)
+	//	Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowSimulatePhysics(tmp, true);
+	//	Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0.5f);
+	//	OtherComp->AddImpulse(FVector::OneVector * 100, tmp);
+	//	FTimerHandle timer_handle;
+	//	GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&, OtherComp]() {
+	//		//Cast<USkeletalMeshComponent>(OtherComp)->SetAllBodiesBelowPhysicsBlendWeight(tmp, 0);
+	//		Cast<USkeletalMeshComponent>(OtherComp)->SetSimulatePhysics(false);
+	//		}), 1, false);
+	//	UKismetSystemLibrary::PrintString(this, tmp.ToString());
+	//	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("%d"), OtherBodyIndex));
+	//	attackEvent(OtherActor, tmp);
+	//}
+	//else {
+	//	return;
+	//}
+	attackEvent(OtherActor, "spine_01");
 }
 
 

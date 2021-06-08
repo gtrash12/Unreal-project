@@ -25,16 +25,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName socket_end;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float half_width;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float half_height;
+		FVector volume;
 		UPrimitiveComponent* weapon;
 		TEnumAsByte<ETraceTypeQuery> trace_channel;
 
-	//UFUNCTION(BlueprintNativeEvent)
-		virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) override;
-	//UFUNCTION(BlueprintNativeEvent)
-		virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) override;
-	//UFUNCTION(BlueprintImplementableEvent)
-		//bool Received_NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) const;
+	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) override;
+	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) override;
+	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 };

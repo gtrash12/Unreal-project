@@ -27,7 +27,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void setLookRotation();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void applyDamage(FName __target_damage_id, AActor* __damage_causor);
+		void applyDamage(FName __target_damage_id, AActor* __damage_causor, FName __hit_bone_name);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void setDamageData(FdamageData __target_damage_data);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
@@ -35,7 +35,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetHitActorList();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void attackEvent(AActor* __hit_actor);
+		void attackEvent(AActor* __hit_actor, FName __hit_bone_name);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetNextAttack(bool __is_on_action__toggle);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
