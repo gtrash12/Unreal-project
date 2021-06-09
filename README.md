@@ -1,6 +1,10 @@
 # Unreal-project
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
+# 영상
+[![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
+클릭하면 유튜브 영상 링크
+
 # 주요 파일
 ## c++ 파일
 - 최상위 베이스 캐릭터 클래스 파일
