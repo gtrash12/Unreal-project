@@ -119,6 +119,10 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 
 몬스터가 사망할 때 넉백의 운동량이 그대로 사망 래그돌 모션에 적용되어 넉백 방향으로 쓰러져 죽는 모션 구현
 
+![히트 본 덜렁 sm](https://user-images.githubusercontent.com/12960463/121346210-c8edc080-c960-11eb-9f05-f90f96262203.gif)
+
+슈퍼아머인 적은 경직 hit 애니메이션을 실행하지 않기 때문에 기존 애니메이션 위에 피격 부위만 덜렁거리는 피지컬 애니메이션으로 구현
+
 ## 발 IK
 ![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
 PowerIK 플러그인 사용
