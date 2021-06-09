@@ -108,6 +108,43 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 이 시스템의 문제점
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
+#### 코드 Tick
+'''
+//... Tick함수
+//래그돌 위치 동기화 시스템
+	else if (character_state == ECharacterState::Ragdoll) {
+		SetReplicateMovement(false);
+		getNetworkOwnerType(network_owner_type);
+		is_on_action = false;
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type,ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			switch (network_owner_type)
+			{
+			case ENetworkOwnerType::OwnedAI:
+			case ENetworkOwnerType::RemoteAI:
+				if (is_simulation_responsible) {
+					ragdoll_ClientOnwer_Implementation();
+				}
+				else {
+					ragdoll_SyncLocation_Implementation();
+				}
+				break;
+			case ENetworkOwnerType::OwnedPlayer:
+				if (UKismetSystemLibrary::IsStandalone(this))
+					ragdoll_ServerOnwer_Implementation();
+				else
+					ragdoll_ClientOnwer_Implementation();
+				break;
+			case ENetworkOwnerType::RemotePlayer:
+				ragdoll_SyncLocation_Implementation();
+				break;
+			default:
+				break;
+			}
+		}
+	}
+  // ...
+'''
 
 ## 전방향 피격모션 & 발동작 블렌딩
 
