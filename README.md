@@ -1,6 +1,10 @@
 # Unreal-project
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
+# 영상
+[![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
+클릭하면 유튜브 영상 링크
+
 # 주요 파일
 ## c++ 파일
 - 최상위 베이스 캐릭터 클래스 파일
@@ -20,23 +24,6 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
-## 블루프린트 파일
-- c++ 베이스 캐릭터를 상속받는 플레이어 캐릭터
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter_cpp.uasset
-- c++ 베이스 캐릭터를 상속받는 적(AI) 캐릭터
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp_cpp.uasset
--  블루프린트 베이스 캐릭터
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_BaseCharacter.uasset
-- 블루프린트 베이스 캐릭터를 상속받는 플레이어 캐릭터
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/BP_PlayerCharacter.uasset
-- 블루프린트 베이스 캐릭터를 상속받는 적(AI) 캐릭터
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/bpbp.uasset
--  플레이어 콘트롤러 블루프린트
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/Controller_PlayerCharacter_cpp.uasset
-- 모든 액션의 데미지 데이터를 정의한 테이블
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/DamageDataTable.uasset
-- 모든 휴머노이드 형식의 액터들이 상속받아 override만으로 쉽게 애니메이션을 구현할 수 있는 베이스 애니메이션 블루프린트
-  - https://github.com/gtrash12/Unreal-project/blob/main/Content/Blueprint/Player_Anim_BP.uasset
 
 - 그외 접두사에 따라
   - AN : 애님 노티파이
@@ -109,6 +96,114 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
 
+#### 코드 : Tick 함수 내에서 래그돌 동기화 함수 매 프레임 실행시키는 코드 ( Tick 함수 코드 일부 )
+```
+//... Tick함수
+//래그돌 위치 동기화 시스템
+	else if (character_state == ECharacterState::Ragdoll) {
+		SetReplicateMovement(false);
+		getNetworkOwnerType(network_owner_type);
+		is_on_action = false;
+		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type,ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			switch (network_owner_type)
+			{
+			case ENetworkOwnerType::OwnedAI:
+			case ENetworkOwnerType::RemoteAI:
+				if (is_simulation_responsible) {
+					ragdoll_ClientOnwer_Implementation();
+				}
+				else {
+					ragdoll_SyncLocation_Implementation();
+				}
+				break;
+			case ENetworkOwnerType::OwnedPlayer:
+				if (UKismetSystemLibrary::IsStandalone(this))
+					ragdoll_ServerOnwer_Implementation();
+				else
+					ragdoll_ClientOnwer_Implementation();
+				break;
+			case ENetworkOwnerType::RemotePlayer:
+				ragdoll_SyncLocation_Implementation();
+				break;
+			default:
+				break;
+			}
+		}
+	}
+  // ...
+```
+#### 코드 : 동기화 함수 ( 액터가 클라이언트 소유인 경우 )
+```
+/// <summary>
+/// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
+/// 0.2초 간격으로 RPC를 통해 서버의 ragdoll_server_location를 업데이트
+/// </summary>
+void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
+	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
+	ragdoll_server_location = sock_location;
+	stickToTheGround(sock_location);
+	if (replication_delay_count >= last_replication_delay) {
+		replication_delay_count += d_time;
+		replication_delay_count -= last_replication_delay;
+		last_replication_delay = 0.2f;
+		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 1) {
+			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+			prev_ragdoll_server_location = ragdoll_server_location;
+		}
+	}
+	else {
+		replication_delay_count += d_time;
+	}
+}
+
+```
+
+#### 코드 : 동기화 함수 ( 스탠드얼론 or 데디케이티드 서버일 때 )
+```
+/// <summary>
+/// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
+/// </summary>
+void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
+	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
+	ragdoll_server_location = sock_location;
+	stickToTheGround(ragdoll_server_location);
+}
+```
+
+#### 코드 : 동기화 함수 ( 리모트 액터일 때 )
+```
+/// <summary>
+/// 래그돌 위치 동기화
+/// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
+/// </summary>
+void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
+
+	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+	// 래그돌 위치 갱신 여부 확인
+	if (ragdoll_server_location == last_ragdoll_server_location) {
+		// 위치 갱신 안되었을 때
+		replication_delay_count += d_time;
+	}
+	else {
+		// 위치 갱신 되었을 때
+		float tmp = replication_delay_count - last_replication_delay;
+		last_replication_delay = replication_delay_count;
+		replication_delay_count = tmp + d_time;
+		prev_ragdoll_server_location = last_ragdoll_server_location;
+	}
+
+	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
+	float ease_alpha = replication_delay_count / last_replication_delay;
+	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	ragdoll_physics_handle->SetTargetLocation(predicted_location);
+	stickToTheGround(ragdoll_server_location);
+	last_ragdoll_server_location = ragdoll_server_location;
+}
+```
+
+
 ## 전방향 피격모션 & 발동작 블렌딩
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
@@ -122,6 +217,172 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 ![히트 본 덜렁 sm](https://user-images.githubusercontent.com/12960463/121346210-c8edc080-c960-11eb-9f05-f90f96262203.gif)
 
 슈퍼아머인 적은 경직 hit 애니메이션을 실행하지 않기 때문에 기존 애니메이션 위에 피격 부위만 덜렁거리는 피지컬 애니메이션으로 구현
+
+#### 코드 : applyDamage 코드 ( 피지컬 애니메이션, 넉백 )
+```
+/// <summary>
+/// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
+/// 피격 액터의 durability_level 이 공격의 durability_level 보다 크면 넉백과 에어본, 경직을 무시하고 히트 부위에 피지컬 애니메이션 실행
+/// 이외의 상황에서 damage_id를 통해 DamageData를 구하고 해당 DamageData의 넉백 벡터와 offset, 공격 액터의 방향과 현재 액터의 위치 관계에 따라 넉백 벡터를 회전해서 적용
+/// </summary>
+/// <param name="__target_damage_id">데미지 id</param>
+/// <param name="damage_causor">공격한 액터</param>
+/// <param name="__hit_bone_name">피격된 본</param>
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
+	FdamageData target_damage_data;
+	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
+	{
+		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
+	}
+	if (durability_level >= target_damage_data.durability_level) {
+		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션 초기화부
+		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
+			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
+				hit_bone_physics_weight_map[__hit_bone_name] = 0.5f;
+			}
+			else {
+				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
+			}
+			GetMesh()->AddImpulse(damage_causor->GetActorForwardVector() * 1200, __hit_bone_name, true);
+		}
+		//끝
+		animation_Sound_Multicast(nullptr, sq_hit);
+		return;
+	}
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FVector rotated_vector;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
+	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
+		rotated_vector.X *= distance;
+		rotated_vector.Y *= distance;
+	}
+	else {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	}
+	UAnimMontage* hit_anim = nullptr;
+	selectHitAnimation(rotated_vector, hit_anim);
+	animation_Sound_Multicast(hit_anim, sq_hit);
+
+	rotate_interp_time = 0;
+	if (character_state == ECharacterState::Ragdoll) {
+		ragdollGetUp();
+		setCharacterState(ECharacterState::Airbone);
+	}
+	FVector hitnormal;
+	if (airbone_HitChk(rotated_vector, hitnormal)) {
+		float rotated_std = rotated_vector.Size();
+		rotated_vector = hitnormal * rotated_std;
+	}
+	if (target_damage_data.target_control == ETargetControlType::None) {
+		if (character_state == ECharacterState::Walk_and_Jump) {
+			applyKnock_Back(rotated_vector);
+		}
+		else {
+			LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2 , rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		}
+	}
+	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
+		knock_back_unit_vector = FVector::ZeroVector;
+		if (network_owner_type == ENetworkOwnerType::RemoteAI)
+			current_velocty = FVector::ZeroVector;
+		knock_back_speed = 0;
+		if (is_on_sprint)
+			GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+		else
+			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+		GetCharacterMovement()->MaxAcceleration = 2048.0f;
+		ConsumeMovementInputVector();
+		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, rotated_vector]() {
+			//UKismetSystemLibrary::PrintString(this, rotated_vector.ToString());
+			airboneStart(rotated_vector);
+			}));
+	}
+}
+```
+
+#### 코드 : 넉백 프로세스 ( 틱 함수 내에서 매 틱 실행 )
+```
+/// <summary>
+/// 넉백 연산 수행 (매 틱 실행)
+/// </summary>
+/// <param name="velocity">넉백 벨로시티</param>
+void ABaseCharacter::knock_BackProcess_Implementation() {
+	if (knock_back_speed > 0) {
+		knock_back_speed = UKismetMathLibrary::FInterpTo(knock_back_speed, 0, d_time, 5);
+		if (knock_back_speed <= 5.0f) {
+			knock_back_unit_vector = FVector::ZeroVector;
+			if (network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = FVector::ZeroVector;
+			knock_back_speed = 0;
+			if (is_on_sprint)
+				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+			else
+				GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+			GetCharacterMovement()->MaxAcceleration = 2048.0f;
+		}
+		else {
+			GetCharacterMovement()->MaxWalkSpeed = knock_back_speed * 4;
+			AddMovementInput(knock_back_unit_vector, 1.0f);
+			if(network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = knock_back_unit_vector * (GetCharacterMovement()->MaxWalkSpeed);
+		}
+	}
+}
+```
+
+#### 코드 : 히트 본 피지컬 애니메이션 프로세스 ( 틱 함수 내에서 매 틱 실행 )
+```
+/// <summary>
+/// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
+/// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
+/// 원소의 밸류가 0이하가 되면 해당 본의 피직스 시뮬레이션을 종료하고 hit_bone_physics_weight_map 에서 제거
+/// </summary>
+void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
+	if (hit_bone_physics_weight_map.Num() == 0)
+		return;
+	// 캐릭터 스테이트가 Walk_and_Jump가 아니면 맵을 empty로 초기화 하고 모든 본의 weight를 초기화 한 뒤 함수 종료
+	if (character_state != ECharacterState::Walk_and_Jump) {
+		hit_bone_physics_weight_map.Empty();
+		GetMesh()->SetAllBodiesPhysicsBlendWeight(1);
+		return;
+	}
+	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
+	for (auto i : hit_bone_physics_weight_map) {
+		i.Value -= d_time;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 2;
+		if (i.Value <= 0) {
+			if (hit_bone_physics_weight_map.Num() == 1) {
+				GetMesh()->SetSimulatePhysics(false);
+			}
+			else {
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
+			}
+			hit_bone_physics_weight_map.Remove(i.Key);
+		}
+		else {
+			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
+			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
+		}
+	}
+}
+```
 
 ## 발 IK
 ![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
