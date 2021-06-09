@@ -108,7 +108,8 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 이 시스템의 문제점
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
-#### 코드 Tick
+
+#### 코드 : Tick 함수 내에서 래그돌 동기화 함수 매 프레임 실행시키는 코드
 ```
 //... Tick함수
 //래그돌 위치 동기화 시스템
@@ -145,6 +146,76 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 	}
   // ...
 ```
+#### 코드 : 동기화 함수 ( 액터가 클라이언트 소유인 경우 )
+```
+/// <summary>
+/// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
+/// 0.2초 간격으로 RPC를 통해 서버의 ragdoll_server_location를 업데이트
+/// </summary>
+void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
+	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
+	ragdoll_server_location = sock_location;
+	stickToTheGround(sock_location);
+	if (replication_delay_count >= last_replication_delay) {
+		replication_delay_count += d_time;
+		replication_delay_count -= last_replication_delay;
+		last_replication_delay = 0.2f;
+		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 1) {
+			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+			prev_ragdoll_server_location = ragdoll_server_location;
+		}
+	}
+	else {
+		replication_delay_count += d_time;
+	}
+}
+
+```
+
+#### 코드 : 동기화 함수 ( 스탠드얼론 or 데디케이티드 서버일 때 )
+```
+/// <summary>
+/// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
+/// </summary>
+void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
+	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
+	ragdoll_server_location = sock_location;
+	stickToTheGround(ragdoll_server_location);
+}
+```
+
+#### 코드 : 동기화 함수 ( 리모트 액터일 때 )
+```
+/// <summary>
+/// 래그돌 위치 동기화
+/// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
+/// </summary>
+void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
+
+	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+	// 래그돌 위치 갱신 여부 확인
+	if (ragdoll_server_location == last_ragdoll_server_location) {
+		// 위치 갱신 안되었을 때
+		replication_delay_count += d_time;
+	}
+	else {
+		// 위치 갱신 되었을 때
+		float tmp = replication_delay_count - last_replication_delay;
+		last_replication_delay = replication_delay_count;
+		replication_delay_count = tmp + d_time;
+		prev_ragdoll_server_location = last_ragdoll_server_location;
+	}
+
+	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
+	float ease_alpha = replication_delay_count / last_replication_delay;
+	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	ragdoll_physics_handle->SetTargetLocation(predicted_location);
+	stickToTheGround(ragdoll_server_location);
+	last_ragdoll_server_location = ragdoll_server_location;
+}
+```
+
 
 ## 전방향 피격모션 & 발동작 블렌딩
 
