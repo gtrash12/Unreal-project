@@ -231,6 +231,134 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 
 슈퍼아머인 적은 경직 hit 애니메이션을 실행하지 않기 때문에 기존 애니메이션 위에 피격 부위만 덜렁거리는 피지컬 애니메이션으로 구현
 
+#### 코드 : applyDamage 코드 ( 피지컬 애니메이션, 넉백 )
+```
+/// <summary>
+/// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
+/// 피격 액터의 durability_level 이 공격의 durability_level 보다 크면 넉백과 에어본, 경직을 무시하고 히트 부위에 피지컬 애니메이션 실행
+/// 이외의 상황에서 damage_id를 통해 DamageData를 구하고 해당 DamageData의 넉백 벡터와 offset, 공격 액터의 방향과 현재 액터의 위치 관계에 따라 넉백 벡터를 회전해서 적용
+/// </summary>
+/// <param name="__target_damage_id">데미지 id</param>
+/// <param name="damage_causor">공격한 액터</param>
+/// <param name="__hit_bone_name">피격된 본</param>
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
+	FdamageData target_damage_data;
+	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
+	{
+		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
+	}
+	if (durability_level >= target_damage_data.durability_level) {
+		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션 초기화부
+		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
+			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
+				hit_bone_physics_weight_map[__hit_bone_name] = 0.5f;
+			}
+			else {
+				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
+			}
+			GetMesh()->AddImpulse(damage_causor->GetActorForwardVector() * 1200, __hit_bone_name, true);
+		}
+		//끝
+		animation_Sound_Multicast(nullptr, sq_hit);
+		return;
+	}
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FVector rotated_vector;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
+	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
+		rotated_vector.X *= distance;
+		rotated_vector.Y *= distance;
+	}
+	else {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	}
+	UAnimMontage* hit_anim = nullptr;
+	selectHitAnimation(rotated_vector, hit_anim);
+	animation_Sound_Multicast(hit_anim, sq_hit);
+
+	rotate_interp_time = 0;
+	if (character_state == ECharacterState::Ragdoll) {
+		ragdollGetUp();
+		setCharacterState(ECharacterState::Airbone);
+	}
+	FVector hitnormal;
+	if (airbone_HitChk(rotated_vector, hitnormal)) {
+		float rotated_std = rotated_vector.Size();
+		rotated_vector = hitnormal * rotated_std;
+	}
+	if (target_damage_data.target_control == ETargetControlType::None) {
+		if (character_state == ECharacterState::Walk_and_Jump) {
+			applyKnock_Back(rotated_vector);
+		}
+		else {
+			LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2 , rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		}
+	}
+	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
+		knock_back_unit_vector = FVector::ZeroVector;
+		if (network_owner_type == ENetworkOwnerType::RemoteAI)
+			current_velocty = FVector::ZeroVector;
+		knock_back_speed = 0;
+		if (is_on_sprint)
+			GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+		else
+			GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+		GetCharacterMovement()->MaxAcceleration = 2048.0f;
+		ConsumeMovementInputVector();
+		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
+		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, rotated_vector]() {
+			//UKismetSystemLibrary::PrintString(this, rotated_vector.ToString());
+			airboneStart(rotated_vector);
+			}));
+	}
+}
+```
+
+#### 코드 : 넉백 프로세스 ( 틱 함수 내에서 매 틱 실행 )
+```
+/// <summary>
+/// 넉백 연산 수행 (매 틱 실행)
+/// </summary>
+/// <param name="velocity">넉백 벨로시티</param>
+void ABaseCharacter::knock_BackProcess_Implementation() {
+	if (knock_back_speed > 0) {
+		knock_back_speed = UKismetMathLibrary::FInterpTo(knock_back_speed, 0, d_time, 5);
+		if (knock_back_speed <= 5.0f) {
+			knock_back_unit_vector = FVector::ZeroVector;
+			if (network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = FVector::ZeroVector;
+			knock_back_speed = 0;
+			if (is_on_sprint)
+				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+			else
+				GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+			GetCharacterMovement()->MaxAcceleration = 2048.0f;
+		}
+		else {
+			GetCharacterMovement()->MaxWalkSpeed = knock_back_speed * 4;
+			AddMovementInput(knock_back_unit_vector, 1.0f);
+			if(network_owner_type == ENetworkOwnerType::RemoteAI)
+				current_velocty = knock_back_unit_vector * (GetCharacterMovement()->MaxWalkSpeed);
+		}
+	}
+}
+```
+
 ## 발 IK
 ![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
 PowerIK 플러그인 사용
