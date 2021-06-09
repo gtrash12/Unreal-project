@@ -522,8 +522,16 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// </summary>
 /// <param name="target_damage_data"></param>
 /// <param name="damage_causor"></param>
+
+/// <summary>
+/// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
+/// 피격 액터의 durability_level 이 공격의 durability_level 보다 크면 넉백과 에어본, 경직을 무시하고 히트 부위에 피지컬 애니메이션 실행
+/// 이외의 상황에서 damage_id를 통해 DamageData를 구하고 해당 DamageData의 넉백 벡터와 offset, 공격 액터의 방향과 현재 액터의 위치 관계에 따라 넉백 벡터를 회전해서 적용
+/// </summary>
+/// <param name="__target_damage_id">데미지 id</param>
+/// <param name="damage_causor">공격한 액터</param>
+/// <param name="__hit_bone_name">피격된 본</param>
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
-	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FdamageData target_damage_data;
 	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
 	{
@@ -545,6 +553,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		animation_Sound_Multicast(nullptr, sq_hit);
 		return;
 	}
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
 	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
 	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
@@ -773,16 +782,12 @@ void ABaseCharacter::stickToTheGround(FVector location) {
 
 /// <summary>
 /// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
+/// 0.2초 간격으로 RPC를 통해 서버의 ragdoll_server_location를 업데이트
 /// </summary>
 void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
 	stickToTheGround(sock_location);
-	/*if(network_owner_type == ENetworkOwnerType::OwnedPlayer)
-		CtoS_targetLocation(this, ragdoll_server_location);*/
-	//if (GetWorld()->GetFirstPlayerController()->GetPawn()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-	//	IInterface_BaseCharacter::exectue(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_data, this);
-	//}
 	if (replication_delay_count >= last_replication_delay) {
 		replication_delay_count += d_time;
 		replication_delay_count -= last_replication_delay;
@@ -796,9 +801,6 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	else {
 		replication_delay_count += d_time;
 	}
-	/*if (GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).Size() > 5) {
-		Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
-	}*/
 }
 
 
@@ -1159,23 +1161,29 @@ void ABaseCharacter::Multicast_setCharacterState_Implementation(ECharacterState 
 	setCharacterState(__target_character_state);
 }
 
+/// <summary>
+/// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
+/// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
+/// 원소의 밸류가 0이하가 되면 해당 본의 피직스 시뮬레이션을 종료하고 hit_bone_physics_weight_map 에서 제거
+/// </summary>
 void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	if (hit_bone_physics_weight_map.Num() == 0)
 		return;
+	// 캐릭터 스테이트가 Walk_and_Jump가 아니면 맵을 empty로 초기화 하고 모든 본의 weight를 초기화 한 뒤 함수 종료
 	if (character_state != ECharacterState::Walk_and_Jump) {
 		hit_bone_physics_weight_map.Empty();
 		GetMesh()->SetAllBodiesPhysicsBlendWeight(1);
 		return;
 	}
+	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
 	for (auto i : hit_bone_physics_weight_map) {
 		i.Value -= d_time;
-		hit_bone_physics_weight_map[i.Key] -= d_time * 2;
-		if (i.Value < 0) {
+		hit_bone_physics_weight_map[i.Key] -= d_time * 1.2f;
+		if (i.Value <= 0) {
 			if (hit_bone_physics_weight_map.Num() == 1) {
 				GetMesh()->SetSimulatePhysics(false);
 			}
 			else {
-				//GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, 0);
 				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
 			}
 			hit_bone_physics_weight_map.Remove(i.Key);
