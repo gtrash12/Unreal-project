@@ -359,6 +359,44 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 }
 ```
 
+#### 코드 : 히트 본 피지컬 애니메이션 프로세스 ( 틱 함수 내에서 매 틱 실행 )
+```
+/// <summary>
+/// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
+/// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
+/// 원소의 밸류가 0이하가 되면 해당 본의 피직스 시뮬레이션을 종료하고 hit_bone_physics_weight_map 에서 제거
+/// </summary>
+void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
+	if (hit_bone_physics_weight_map.Num() == 0)
+		return;
+	// 캐릭터 스테이트가 Walk_and_Jump가 아니면 맵을 empty로 초기화 하고 모든 본의 weight를 초기화 한 뒤 함수 종료
+	if (character_state != ECharacterState::Walk_and_Jump) {
+		hit_bone_physics_weight_map.Empty();
+		GetMesh()->SetAllBodiesPhysicsBlendWeight(1);
+		return;
+	}
+	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
+	for (auto i : hit_bone_physics_weight_map) {
+		i.Value -= d_time;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 2;
+		if (i.Value <= 0) {
+			if (hit_bone_physics_weight_map.Num() == 1) {
+				GetMesh()->SetSimulatePhysics(false);
+			}
+			else {
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
+			}
+			hit_bone_physics_weight_map.Remove(i.Key);
+		}
+		else {
+			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
+			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
+		}
+	}
+}
+```
+
 ## 발 IK
 ![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
 PowerIK 플러그인 사용
