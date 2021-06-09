@@ -131,6 +131,8 @@ public:
 		float durability_level = 1;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		bool is_dodge = 0;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
+		TMap<FName, float> hit_bone_physics_weight_map;
 
 private :
 	UPROPERTY()
@@ -357,4 +359,9 @@ public:
 	UFUNCTION(BlueprintCallable, NetMulticast, UnReliable)
 		void Multicast_setCharacterState(ECharacterState __target_character_state);
 		virtual void Multicast_setCharacterState_Implementation(ECharacterState __target_character_state);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, meta = (Category = "Base-Combat"))
+		void hitBonePhysicalReactionProcess();
+		virtual void hitBonePhysicalReactionProcess_Implementation();
+
 };

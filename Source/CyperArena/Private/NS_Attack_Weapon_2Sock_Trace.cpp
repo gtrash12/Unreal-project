@@ -39,7 +39,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 		FRotator trace_rotation = UKismetMathLibrary::FindLookAtRotation(cur_sock_start, cur_sock_end);;
 		TArray<FHitResult> hit_results;
 		const TArray<AActor*> ignore_actors;
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_start, cur_sock_end, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_start, cur_sock_end, volume * actor->GetActorScale().X, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);

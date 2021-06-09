@@ -35,8 +35,7 @@ void UNS_Attack_1Sock_Trace_Sphere::NotifyTick(USkeletalMeshComponent* MeshComp,
 		FVector cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
 		TArray<FHitResult> hit_results;
 		const TArray<AActor*> ignore_actors;
-		cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
-		UKismetSystemLibrary::SphereTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, radius, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		UKismetSystemLibrary::SphereTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, radius * actor->GetActorScale().X, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);

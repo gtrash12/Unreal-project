@@ -135,6 +135,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 	knock_BackProcess();
 	rotateProcess();
+	hitBonePhysicalReactionProcess();
 }
 
 // Called to bind functionality to input
@@ -263,7 +264,9 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 			}
 		}
 	}
-	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 2 )) {
+	/* pelvis 하위 본 히트시에만 applyDamage*/
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%d] %s"), GetMesh()->GetBoneIndex(__hit_bone_name), *(__hit_bone_name.ToString())));
+	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
 		flag = false;
 	}
 
@@ -528,16 +531,15 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 	if (durability_level >= target_damage_data.durability_level) {
 		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
-		if (character_state == ECharacterState::Walk_and_Jump) {
+		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
-			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(__hit_bone_name, 0.5f);
-			GetMesh()->AddImpulse(FVector::OneVector * 300, __hit_bone_name);
-			FTimerHandle timer_handle;
-			GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
-				if (character_state == ECharacterState::Walk_and_Jump) {
-					GetMesh()->SetSimulatePhysics(false);
-				}
-				}), 0.7f, false);
+			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
+				hit_bone_physics_weight_map[__hit_bone_name] = 0.5f;
+			}
+			else {
+				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
+			}
+			GetMesh()->AddImpulse(damage_causor->GetActorForwardVector() * 1200, __hit_bone_name, true);
 		}
 		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
@@ -1155,4 +1157,33 @@ void ABaseCharacter::CtoS_setCharacterState_Implementation(ECharacterState __tar
 
 void ABaseCharacter::Multicast_setCharacterState_Implementation(ECharacterState __target_character_state) {
 	setCharacterState(__target_character_state);
+}
+
+void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
+	if (hit_bone_physics_weight_map.Num() == 0)
+		return;
+	if (character_state != ECharacterState::Walk_and_Jump) {
+		hit_bone_physics_weight_map.Empty();
+		GetMesh()->SetAllBodiesPhysicsBlendWeight(1);
+		return;
+	}
+	for (auto i : hit_bone_physics_weight_map) {
+		i.Value -= d_time;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 2;
+		if (i.Value < 0) {
+			if (hit_bone_physics_weight_map.Num() == 1) {
+				GetMesh()->SetSimulatePhysics(false);
+			}
+			else {
+				//GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, 0);
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
+			}
+			hit_bone_physics_weight_map.Remove(i.Key);
+		}
+		else {
+			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
+				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
+			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
+		}
+	}
 }

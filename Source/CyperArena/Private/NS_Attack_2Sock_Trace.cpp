@@ -54,7 +54,7 @@ void UNS_Attack_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 		halfsize.Y = abs(halfsize.Y);
 		halfsize.Z = abs(halfsize.Z);
 		halfsize += volume;
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_mid, cur_mid, halfsize, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_mid, cur_mid, halfsize * actor->GetActorScale().X, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
