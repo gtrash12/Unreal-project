@@ -10,6 +10,7 @@
 #include "Engine.h"
 #include "EngineUtils.h"
 #include "Public/Interface_PlayerController.h"
+#include "Public/PWOGameInstance.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -66,6 +67,8 @@ void ABaseCharacter::PostInitializeComponents() {
 	GetMesh()->AddTickPrerequisiteActor(this);
 	main_anim_instance = GetMesh()->GetAnimInstance();
 	GetCharacterMovement()->bOrientRotationToMovement = 0;
+
+	
 }
 
 // Called when the game starts or when spawned
@@ -181,10 +184,7 @@ void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor
 {
 	FdamageData __target_damage_data;
 	float causor_power;
-	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
-	{
-		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, __target_damage_data);
-	}
+	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, __target_damage_data);
 	if (__damage_causor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
 		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
@@ -533,10 +533,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// <param name="__hit_bone_name">피격된 본</param>
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
 	FdamageData target_damage_data;
-	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
-	{
-		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
-	}
+	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, target_damage_data);
 	if (durability_level >= target_damage_data.durability_level) {
 		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
 		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {

@@ -9,6 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/SphereComponent.h"
+#include "../Public/PWOGameInstance.h"
 
 void UNS_Attack_Collision_Create::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
@@ -18,10 +19,7 @@ void UNS_Attack_Collision_Create::NotifyBegin(USkeletalMeshComponent* MeshComp, 
 	ABaseCharacter* base_character = Cast<ABaseCharacter>(actor);
 	if (base_character == nullptr)
 		return;
-	if (MeshComp->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
-	{
-		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
-	}
+	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);

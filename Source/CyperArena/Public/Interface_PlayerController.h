@@ -30,8 +30,4 @@ public:
 		void isLock_On_Target(AActor* actor, bool& result);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void CtoS_applyDamage(const AActor* damaged_actor, FName __damage_id, AActor* damage_causor, FName __hit_bone_name);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void findDamageData(FName __damage_id, FdamageData& __output_damage_data);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void findActionData(FName __action_id, FActionData& __output_action_data);
 };

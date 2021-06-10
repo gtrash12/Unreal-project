@@ -7,6 +7,7 @@
 #include "../BaseCharacter.h"
 #include "../CustomData.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "../Public/PWOGameInstance.h"
 
 void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
@@ -17,10 +18,7 @@ void UNS_Attack_Weapon_Collision_Bind::NotifyBegin(USkeletalMeshComponent* MeshC
 		return;
 	FdamageData damage_data;
 	UPrimitiveComponent* weapon;
-	if (MeshComp->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
-	{
-		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
-	}
+	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);

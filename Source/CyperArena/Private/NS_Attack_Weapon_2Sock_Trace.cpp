@@ -7,6 +7,7 @@
 #include "../CustomData.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "../Public/PWOGameInstance.h"
 
 void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
 	
@@ -14,10 +15,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp
 		return;
 	AActor* actor = MeshComp->GetOwner();
 	FdamageData damage_data;
-	if (MeshComp->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
-	{
-		IInterface_PlayerController::Execute_findDamageData(MeshComp->GetWorld()->GetFirstPlayerController(), damage_id, damage_data);
-	}
+	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
@@ -51,7 +49,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 void UNS_Attack_Weapon_2Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
-	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
+	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 }
 
 
