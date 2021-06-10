@@ -539,10 +539,12 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
 			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
-				hit_bone_physics_weight_map[__hit_bone_name] = 0.5f;
+				hit_bone_physics_weight_map[__hit_bone_name] =0.8f;
 			}
 			else {
-				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
+				if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(__hit_bone_name)) == false) {
+					hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.8f));
+				}
 			}
 			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 300, __hit_bone_name, true);
 		}
@@ -1173,9 +1175,16 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 		return;
 	}
 	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
+	TArray<FName> removetarget;
 	for (auto i : hit_bone_physics_weight_map) {
 		i.Value -= d_time;
-		hit_bone_physics_weight_map[i.Key] -= d_time * 0.8f;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 1.5f;
+		if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(i.Key))) {
+			/*상위 본에서 피직스 이미 시뮬레이션 중이면 맵에서 제거하고 웨이트 조절 스킵*/
+			//hit_bone_physics_weight_map.Remove(i.Key);
+			removetarget.Add(i.Key);
+			continue;
+		}
 		if (i.Value <= 0) {
 			if (hit_bone_physics_weight_map.Num() == 1) {
 				GetMesh()->SetSimulatePhysics(false);
@@ -1183,12 +1192,16 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 			else {
 				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
 			}
-			hit_bone_physics_weight_map.Remove(i.Key);
+			//hit_bone_physics_weight_map.Remove(i.Key);
+			removetarget.Add(i.Key);
 		}
 		else {
 			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
 				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
 			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
 		}
+	}
+	for (auto i : removetarget) {
+		hit_bone_physics_weight_map.Remove(i);
 	}
 }
