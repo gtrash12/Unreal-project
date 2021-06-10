@@ -226,9 +226,9 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 /// 이외의 상황에서 damage_id를 통해 DamageData를 구하고 해당 DamageData의 넉백 벡터와 offset, 공격 액터의 방향과 현재 액터의 위치 관계에 따라 넉백 벡터를 회전해서 적용
 /// </summary>
 /// <param name="__target_damage_id">데미지 id</param>
-/// <param name="damage_causor">공격한 액터</param>
+/// <param name="damage_causer">공격한 액터</param>
 /// <param name="__hit_bone_name">피격된 본</param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
 	FdamageData target_damage_data;
 	if (GetMesh()->GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass()))
 	{
@@ -244,7 +244,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 			else {
 				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
 			}
-			GetMesh()->AddImpulse(damage_causor->GetActorForwardVector() * 1200, __hit_bone_name, true);
+			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 1200, __hit_bone_name, true);
 		}
 		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
@@ -252,10 +252,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
-	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
-	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
@@ -272,7 +272,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		rotated_vector.Y *= distance;
 	}
 	else {
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);

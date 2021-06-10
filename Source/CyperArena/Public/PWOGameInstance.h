@@ -38,4 +38,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-DataTableAccess")
 		void findActionData(FName __action_id, FActionData& __output_action_data);
 		virtual void findActionData_Implementation(FName __action_id, FActionData& __output_action_data);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-Interaction")
+		void Interact(AActor* __target, AActor* __causer);
+		virtual void Interact_Implementation(AActor* __target, AActor* __causer);
 };

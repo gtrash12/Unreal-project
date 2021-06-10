@@ -1175,7 +1175,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
 	for (auto i : hit_bone_physics_weight_map) {
 		i.Value -= d_time;
-		hit_bone_physics_weight_map[i.Key] -= d_time * 1.2f;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 0.8f;
 		if (i.Value <= 0) {
 			if (hit_bone_physics_weight_map.Num() == 1) {
 				GetMesh()->SetSimulatePhysics(false);
