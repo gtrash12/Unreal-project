@@ -179,17 +179,17 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// 체력 연산 후 멀티캐스트 함수 실행
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
-/// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causor, FName __hit_bone_name)
+/// <param name="damage_causer">데미지를 입힌 액터</param>
+void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causer, FName __hit_bone_name)
 {
 	FdamageData __target_damage_data;
-	float causor_power;
+	float causer_power;
 	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, __target_damage_data);
-	if (__damage_causor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_getBasePower(__damage_causor, causor_power);
-		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causor_power;
+	if (__damage_causer->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		IInterface_BaseCharacter::Execute_getBasePower(__damage_causer, causer_power);
+		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causer_power;
 		hp = UKismetMathLibrary::Max(0, hp);
-		applyDamage_Multicast(__target_damage_id, __damage_causor, __hit_bone_name);
+		applyDamage_Multicast(__target_damage_id, __damage_causer, __hit_bone_name);
 	}
 }
 
@@ -509,11 +509,11 @@ void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
 /// 서버에서 체력연산 후 멀티캐스트로 넉백 등을 처리
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
-/// <param name="damage_causor">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name)
+/// <param name="damage_causer">데미지를 입힌 액터</param>
+void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name)
 {
 	getNetworkOwnerType(network_owner_type);
-	applyDamage_Multicast_Exec(__target_damage_id, damage_causor, __hit_bone_name);
+	applyDamage_Multicast_Exec(__target_damage_id, damage_causer, __hit_bone_name);
 }
 
 /// <summary>
@@ -521,7 +521,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// 블루프린트에서 오버라이딩 할 수 있게 하기 위함
 /// </summary>
 /// <param name="target_damage_data"></param>
-/// <param name="damage_causor"></param>
+/// <param name="damage_causer"></param>
 
 /// <summary>
 /// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
@@ -529,9 +529,9 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// 이외의 상황에서 damage_id를 통해 DamageData를 구하고 해당 DamageData의 넉백 벡터와 offset, 공격 액터의 방향과 현재 액터의 위치 관계에 따라 넉백 벡터를 회전해서 적용
 /// </summary>
 /// <param name="__target_damage_id">데미지 id</param>
-/// <param name="damage_causor">공격한 액터</param>
+/// <param name="damage_causer">공격한 액터</param>
 /// <param name="__hit_bone_name">피격된 본</param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causor, FName __hit_bone_name) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
 	FdamageData target_damage_data;
 	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, target_damage_data);
 	if (durability_level >= target_damage_data.durability_level) {
@@ -544,7 +544,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 			else {
 				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
 			}
-			GetMesh()->AddImpulse(damage_causor->GetActorForwardVector() * 1200, __hit_bone_name, true);
+			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 300, __hit_bone_name, true);
 		}
 		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
@@ -552,10 +552,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
-	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
-	FVector knock_back_point_vector = damage_causor->GetActorLocation() + rotated_offset;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
@@ -572,7 +572,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		rotated_vector.Y *= distance;
 	}
 	else {
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causor->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);

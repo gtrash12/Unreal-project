@@ -2,6 +2,7 @@
 
 
 #include "PWOGameInstance.h"
+#include "../Public//Interface_General.h"
 
 UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UDataTable> damage_data_table_cst(TEXT("DataTable'/Game/DataTable/DamageDataTable.DamageDataTable'"));
@@ -24,4 +25,11 @@ void UPWOGameInstance::findDamageData_Implementation(FName __damage_id, FdamageD
 
 void UPWOGameInstance::findActionData_Implementation(FName __action_id, FActionData& __output_action_data) {
 	__output_action_data = *action_data_table->FindRow<FActionData>(__action_id, TEXT(""));
+}
+
+void UPWOGameInstance::Interact_Implementation(AActor* __target, AActor* __causer) {
+	//__target->
+	if (__target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
+		IInterface_General::Execute_Interact(__target, __causer);
+	}
 }

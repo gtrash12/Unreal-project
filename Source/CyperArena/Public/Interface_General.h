@@ -23,9 +23,9 @@ class CYPERARENA_API IInterface_General
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void interaction(AActor* causor);
+		void Interact(AActor* causer);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void popInteractionInfo(AActor* causor);
+		void popInteractionInfo(AActor* causer);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void removeInteractionInfo(AActor* causor);
+		void removeInteractionInfo(AActor* causer);
 };
