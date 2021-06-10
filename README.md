@@ -235,16 +235,18 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		IInterface_PlayerController::Execute_findDamageData(GetMesh()->GetWorld()->GetFirstPlayerController(), __target_damage_id, target_damage_data);
 	}
 	if (durability_level >= target_damage_data.durability_level) {
-		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션 초기화부
+		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
 		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
 			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
-				hit_bone_physics_weight_map[__hit_bone_name] = 0.5f;
+				hit_bone_physics_weight_map[__hit_bone_name] =0.8f;
 			}
 			else {
-				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.5f));
+				if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(__hit_bone_name)) == false) {
+					hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.8f));
+				}
 			}
-			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 1200, __hit_bone_name, true);
+			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 300, __hit_bone_name, true);
 		}
 		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
@@ -352,6 +354,7 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 /// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
 /// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
 /// 원소의 밸류가 0이하가 되면 해당 본의 피직스 시뮬레이션을 종료하고 hit_bone_physics_weight_map 에서 제거
+/// 상위 본이 피직스 시뮬레이션이면 hit_bone_physics_weight_map 에서 현재 본을 제거 ( 충돌과 꼬임 방지 )
 /// </summary>
 void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	if (hit_bone_physics_weight_map.Num() == 0)
@@ -363,9 +366,15 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 		return;
 	}
 	// 맵 순회 하며 웨이트 값 감소하고 0이면 삭제
+	TArray<FName> removetarget;
 	for (auto i : hit_bone_physics_weight_map) {
 		i.Value -= d_time;
-		hit_bone_physics_weight_map[i.Key] -= d_time * 2;
+		hit_bone_physics_weight_map[i.Key] -= d_time * 1.5f;
+		if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(i.Key))) {
+			/*상위 본에서 피직스 이미 시뮬레이션 중이면 맵에서 제거하고 웨이트 조절 스킵*/
+			removetarget.Add(i.Key);
+			continue;
+		}
 		if (i.Value <= 0) {
 			if (hit_bone_physics_weight_map.Num() == 1) {
 				GetMesh()->SetSimulatePhysics(false);
@@ -373,13 +382,14 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 			else {
 				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
 			}
-			hit_bone_physics_weight_map.Remove(i.Key);
+			removetarget.Add(i.Key);
 		}
 		else {
-			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
-				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
 			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
 		}
+	}
+	for (auto i : removetarget) {
+		hit_bone_physics_weight_map.Remove(i);
 	}
 }
 ```
