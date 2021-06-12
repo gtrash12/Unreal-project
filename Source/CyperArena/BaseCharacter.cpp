@@ -1164,6 +1164,7 @@ void ABaseCharacter::Multicast_setCharacterState_Implementation(ECharacterState 
 /// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
 /// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
 /// 원소의 밸류가 0이하가 되면 해당 본의 피직스 시뮬레이션을 종료하고 hit_bone_physics_weight_map 에서 제거
+/// 상위 본이 피직스 시뮬레이션이면 hit_bone_physics_weight_map 에서 현재 본을 제거 ( 충돌과 꼬임 방지 )
 /// </summary>
 void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	if (hit_bone_physics_weight_map.Num() == 0)
@@ -1181,7 +1182,6 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 		hit_bone_physics_weight_map[i.Key] -= d_time * 1.5f;
 		if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(i.Key))) {
 			/*상위 본에서 피직스 이미 시뮬레이션 중이면 맵에서 제거하고 웨이트 조절 스킵*/
-			//hit_bone_physics_weight_map.Remove(i.Key);
 			removetarget.Add(i.Key);
 			continue;
 		}
@@ -1192,12 +1192,9 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 			else {
 				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, false);
 			}
-			//hit_bone_physics_weight_map.Remove(i.Key);
 			removetarget.Add(i.Key);
 		}
 		else {
-			if (GetMesh()->IsSimulatingPhysics(i.Key) == false)
-				GetMesh()->SetAllBodiesBelowSimulatePhysics(i.Key, true);
 			GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(i.Key, hit_bone_physics_weight_map[i.Key]);
 		}
 	}

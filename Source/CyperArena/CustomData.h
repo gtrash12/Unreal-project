@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
 #include "Engine/Texture.h"
+#include "Public/BaseItemEffect.h"
 
 #include "CustomData.generated.h"
 
@@ -174,6 +175,22 @@ public:
 		EItemType item_type;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		float value;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TArray<TSubclassOf<UBaseItemEffect>> item_effect_list;
+};
+
+
+USTRUCT(Atomic, BlueprintType)
+struct FInventoryData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString item_id;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		int32 index;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		int32 count;
 };
 /*
 UCLASS()
