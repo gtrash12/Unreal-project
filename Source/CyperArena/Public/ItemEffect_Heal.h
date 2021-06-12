@@ -14,7 +14,7 @@ class CYPERARENA_API UItemEffect_Heal : public UBaseItemEffect
 {
 	GENERATED_BODY()
 public :
-	virtual void applyItemEffect_Implementation(AActor* causer) override;
 
-	virtual void describeItemEffect_Implementation(FString& __desc_text) override;
+	virtual void applyItemEffect_Implementation(AActor* causer) override;
+	virtual void describeItemEffect_Implementation(FText& __desc_text) override;
 };

@@ -163,32 +163,41 @@ enum class EItemType : uint8
 };
 
 USTRUCT(Atomic, BlueprintType)
+struct FItemEffect
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float value;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TSubclassOf<UBaseItemEffect> item_effect;
+};
+
+USTRUCT(Atomic, BlueprintType)
 struct FItemData : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FString name;
+		FText name;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		UTexture2D* icon;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EItemType item_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (MultiLine="true"))
+		FText item_info_text;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		float value;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TArray<TSubclassOf<UBaseItemEffect>> item_effect_list;
+		TArray<FItemEffect> item_effect_list;
 };
 
 
 USTRUCT(Atomic, BlueprintType)
-struct FInventoryData : public FTableRowBase
+struct FInventoryData
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		FString item_id;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		int32 index;
+		FName item_id;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 count;
 };
