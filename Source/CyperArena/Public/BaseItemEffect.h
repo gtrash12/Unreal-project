@@ -22,11 +22,4 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
 		float value;
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ItemEffect")
-		void applyItemEffect(AActor* causer);
-		virtual void applyItemEffect_Implementation(AActor* causer);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "ItemEffect")
-		void describeItemEffect(FText& __desc_text);
-		virtual void describeItemEffect_Implementation(FText& __desc_text);
 };

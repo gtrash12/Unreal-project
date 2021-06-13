@@ -7,11 +7,3 @@
 UBaseItemEffect::UBaseItemEffect() {
 
 }
-
-void UBaseItemEffect::applyItemEffect_Implementation(AActor* causer) {
-	return;
-}
-
-void UBaseItemEffect::describeItemEffect_Implementation(FText& __desc_text) {
-	return;
-}
