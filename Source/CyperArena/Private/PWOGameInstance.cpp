@@ -27,6 +27,10 @@ void UPWOGameInstance::findActionData_Implementation(FName __action_id, FActionD
 	__output_action_data = *action_data_table->FindRow<FActionData>(__action_id, TEXT(""));
 }
 
+void UPWOGameInstance::findItemData_Implementation(FName __item_id, FItemData& __output_item_data){
+	__output_item_data = *item_data_table->FindRow<FItemData>(__item_id, TEXT(""));
+}
+
 void UPWOGameInstance::Interact_Implementation(AActor* __target, AActor* __causer) {
 	//__target->
 	if (__target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
