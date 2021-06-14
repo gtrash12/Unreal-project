@@ -237,7 +237,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 				flag = true;
 			}
 		}
-		if (UKismetSystemLibrary::IsStandalone(this)) {
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			if (network_owner_type == ENetworkOwnerType::OwnedAI) {
 				flag = true;
 			}
@@ -995,7 +995,10 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 /// <param name="closest_player">가장 가까이있는 플레이어 폰</param>
 void ABaseCharacter::findClosestPlayer_Implementation(AActor*& closest_player) {
 	float min_distance = INFINITY;
-	
+	if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+		closest_player = this;
+		return;
+	}
 	for (const auto& entity : TActorRange<APlayerController>(GetWorld())) {
 		float tmp_dist = FVector::Distance(entity->GetPawn()->GetActorLocation(), GetActorLocation());
 		if (tmp_dist < min_distance) {
