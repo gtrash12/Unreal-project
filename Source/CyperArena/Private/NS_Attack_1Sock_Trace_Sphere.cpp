@@ -45,5 +45,5 @@ void UNS_Attack_1Sock_Trace_Sphere::NotifyTick(USkeletalMeshComponent* MeshComp,
 void UNS_Attack_1Sock_Trace_Sphere::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
-	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
 }

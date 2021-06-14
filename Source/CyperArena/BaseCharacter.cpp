@@ -239,7 +239,9 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 		}
 		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 			if (network_owner_type == ENetworkOwnerType::OwnedAI) {
-				flag = true;
+				if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+					flag = true;
+				}
 			}
 		}
 	}
