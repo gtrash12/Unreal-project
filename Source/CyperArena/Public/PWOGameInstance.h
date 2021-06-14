@@ -47,4 +47,5 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-Interaction")
 		void Interact(AActor* __target, AActor* __causer);
 		virtual void Interact_Implementation(AActor* __target, AActor* __causer);
+
 };
