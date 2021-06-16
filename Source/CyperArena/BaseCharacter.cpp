@@ -842,7 +842,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	//}
 	float ease_alpha = replication_delay_count / last_replication_delay;
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
-	ragdoll_physics_handle->SetTargetLocation(predicted_location);
+	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 	stickToTheGround(ragdoll_server_location);
 	last_ragdoll_server_location = ragdoll_server_location;
 }
