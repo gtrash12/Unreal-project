@@ -626,14 +626,6 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 			}));
 		//setCharacterState(ECharacterState::Airbone);
 	}
-	if (character_state == ECharacterState::Ragdoll) {
-		/*if (is_simulation_responsible) {
-			GetMesh()->AddImpulse(UKismetMathLibrary::MakeVector(rotated_vector.X * 2 * 1/d_time, rotated_vector.Y * 2 * 1 / d_time, rotated_vector.Z * 1 / d_time), TEXT("pelvis"), true);
-		}
-		else {
-			replication_delay_count = last_replication_delay;
-		}*/
-	}
 }
 
 /// <summary>
@@ -686,38 +678,12 @@ void ABaseCharacter::rotateProcess_Implementation() {
 /// </summary>
 /// <param name="velocity">넉백 벨로시티</param>
 void ABaseCharacter::knock_BackProcess_Implementation() {
-	/*if (knock_back_count_end > 0) {
-		float prev = UKismetMathLibrary::Ease(1.0f, 0.0f, knock_back_count / knock_back_count_end, EEasingFunc::EaseOut);
-		knock_back_count += d_time;
-		float ease_alpha = knock_back_count / knock_back_count_end;
-		float ease_res = UKismetMathLibrary::Ease(1.0f, 0.0f, ease_alpha, EEasingFunc::EaseOut);
-		FVector knock_back_delta = UKismetMathLibrary::Multiply_VectorFloat(knock_back_unit_vector, prev - ease_res);
-		GetCharacterMovement()->MaxWalkSpeed = knock_back_unit_vector.Size() * ease_res * 4;
-		GetCharacterMovement()->MaxAcceleration = 1000000.f;
-		AddMovementInput(knock_back_unit_vector, 1.0f);
-		if (ease_alpha >= 1.0f) {
-			knock_back_count_end = 0.0f;
-			if (is_on_sprint)
-				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
-			else
-				GetCharacterMovement()->MaxWalkSpeed = walk_speed;
-			GetCharacterMovement()->MaxAcceleration = 2048.0f;
-		}
-	}*/
 	if (knock_back_speed > 0) {
 		//knock_back_unit_vector = UKismetMathLibrary::VInterpTo(knock_back_unit_vector, FVector::ZeroVector, d_time, 5);
 		knock_back_speed = UKismetMathLibrary::FInterpTo(knock_back_speed, 0, d_time, 5);
 		//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("ASDF %f"),knock_back_speed));
 		if (knock_back_speed <= 5.0f) {
-			knock_back_unit_vector = FVector::ZeroVector;
-			if (network_owner_type == ENetworkOwnerType::RemoteAI)
-				current_velocty = FVector::ZeroVector;
-			knock_back_speed = 0;
-			if (is_on_sprint)
-				GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
-			else
-				GetCharacterMovement()->MaxWalkSpeed = walk_speed;
-			GetCharacterMovement()->MaxAcceleration = 2048.0f;
+			endKnock_Back();
 		}
 		else {
 			GetCharacterMovement()->MaxWalkSpeed = knock_back_speed * 4;
@@ -745,6 +711,22 @@ void ABaseCharacter::applyKnock_Back_Implementation(FVector velocity) {
 		LaunchCharacter(UKismetMathLibrary::MakeVector(0.0f,0.0f,velocity.Z),false,false);
 	}
 	GetCharacterMovement()->MaxAcceleration = 1000000.f;
+	//SetReplicateMovement(false);
+}
+
+
+void ABaseCharacter::endKnock_Back() {
+	//SetReplicateMovement(true);
+	knock_back_unit_vector = FVector::ZeroVector;
+	if (network_owner_type == ENetworkOwnerType::RemoteAI)
+		current_velocty = FVector::ZeroVector;
+	knock_back_speed = 0;
+	if (is_on_sprint)
+		GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+	else
+		GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+	GetCharacterMovement()->MaxAcceleration = 2048.0f;
+	
 }
 
 /// <summary>

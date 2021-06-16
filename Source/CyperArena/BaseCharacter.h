@@ -364,4 +364,6 @@ public:
 		void hitBonePhysicalReactionProcess();
 		virtual void hitBonePhysicalReactionProcess_Implementation();
 
+	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
+		void endKnock_Back();
 };
