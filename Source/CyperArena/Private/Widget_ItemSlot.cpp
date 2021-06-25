@@ -3,6 +3,8 @@
 
 #include "Widget_ItemSlot.h"
 
-template<typename T>
-void UWidget_ItemSlot::swapItem(T operation) {
+void UWidget_ItemSlot::dropFromItemSlot(UWidget_ItemSlot* from) {
+	if (from->my_index == my_index)
+		return;
+
 }

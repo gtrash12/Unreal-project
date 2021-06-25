@@ -28,7 +28,6 @@ public :
 		int32 count;
 
 
-	template<typename T>
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
-		void swapItem(T operation);
+		void dropFromItemSlot(UWidget_ItemSlot* from);
 };
