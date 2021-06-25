@@ -36,11 +36,31 @@ void AFollowCam_Base::BeginPlay()
 void AFollowCam_Base::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-    if (look_target->IsValidLowLevel() == false)
+    if (follow_target->IsValidLowLevel() == false)
         return;
-    FVector trace_start = GetActorLocation();
+    FVector trace_start = follow_target->GetActorLocation();
     trace_start.Z += 50;
-    FVector trace_end = GetActorLocation();
-    UKismetSystemLibrary::LineTraceSingle();
+    FVector trace_end = spring_arm->GetRightVector() * 60 + trace_start;
+
+    const TArray<AActor*> ignore;
+    FHitResult hit_result;
+    UKismetSystemLibrary::LineTraceSingle(this, trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, ignore, EDrawDebugTrace::Type::None, hit_result, true);
+    if (hit_result.bBlockingHit) {
+        location_offset.Y = hit_result.Distance - 60;
+    }
+    else {
+        location_offset.Y = 0;
+    }
+
+    FVector target_location = follow_target->GetActorLocation() + follow_target->GetActorRightVector() * location_offset.Y;
+    FRotator target_rotation;
+    if (is_lock_on) {
+        target_rotation = UKismetMathLibrary::FindLookAtRotation(camera->GetComponentLocation(), look_target->GetActorLocation());
+        GetWorld()->GetFirstPlayerController()->SetControlRotation(UKismetMathLibrary::FindLookAtRotation(follow_target->GetActorLocation(), look_target->GetActorLocation()));
+    }
+    else {
+        target_rotation = GetWorld()->GetFirstPlayerController()->GetControlRotation();
+    }
+    SetActorLocationAndRotation(target_location, target_rotation);
 }
 
