@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "FollowCam_Base.h"
 #include "../CustomData.h"
+#include "BaseEnemy.h"
 
 #include "Controller_Player.generated.h"
 
@@ -16,6 +17,8 @@ UCLASS()
 class CYPERARENA_API AController_Player : public APlayerController
 {
 	GENERATED_BODY()
+protected:
+	virtual void BeginPlay() override;
 public :
 	UPROPERTY(BlueprintReadWrite)
 		AFollowCam_Base* follow_cam;
