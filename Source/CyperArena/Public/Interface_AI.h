@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "BehaviorTree/BehaviorTree.h"
+
 #include "Interface_AI.generated.h"
 
 // This class does not need to be modified.
@@ -36,4 +38,6 @@ public:
 		void setSprint(bool __is_sprint);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-AI")
 		void attack();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-AI")
+		UBehaviorTree* getBehaviorTree();
 };
