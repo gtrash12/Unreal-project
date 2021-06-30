@@ -5,6 +5,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "../Public/Interface_AI.h"
 
 void AController_Player::BeginPlay()
 {
@@ -19,6 +20,52 @@ void AController_Player::BeginPlay()
 		SetViewTarget(follow_cam);
 		}), 2, false);
 }
+
+void AController_Player::SetupInputComponent()
+{
+	
+	InputComponent->BindAction("LockOn", IE_Pressed, this, &AController_Player::lockOnEvent);
+
+	//InputComponent->BindAxis("MoveX", this, &AMyPawn::Move_XAxis);
+	//InputComponent->BindAxis("MoveY", this, &AMyPawn::Move_YAxis);
+
+}
+
+void AController_Player::lockOnEvent()
+{
+	if (follow_cam->IsValidLowLevel() == false)
+		return;
+	if (follow_cam->is_lock_on) {
+		releaseLock_ON();
+		return;
+	}
+	AActor* target = findLockOnTarget();
+	if (target->IsValidLowLevel()) {
+		if (target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
+			IInterface_AI::Execute_setStateBarVisibility(target, true);
+			IInterface_AI::Execute_setLockOnMarker(target, true);
+		}
+		follow_cam->is_lock_on = true;
+		is_lock_on = true;
+		follow_cam->look_target = target;
+	}
+}
+
+void AController_Player::releaseLock_ON_Implementation()
+{
+	if (follow_cam->IsValidLowLevel() == false)
+		return;
+	follow_cam->is_lock_on = false;
+	is_lock_on = false;
+	if (follow_cam->look_target->IsValidLowLevel()) {
+		if (follow_cam->look_target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
+			IInterface_AI::Execute_setLockOnMarker(follow_cam->look_target, false);
+		}
+	}
+	SetControlRotation(follow_cam->camera->GetComponentRotation());
+}
+
+
 
 /// <summary>
 /// 타게팅 대상을 선정
@@ -95,4 +142,5 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 			}
 		}
 	}
+	return result;
 }

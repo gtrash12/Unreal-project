@@ -30,4 +30,10 @@ public:
 		void isLock_On_Target(AActor* actor, bool& result);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void CtoS_applyDamage(const AActor* damaged_actor, FName __damage_id, AActor* damage_causer, FName __hit_bone_name);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		AActor* getLockOnTarget();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void getItem(FName __item_id);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		int32 findInventoryEmptyIndex();
 };

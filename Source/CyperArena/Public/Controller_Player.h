@@ -7,6 +7,7 @@
 #include "FollowCam_Base.h"
 #include "../CustomData.h"
 #include "BaseEnemy.h"
+#include "Interface_PlayerController.h"
 
 #include "Controller_Player.generated.h"
 
@@ -14,12 +15,14 @@
  * 
  */
 UCLASS()
-class CYPERARENA_API AController_Player : public APlayerController
+class CYPERARENA_API AController_Player : public APlayerController, public IInterface_PlayerController
 {
 	GENERATED_BODY()
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
 public :
+
 	UPROPERTY(BlueprintReadWrite)
 		AFollowCam_Base* follow_cam;
 	UPROPERTY(BlueprintReadWrite)
@@ -37,8 +40,14 @@ public :
 	UPROPERTY(BlueprintReadWrite)
 		int32 max_slot_size;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+		void releaseLock_ON();
+		virtual void releaseLock_ON_Implementation();
+
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* changeLockOnTarget(float __direction);
+	UFUNCTION(BlueprintCallable, Category = "Targetting")
+		void lockOnEvent();
 };
