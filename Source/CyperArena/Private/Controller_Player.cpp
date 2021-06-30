@@ -52,7 +52,7 @@ void AController_Player::Tick(float DeltaTime)
 		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery1, false, dummy, EDrawDebugTrace::Type::None, hit_result, true);
 		if (is_hit && hit_result.Actor->ActorHasTag("Interactable")) {
 			if (interaction_target != hit_result.Actor) {
-				if (interaction_target->IsValidLowLevel()) {
+				if (interaction_target != nullptr && interaction_target->IsValidLowLevel()) {
 					if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
 						IInterface_General::Execute_removeInteractionInfo(interaction_target, GetPawn());
 					}
@@ -64,7 +64,7 @@ void AController_Player::Tick(float DeltaTime)
 			}
 		}
 		else {
-			if (interaction_target->IsValidLowLevel()) {
+			if (interaction_target != nullptr && interaction_target->IsValidLowLevel()) {
 				if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
 					IInterface_General::Execute_removeInteractionInfo(interaction_target, GetPawn());
 				}
@@ -96,7 +96,7 @@ void AController_Player::lockOnEvent()
 		return;
 	}
 	AActor* target = findLockOnTarget();
-	if (target->IsValidLowLevel()) {
+	if (target != nullptr && target->IsValidLowLevel()) {
 		if (target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
 			IInterface_AI::Execute_setStateBarVisibility(target, true);
 			IInterface_AI::Execute_setLockOnMarker(target, true);
@@ -118,7 +118,7 @@ void AController_Player::changeLockOnAxisEvent(float __axis_value)
 	if (__axis_value == 0 || lock_on_cooltime > 0 || follow_cam->IsValidLowLevel() == false || is_lock_on == false)
 		return;
 	AActor* target = changeLockOnTarget(__axis_value);
-	if (target->IsValidLowLevel()) {
+	if (target != nullptr && target->IsValidLowLevel()) {
 		if (follow_cam->look_target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
 			IInterface_AI::Execute_setLockOnMarker(follow_cam->look_target, false);
 		}
@@ -140,7 +140,7 @@ void AController_Player::releaseLock_ON_Implementation()
 		return;
 	follow_cam->is_lock_on = false;
 	is_lock_on = false;
-	if (follow_cam->look_target->IsValidLowLevel()) {
+	if (follow_cam->look_target != nullptr && follow_cam->look_target->IsValidLowLevel()) {
 		if (follow_cam->look_target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
 			IInterface_AI::Execute_setLockOnMarker(follow_cam->look_target, false);
 		}

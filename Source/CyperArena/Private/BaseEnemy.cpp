@@ -187,7 +187,7 @@ UBehaviorTree* ABaseEnemy::getBehaviorTree_Implementation()
 
 void ABaseEnemy::setLookRotation_Implementation()
 {
-	if (target_actor->IsValidLowLevel()) {
+	if (target_actor != nullptr && target_actor->IsValidLowLevel()) {
 		look_location = target_actor->GetActorLocation();
 	}
 	FRotator target_look_rotation = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), look_location), GetActorRotation());
