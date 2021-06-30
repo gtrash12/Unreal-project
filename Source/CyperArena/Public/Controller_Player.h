@@ -62,9 +62,17 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		int32 findInventoryEmptyIndex();
 		virtual int32 findInventoryEmptyIndex_Implementation();
-		UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-			int32 findSameItem(FName __item_id);
-			virtual int32 findSameItem_Implementation(FName __item_id);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		int32 findSameItem(FName __item_id);
+		virtual int32 findSameItem_Implementation(FName __item_id);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		bool getIsLockOn();
+		virtual bool getIsLockOn_Implementation();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		AFollowCam_Base* getFollowCam();
+		virtual AFollowCam_Base* getFollowCam_Implementation();
+
+
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

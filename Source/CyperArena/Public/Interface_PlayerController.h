@@ -38,4 +38,10 @@ public:
 		int32 findInventoryEmptyIndex();
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		int32 findSameItem(FName __item_id);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		bool getIsLockOn();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		bool getHUDReference();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		AFollowCam_Base* getFollowCam();
 };

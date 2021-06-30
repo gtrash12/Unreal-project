@@ -21,6 +21,7 @@ AController_Player::AController_Player()
 /// </summary>
 void AController_Player::BeginPlay()
 {
+	Super::BeginPlay();
 	if (IsLocalPlayerController() == false)
 		return;
 	PlayerCameraManager->SetManualCameraFade(1, FLinearColor::Black, true);
@@ -46,21 +47,21 @@ void AController_Player::Tick(float DeltaTime)
 	/* 라인트레이스로 인터랙션 가능 물체 탐색 */
 	if (IsLocalPlayerController() && follow_cam->IsValidLowLevel()) {
 		FHitResult hit_result;
-		FVector trace_start = follow_cam->GetActorLocation();
-		FVector trace_end = trace_start + follow_cam->camera->GetForwardVector()*70;
+		FVector trace_start = GetPawn()->GetActorLocation();
+		FVector trace_end = trace_start + follow_cam->camera->GetForwardVector()*(100);
 		TArray<AActor*> dummy;
-		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery1, false, dummy, EDrawDebugTrace::Type::None, hit_result, true);
-		if (is_hit && hit_result.Actor->ActorHasTag("Interactable")) {
-			if (interaction_target != hit_result.Actor) {
+		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery6, false, dummy, EDrawDebugTrace::Type::None, hit_result, true);
+		if (is_hit && hit_result.GetActor()->ActorHasTag("interactable")) {
+			if (interaction_target != hit_result.GetActor()) {
 				if (interaction_target != nullptr && interaction_target->IsValidLowLevel()) {
 					if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
 						IInterface_General::Execute_removeInteractionInfo(interaction_target, GetPawn());
 					}
 				}
-			}
-			interaction_target = hit_result.GetActor();
-			if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
-				IInterface_General::Execute_popInteractionInfo(interaction_target, GetPawn());
+				interaction_target = hit_result.GetActor();
+				if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
+					IInterface_General::Execute_popInteractionInfo(interaction_target, GetPawn());
+				}
 			}
 		}
 		else {
@@ -80,8 +81,11 @@ void AController_Player::Tick(float DeltaTime)
 /// </summary>
 void AController_Player::SetupInputComponent()
 {
-	InputComponent->BindAction("LockOn", IE_Pressed, this, &AController_Player::lockOnEvent);
-	InputComponent->BindAxis("ChangeLockOn", this, &AController_Player::changeLockOnAxisEvent);
+	Super::SetupInputComponent();
+	if (InputComponent) {
+		InputComponent->BindAction("LockOn", IE_Pressed, this, &AController_Player::lockOnEvent);
+		InputComponent->BindAxis("ChangeLockOn", this, &AController_Player::changeLockOnAxisEvent);
+	}
 }
 
 /// <summary>
@@ -365,4 +369,14 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 		data.count = __num;
 		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
 	}
+}
+
+bool AController_Player::getIsLockOn_Implementation()
+{
+	return is_lock_on;
+}
+
+AFollowCam_Base* AController_Player::getFollowCam_Implementation()
+{
+	return follow_cam;
 }
