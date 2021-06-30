@@ -7,7 +7,18 @@
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "../Public/Interface_AI.h"
 #include "../Public/Interface_General.h"
+#include "../Public/Interface_BaseCharacter.h"
+#include "PWOGameInstance.h"
 
+
+AController_Player::AController_Player()
+{
+
+}
+
+/// <summary>
+/// 팔로우 카메라를 생성해서 viewtarget 대체
+/// </summary>
 void AController_Player::BeginPlay()
 {
 	if (IsLocalPlayerController() == false)
@@ -22,6 +33,11 @@ void AController_Player::BeginPlay()
 		}), 2, false);
 }
 
+/// <summary>
+/// 락온 쿨타임을 매 프레임 감소시킴
+/// 매 프레임 카메라 전방으로 linetrace 해서 interactable 객체를 찾아서 등록
+/// </summary>
+/// <param name="DeltaTime"></param>
 void AController_Player::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -58,12 +74,19 @@ void AController_Player::Tick(float DeltaTime)
 	}
 }
 
+
+/// <summary>
+/// 키매핑
+/// </summary>
 void AController_Player::SetupInputComponent()
 {
 	InputComponent->BindAction("LockOn", IE_Pressed, this, &AController_Player::lockOnEvent);
 	InputComponent->BindAxis("ChangeLockOn", this, &AController_Player::changeLockOnAxisEvent);
 }
 
+/// <summary>
+/// 락온타게팅 실행 ( 액션 매핑 이벤트 )
+/// </summary>
 void AController_Player::lockOnEvent()
 {
 	if (follow_cam->IsValidLowLevel() == false)
@@ -84,6 +107,12 @@ void AController_Player::lockOnEvent()
 	}
 }
 
+
+/// <summary>
+/// 타게팅 전환 (축매핑 이벤트)
+/// changeLockOnTarget 메소드로 타게팅이 전환될 액터를 구하고 이전 타겟의 마커를 화면에서 지우고 새로운 타겟의 마커를 띄움
+/// </summary>
+/// <param name="__axis_value"></param>
 void AController_Player::changeLockOnAxisEvent(float __axis_value)
 {
 	if (__axis_value == 0 || lock_on_cooltime > 0 || follow_cam->IsValidLowLevel() == false || is_lock_on == false)
@@ -102,6 +131,9 @@ void AController_Player::changeLockOnAxisEvent(float __axis_value)
 	}
 }
 
+/// <summary>
+/// 타게팅 해제
+/// </summary>
 void AController_Player::releaseLock_ON_Implementation()
 {
 	if (follow_cam->IsValidLowLevel() == false)
@@ -194,4 +226,143 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 		}
 	}
 	return result;
+}
+
+/// <summary>
+/// stackable한 아이템인지 결과 반환
+/// </summary>
+/// <param name="__item_type"></param>
+/// <returns></returns>
+bool AController_Player::isStackable(EItemType __item_type)
+{
+	return __item_type == EItemType::Consumables || __item_type == EItemType::Raw;
+}
+
+
+/// <summary>
+/// 서버에서 applyDamage를 실행
+/// </summary>
+/// <param name="__damaged_actor"></param>
+/// <param name="__damage_id"></param>
+/// <param name="__damage_causer"></param>
+/// <param name="__hit_bone_name"></param>
+void AController_Player::CtoS_applyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name)
+{
+	Server_ApplyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name);
+}
+
+/// <summary>
+/// 클라이언트 소유 액터의 applyDamage를 실행
+/// </summary>
+/// <param name="__damaged_actor"></param>
+/// <param name="__damage_id"></param>
+/// <param name="__damage_causer"></param>
+/// <param name="__hit_bone_name"></param>
+void AController_Player::Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name)
+{
+	if (__damaged_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		IInterface_BaseCharacter::Execute_applyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name);
+	}
+}
+
+/// <summary>
+/// 액터가 타게팅 중인 액터인지 반환
+/// </summary>
+/// <param name="actor"></param>
+/// <param name="result"></param>
+void AController_Player::isLock_On_Target_Implementation(AActor* actor, bool& result)
+{
+	result = false;
+	if (follow_cam->IsValidLowLevel())
+		if (actor == follow_cam->look_target)
+			result = true;
+}
+
+
+/// <summary>
+/// 현재 타겟팅 중인 적 액터 포인터 반환
+/// </summary>
+/// <returns></returns>
+AActor* AController_Player::getLockOnTargetActor_Implementation()
+{
+	if (follow_cam->IsValidLowLevel())
+		return follow_cam->look_target;
+	else
+		return nullptr;
+}
+
+/// <summary>
+/// 빈 index 반환
+/// </summary>
+/// <returns></returns>
+int32 AController_Player::findInventoryEmptyIndex_Implementation()
+{
+	TArray<int32> keys;
+	inventory_list.GetKeys(keys);
+	keys.Sort();
+	int32 min = 0;
+	for (auto i : keys) {
+		if (i != min)
+			return min;
+		else
+			min += 1;
+	}
+	return min;
+}
+
+
+/// <summary>
+/// 동일한 __item_id를 가진 슬롯의 index 반환
+/// </summary>
+/// <param name="__item_id"></param>
+/// <returns></returns>
+int32 AController_Player::findSameItem_Implementation(FName __item_id)
+{
+	TArray<FInventoryData> values;
+	TArray<int32> keys;
+	inventory_list.GenerateValueArray(values);
+	inventory_list.GetKeys(keys);
+	int nums = values.Num();
+	for (int i = 0; i < nums; i++) {
+		if (values[i].item_id == __item_id) {
+			return keys[i];
+		}
+	}
+	return -1;
+}
+
+/// <summary>
+/// 아이템 획득
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__num"></param>
+void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
+{
+	if (inventory_list.Num() >= max_slot_size)
+		return;
+	FItemData itemdata;
+	bool add_in_empty_slot = false;
+	Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id, itemdata);
+	/* stackable 한 아이템일 때 findSameItem 결과가 있으면 그 슬롯의 count만 증가시킴*/
+	if (isStackable(itemdata.item_type)) {
+		int32 same_item_index = findSameItem(__item_id);
+		if (same_item_index >= 0) {
+			inventory_list[same_item_index].count += __num;
+			return;
+		}
+		else {
+			add_in_empty_slot = true;
+		}
+	}
+	else {
+		add_in_empty_slot = true;
+	}
+	/* empty index에 아이템 add */
+	if (add_in_empty_slot) {
+		int32 empty_index = findInventoryEmptyIndex();
+		FInventoryData data;
+		data.item_id = __item_id;
+		data.count = __num;
+		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
+	}
 }

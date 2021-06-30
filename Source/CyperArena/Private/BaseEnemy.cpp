@@ -184,3 +184,14 @@ UBehaviorTree* ABaseEnemy::getBehaviorTree_Implementation()
 {
 	return behavior_tree;
 }
+
+void ABaseEnemy::setLookRotation_Implementation()
+{
+	if (target_actor->IsValidLowLevel()) {
+		look_location = target_actor->GetActorLocation();
+	}
+	FRotator target_look_rotation = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), look_location), GetActorRotation());
+	FRotator interped_look_rotation = UKismetMathLibrary::RInterpTo(FRotator(look_pitch, look_yaw, 0), target_look_rotation, d_time, 3);
+	look_pitch = UKismetMathLibrary::ClampAngle(interped_look_rotation.Pitch, -90, 90);
+	look_yaw = UKismetMathLibrary::ClampAngle(interped_look_rotation.Yaw, -90, 90);
+}

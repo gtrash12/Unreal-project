@@ -133,11 +133,10 @@ public:
 		bool is_dodge = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		TMap<FName, float> hit_bone_physics_weight_map;
-
-private :
+	
+protected:
 	UPROPERTY()
 		float d_time;
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

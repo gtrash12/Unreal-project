@@ -31,9 +31,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void CtoS_applyDamage(const AActor* damaged_actor, FName __damage_id, AActor* damage_causer, FName __hit_bone_name);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		AActor* getLockOnTarget();
+		AActor* getLockOnTargetActor();
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void getItem(FName __item_id);
+		void getItem(FName __item_id, int32 __num);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		int32 findInventoryEmptyIndex();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		int32 findSameItem(FName __item_id);
 };

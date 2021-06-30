@@ -44,6 +44,7 @@ protected:
 	virtual void BeginPlay() override;
 public:
 	virtual void Tick(float DeltaTime) override;
+	virtual void setLookRotation_Implementation() override;
 
 	virtual void applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) override;
 	virtual void getTargetRotation_Implementation(FRotator& __target_rotation) override;
