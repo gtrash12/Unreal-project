@@ -39,4 +39,6 @@ public :
 
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();
+	UFUNCTION(BlueprintCallable, Category = "Targetting")
+		AActor* changeLockOnTarget(float __direction);
 };
