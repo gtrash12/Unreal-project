@@ -6,6 +6,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "../Public/Interface_AI.h"
+#include "../Public/Interface_General.h"
 
 void AController_Player::BeginPlay()
 {
@@ -21,14 +22,46 @@ void AController_Player::BeginPlay()
 		}), 2, false);
 }
 
+void AController_Player::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	lock_on_cooltime -= DeltaTime;
+
+	/* 라인트레이스로 인터랙션 가능 물체 탐색 */
+	if (IsLocalPlayerController() && follow_cam->IsValidLowLevel()) {
+		FHitResult hit_result;
+		FVector trace_start = follow_cam->GetActorLocation();
+		FVector trace_end = trace_start + follow_cam->camera->GetForwardVector()*70;
+		TArray<AActor*> dummy;
+		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery1, false, dummy, EDrawDebugTrace::Type::None, hit_result, true);
+		if (is_hit && hit_result.Actor->ActorHasTag("Interactable")) {
+			if (interaction_target != hit_result.Actor) {
+				if (interaction_target->IsValidLowLevel()) {
+					if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
+						IInterface_General::Execute_removeInteractionInfo(interaction_target, GetPawn());
+					}
+				}
+			}
+			interaction_target = hit_result.GetActor();
+			if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
+				IInterface_General::Execute_popInteractionInfo(interaction_target, GetPawn());
+			}
+		}
+		else {
+			if (interaction_target->IsValidLowLevel()) {
+				if (interaction_target->GetClass()->ImplementsInterface(UInterface_General::StaticClass())) {
+					IInterface_General::Execute_removeInteractionInfo(interaction_target, GetPawn());
+				}
+			}
+			interaction_target = nullptr;
+		}
+	}
+}
+
 void AController_Player::SetupInputComponent()
 {
-	
 	InputComponent->BindAction("LockOn", IE_Pressed, this, &AController_Player::lockOnEvent);
-
-	//InputComponent->BindAxis("MoveX", this, &AMyPawn::Move_XAxis);
-	//InputComponent->BindAxis("MoveY", this, &AMyPawn::Move_YAxis);
-
+	InputComponent->BindAxis("ChangeLockOn", this, &AController_Player::changeLockOnAxisEvent);
 }
 
 void AController_Player::lockOnEvent()
@@ -48,6 +81,24 @@ void AController_Player::lockOnEvent()
 		follow_cam->is_lock_on = true;
 		is_lock_on = true;
 		follow_cam->look_target = target;
+	}
+}
+
+void AController_Player::changeLockOnAxisEvent(float __axis_value)
+{
+	if (__axis_value == 0 || lock_on_cooltime > 0 || follow_cam->IsValidLowLevel() == false || is_lock_on == false)
+		return;
+	AActor* target = changeLockOnTarget(__axis_value);
+	if (target->IsValidLowLevel()) {
+		if (follow_cam->look_target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
+			IInterface_AI::Execute_setLockOnMarker(follow_cam->look_target, false);
+		}
+		if (target->GetClass()->ImplementsInterface(UInterface_AI::StaticClass())) {
+			IInterface_AI::Execute_setStateBarVisibility(target, true);
+			IInterface_AI::Execute_setLockOnMarker(target, true);
+		}
+		follow_cam->look_target = target;
+		lock_on_cooltime = 0.2f;
 	}
 }
 

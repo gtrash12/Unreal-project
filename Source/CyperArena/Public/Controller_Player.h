@@ -22,6 +22,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 public :
+	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(BlueprintReadWrite)
 		AFollowCam_Base* follow_cam;
@@ -50,4 +51,6 @@ public :
 		AActor* changeLockOnTarget(float __direction);
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		void lockOnEvent();
+	UFUNCTION(BlueprintCallable, Category = "Targetting")
+		void changeLockOnAxisEvent(float __axis_value);
 };
