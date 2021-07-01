@@ -380,3 +380,13 @@ AFollowCam_Base* AController_Player::getFollowCam_Implementation()
 {
 	return follow_cam;
 }
+
+void AController_Player::showInteractionText_Implementation(const FText& __text)
+{
+
+}
+
+void AController_Player::removeInteractionText_Implementation()
+{
+
+}

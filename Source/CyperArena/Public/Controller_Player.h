@@ -56,23 +56,27 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		AActor* getLockOnTargetActor();
 		AActor* getLockOnTargetActor_Implementation();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void getItem(FName __item_id, int32 __num);
 		virtual void getItem_Implementation(FName __item_id, int32 __num);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		int32 findInventoryEmptyIndex();
 		virtual int32 findInventoryEmptyIndex_Implementation();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		int32 findSameItem(FName __item_id);
 		virtual int32 findSameItem_Implementation(FName __item_id);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		bool getIsLockOn();
 		virtual bool getIsLockOn_Implementation();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		AFollowCam_Base* getFollowCam();
 		virtual AFollowCam_Base* getFollowCam_Implementation();
-
-
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void showInteractionText(const FText& __text);
+		virtual void showInteractionText_Implementation(const FText& __text);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void removeInteractionText();
+		virtual void removeInteractionText_Implementation();
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

@@ -44,4 +44,8 @@ public:
 		bool getHUDReference();
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		AFollowCam_Base* getFollowCam();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void showInteractionText(const FText& __text);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void removeInteractionText();
 };
