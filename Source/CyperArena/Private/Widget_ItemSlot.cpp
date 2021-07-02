@@ -8,6 +8,16 @@
 #include "../Public/PWOGameInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+//FEventReply UWidget_ItemSlot::OnMouseButtonDown(FGeometry MyGeometry, const FPointerEvent& MouseEvent)
+//{
+//	
+//}
+//
+//void UWidget_ItemSlot::OnMouseEnter(FGeometry MyGeometry, const FPointerEvent& MouseEvent)
+//{
+//
+//}
+
 void UWidget_ItemSlot::initSlot() {
 	FInventoryData invendata;
 	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {

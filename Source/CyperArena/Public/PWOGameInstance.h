@@ -7,6 +7,7 @@
 #include "../CustomData.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/DataTable.h"
+#include "Widget_Detail.h"
 
 #include "PWOGameInstance.generated.h"
 
@@ -29,6 +30,8 @@ public:
 		UDataTable* item_data_table;
 	UPROPERTY()
 		UTexture2D* empty_slot_image;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Look")
+		UWidget_Detail* detail_widget_reference;
 
 
 

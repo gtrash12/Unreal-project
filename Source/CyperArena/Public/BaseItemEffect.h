@@ -18,7 +18,7 @@ class CYPERARENA_API UBaseItemEffect : public UObject, public IInterface_ItemEff
 	GENERATED_BODY()
 public :
 	UBaseItemEffect();
-
+	~UBaseItemEffect();
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
 		float value;
 

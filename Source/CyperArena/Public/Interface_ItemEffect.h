@@ -26,5 +26,5 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void applyItemEffect(AActor* causer);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
-		void describeItemEffect(FText& __desc_text );
+		FText describeItemEffect();
 };

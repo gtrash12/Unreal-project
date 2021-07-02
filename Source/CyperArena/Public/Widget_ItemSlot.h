@@ -15,6 +15,9 @@ class CYPERARENA_API UWidget_ItemSlot : public UUserWidget
 	GENERATED_BODY()
 	
 public :
+	//FEventReply OnMouseButtonDown(FGeometry MyGeometry, const FPointerEvent& MouseEvent);
+	//void OnMouseEnter(FGeometry MyGeometry, const FPointerEvent& MouseEvent);
+
 	UPROPERTY(Meta = (BindWidget))
 		class UImage* slot_image;
 	UPROPERTY(Meta = (BindWidget))
@@ -27,11 +30,9 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemData")
 		int32 count;
 
-	UPROPERTY()
-	const UTexture2D* empty_slot_image;
-
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
 		void initSlot();
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
 		void dropFromItemSlot(UWidget_ItemSlot* from);
+	
 };

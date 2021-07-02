@@ -86,10 +86,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 	d_time = DeltaTime;
 
 	//바라보기에 필요한 변수 갱신
-	/*IInterface_BaseCharacter * basecharacter_interface = Cast<IInterface_BaseCharacter>(this);
-	if (basecharacter_interface) {
-		basecharacter_interface->setLookRotation();
-	}*/
 	setLookRotation();
 	
 	 //에어본시 피지컬 애니메이션의 관절 각 운동량 조절

@@ -2,8 +2,12 @@
 
 
 #include "BaseItemEffect.h"
-#include "Kismet/KismetSystemLibrary.h"
+//#include "Kismet/KismetSystemLibrary.h"
 
 UBaseItemEffect::UBaseItemEffect() {
+	UE_LOG(LogTemp, Warning, TEXT("생성"));
+}
 
+UBaseItemEffect::~UBaseItemEffect() {
+	UE_LOG(LogTemp, Warning, TEXT("삭제"));
 }
