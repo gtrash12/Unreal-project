@@ -80,6 +80,9 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void swapInvenSlot(int32 __from, int32 __to);
 		virtual void swapInvenSlot_Implementation(int32 __from, int32 __to);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		FInventoryData getInventoryData(int32 __index);
+		virtual FInventoryData getInventoryData_Implementation(int32 __index);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

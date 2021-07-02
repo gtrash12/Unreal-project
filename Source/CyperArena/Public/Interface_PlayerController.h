@@ -54,4 +54,6 @@ public:
 		void swapQuickSlot(FKey __slot1, FKey __slot2);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void swapInvenxQuick(int32 __slot1, FKey __slot2);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		FInventoryData getInventoryData(int32 __index);
 };

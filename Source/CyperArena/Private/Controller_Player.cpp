@@ -419,3 +419,14 @@ void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 	}
 
 }
+
+FInventoryData AController_Player::getInventoryData_Implementation(int32 __index)
+{
+	if(inventory_list.Contains(__index))
+		return inventory_list[__index];
+	else {
+		FInventoryData dummy;
+		dummy.item_id = "None";
+		return dummy;
+	}
+}

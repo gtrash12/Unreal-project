@@ -27,7 +27,11 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemData")
 		int32 count;
 
+	UPROPERTY()
+	const UTexture2D* empty_slot_image;
 
+	UFUNCTION(BlueprintCallable, Category = "itemslot")
+		void initSlot();
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
 		void dropFromItemSlot(UWidget_ItemSlot* from);
 };

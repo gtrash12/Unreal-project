@@ -27,6 +27,8 @@ public:
 		UDataTable* action_data_table;
 	UPROPERTY(BlueprintReadOnly, Category = "Base-Look")
 		UDataTable* item_data_table;
+	UPROPERTY()
+		UTexture2D* empty_slot_image;
 
 
 
@@ -48,4 +50,6 @@ public:
 		void Interact(AActor* __target, AActor* __causer);
 		virtual void Interact_Implementation(AActor* __target, AActor* __causer);
 
+	UFUNCTION(BlueprintCallable, Category = "GameInstance")
+		bool isStackable(EItemType __item_type);
 };
