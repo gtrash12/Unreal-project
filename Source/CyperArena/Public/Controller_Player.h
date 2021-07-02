@@ -36,11 +36,11 @@ public :
 		AActor* interaction_target;
 	UPROPERTY(BlueprintReadWrite)
 		bool is_lock_on;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<int32, FInventoryData> inventory_list;
 	UPROPERTY(BlueprintReadWrite)
 		TMap<FKey, FInventoryData> quickslot_list;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 max_slot_size;
 
 	/* 인터페이스 */
@@ -77,6 +77,9 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void removeInteractionText();
 		virtual void removeInteractionText_Implementation();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void swapInvenSlot(int32 __from, int32 __to);
+		virtual void swapInvenSlot_Implementation(int32 __from, int32 __to);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

@@ -40,8 +40,8 @@ public:
 		virtual void findActionData_Implementation(FName __action_id, FActionData& __output_action_data);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-DataTableAccess")
-		void findItemData(FName __item_id, FItemData& __output_action_data);
-		virtual void findItemData_Implementation(FName __item_id, FItemData& __output_item_data);
+		FItemData findItemData(FName __item_id);
+		virtual FItemData findItemData_Implementation(FName __item_id);
 
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-Interaction")

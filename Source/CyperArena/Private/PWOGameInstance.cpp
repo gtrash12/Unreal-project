@@ -27,10 +27,9 @@ void UPWOGameInstance::findActionData_Implementation(FName __action_id, FActionD
 	__output_action_data = *action_data_table->FindRow<FActionData>(__action_id, TEXT(""));
 }
 
-void UPWOGameInstance::findItemData_Implementation(FName __item_id, FItemData& __output_item_data){
+FItemData UPWOGameInstance::findItemData_Implementation(FName __item_id){
 	FItemData* res = item_data_table->FindRow<FItemData>(__item_id, TEXT(""));
-	if(res)
-		__output_item_data = *res;
+	return *res;
 }
 
 void UPWOGameInstance::Interact_Implementation(AActor* __target, AActor* __causer) {

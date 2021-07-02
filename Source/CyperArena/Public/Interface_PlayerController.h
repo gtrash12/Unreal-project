@@ -48,4 +48,10 @@ public:
 		void showInteractionText(const FText& __text);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void removeInteractionText();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void swapInvenSlot(int32 __from, int32 __to);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void swapQuickSlot(FKey __slot1, FKey __slot2);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void swapInvenxQuick(int32 __slot1, FKey __slot2);
 };

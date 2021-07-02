@@ -346,7 +346,7 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 		return;
 	FItemData itemdata;
 	bool add_in_empty_slot = false;
-	Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id, itemdata);
+	itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
 	/* stackable 한 아이템일 때 findSameItem 결과가 있으면 그 슬롯의 count만 증가시킴*/
 	if (isStackable(itemdata.item_type)) {
 		int32 same_item_index = findSameItem(__item_id);
@@ -388,5 +388,34 @@ void AController_Player::showInteractionText_Implementation(const FText& __text)
 
 void AController_Player::removeInteractionText_Implementation()
 {
+
+}
+
+void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
+{
+	if (inventory_list.Contains(__from)) {
+		
+		if (inventory_list.Contains(__to)) {
+			if (inventory_list[__from].item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(inventory_list[__from].item_id).item_type)) {
+				inventory_list[__to].count += inventory_list[__from].count;
+				inventory_list.Remove(__from);
+			}
+			else {
+				FInventoryData tmp = inventory_list[__from];
+				inventory_list[__from] = inventory_list[__to];
+				inventory_list[__to] = tmp;
+			}
+		}
+		else {
+			//inventory_list[__to] = inventory_list[__from];
+			inventory_list.Add(TTuple<int32, FInventoryData>(__to, inventory_list[__from]));
+			inventory_list.Remove(__from);
+		}
+	}
+	else {
+		//inventory_list[__from] = inventory_list[__to];
+		inventory_list.Add(TTuple<int32, FInventoryData>(__from, inventory_list[__to]));
+		inventory_list.Remove(__to);
+	}
 
 }
