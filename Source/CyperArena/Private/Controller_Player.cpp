@@ -455,9 +455,17 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 		FKey prev_key = reverse_quickslot_list[__from];
 		if (__to == prev_key)
 			return;
-		quickslot_list.Remove(prev_key);
-		reverse_quickslot_list[__from] = __to;
-		quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		if (quickslot_list.Contains(__to)) {
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			reverse_quickslot_list.Remove(quickslot_list[__to]);
+			quickslot_list[__to] = __from;
+		}
+		else {
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		}
 		refreshQuickSlot(prev_key);
 		refreshQuickSlot(__to);
 		return;
