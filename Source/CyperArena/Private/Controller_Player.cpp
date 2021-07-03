@@ -411,6 +411,10 @@ void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 					refreshQuickSlot(prevkey);
 				}
 			}
+			else if(reverse_quickslot_list.Contains(__to)){
+				FKey prevkey = reverse_quickslot_list[__to];
+				refreshQuickSlot(prevkey);
+			}
 		}
 		else {
 			inventory_list[__from] = inventory_list[__to];
