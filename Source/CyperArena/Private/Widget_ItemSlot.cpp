@@ -20,6 +20,8 @@
 
 void UWidget_ItemSlot::initSlot() {
 	FInventoryData invendata;
+	if(GetWorld()->GetFirstPlayerController() == NULL)
+		return;
 	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 		invendata = IInterface_PlayerController::Execute_getInventoryData(GetWorld()->GetFirstPlayerController(), my_index);
 	}

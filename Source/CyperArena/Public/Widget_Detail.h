@@ -15,15 +15,17 @@ class CYPERARENA_API UWidget_Detail : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UImage* image;
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UTextBlock* name_text;
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UTextBlock* info_text;
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UTextBlock* effect_text;
 
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
 		void initDetail(FName __item_id);
+	UFUNCTION(BlueprintCallable, Category = "itemslot")
+		void onViewPortCheck();
 };
