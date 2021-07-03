@@ -105,6 +105,10 @@ public :
 		void changeLockOnAxisEvent(float __axis_value);
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		bool isStackable(EItemType __item_type);
+	UFUNCTION(BlueprintCallable)
+		void refreshQuickSlot(FKey __key);
+	UFUNCTION(BlueprintCallable)
+		void updateQuickSlotData(int32 __from, int32 __to);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		void Server_ApplyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);

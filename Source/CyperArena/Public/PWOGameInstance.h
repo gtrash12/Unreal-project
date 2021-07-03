@@ -8,6 +8,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/DataTable.h"
 #include "Widget_Detail.h"
+#include "Widget_ItemSlot.h"
 
 #include "PWOGameInstance.generated.h"
 
@@ -32,7 +33,8 @@ public:
 		UTexture2D* empty_slot_image;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Look")
 		UWidget_Detail* detail_widget_reference;
-
+	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
+		TMap<FKey, UWidget_ItemSlot*> quickslot_references;
 
 
 

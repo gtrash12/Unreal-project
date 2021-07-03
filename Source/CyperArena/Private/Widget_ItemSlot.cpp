@@ -37,7 +37,7 @@ void UWidget_ItemSlot::initSlot() {
 		slot_image->SetBrushFromTexture(itemdata.icon);
 		if (Cast<UPWOGameInstance>(GetGameInstance())->isStackable(itemdata.item_type)) {
 			count_text->SetText(FText::FromString(FString::FromInt(count)));
-			count_text->SetVisibility(ESlateVisibility::Visible);
+			count_text->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		}
 		else {
 			count_text->SetVisibility(ESlateVisibility::Collapsed);
