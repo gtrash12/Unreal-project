@@ -23,14 +23,14 @@ void UWidget_ItemSlot::initSlot() {
 	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 		invendata = IInterface_PlayerController::Execute_getInventoryData(GetWorld()->GetFirstPlayerController(), my_index);
 	}
+	item_id = invendata.item_id;
+	count = invendata.count;
 	if (invendata.item_id == "None") {
 		slot_image->SetBrushFromTexture(Cast<UPWOGameInstance>(GetGameInstance())->empty_slot_image);
 		count_text->SetVisibility(ESlateVisibility::Collapsed);
 		//
 	}
 	else {
-		item_id = invendata.item_id;
-		count = invendata.count;
 		FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(item_id);
 		slot_image->SetBrushFromTexture(itemdata.icon);
 		if (Cast<UPWOGameInstance>(GetGameInstance())->isStackable(itemdata.item_type)) {
