@@ -398,36 +398,17 @@ void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 		if (fromdata.item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(fromdata.item_id).item_type)) {
 			inventory_list[__to].count += fromdata.count;
 			inventory_list.Remove(__from);
-			if (reverse_quickslot_list.Contains(__from)) {
-				if (reverse_quickslot_list.Contains(__to)) {
-					refreshQuickSlot(reverse_quickslot_list[__from]);
-					refreshQuickSlot(reverse_quickslot_list[__to]);
-				}
-				else {
-					FKey prevkey = reverse_quickslot_list[__from];
-					quickslot_list[prevkey] = __to;
-					reverse_quickslot_list.Add(TTuple<int32, FKey>(__to, prevkey));
-					reverse_quickslot_list.Remove(__from);
-					refreshQuickSlot(prevkey);
-				}
-			}
-			else if(reverse_quickslot_list.Contains(__to)){
-				FKey prevkey = reverse_quickslot_list[__to];
-				refreshQuickSlot(prevkey);
-			}
 		}
 		else {
 			inventory_list[__from] = inventory_list[__to];
 			inventory_list[__to] = fromdata;
-			updateQuickSlotData(__from, __to);
-			//updateQuickSlotData(__to, __from);
 		}
 	}
 	else {
 		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);
-		updateQuickSlotData(__from, __to);
 	}
+	updateQuickSlotData(__from, __to);
 }
 
 
@@ -501,7 +482,32 @@ void AController_Player::refreshQuickSlot(FKey __key)
 }
 
 void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
+	FKey prevfromkey;
+	FKey prevtokey;
 	if (reverse_quickslot_list.Contains(__from)) {
+		prevfromkey = reverse_quickslot_list[__from];
+	}
+	if (reverse_quickslot_list.Contains(__to)) {
+		prevtokey = reverse_quickslot_list[__to];
+	}
+	if (prevfromkey.IsValid()) {
+		reverse_quickslot_list.Remove(__from);
+		quickslot_list[prevfromkey] = __to;
+	}
+	if (prevtokey.IsValid()) {
+		reverse_quickslot_list.Remove(__to);
+		quickslot_list[prevtokey] = __from;
+	}
+	if (prevfromkey.IsValid()) {
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__to, prevfromkey));
+		refreshQuickSlot(prevfromkey);
+	}
+	if (prevtokey.IsValid()) {
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, prevtokey));
+		refreshQuickSlot(prevtokey);
+	}
+
+	/*if (reverse_quickslot_list.Contains(__from)) {
 		if (reverse_quickslot_list.Contains(__to)) {
 			FKey prevfromkey = reverse_quickslot_list[__from];
 			FKey prevtokey = reverse_quickslot_list[__to];
@@ -526,7 +532,7 @@ void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
 		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, prevkey));
 		reverse_quickslot_list.Remove(__to);
 		refreshQuickSlot(prevkey);
-	}
+	}*/
 }
 
 
