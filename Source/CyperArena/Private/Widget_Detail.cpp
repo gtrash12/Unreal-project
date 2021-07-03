@@ -31,35 +31,53 @@ void UWidget_Detail::initDetail(FName __item_id) {
 	else {
 		effect_text->SetVisibility(ESlateVisibility::Collapsed);
 	}
-	onViewPortCheck();
+	//onViewPortCheck();
 }
 
 void UWidget_Detail::onViewPortCheck()
 {
-	if (GetWorld()->GetFirstPlayerController() == nullptr)
-		return;
-	GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
-		//지오메트리가 업데이트 될 때 까지 busy wait
-		if (GetTickSpaceGeometry().GetLocalSize().X == 0) {
-			onViewPortCheck();
-		}
-		else {
-			FVector2D viewport_size;
-			GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
-			FGeometry geometry = GetTickSpaceGeometry();
-			FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
-			FVector2D target_position = geometry.Position * abs_to_local_vector;
-			bool flag = false;
-			if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
-				target_position.X -= 85*abs_to_local_vector.X +  geometry.GetAbsoluteSize().X;
-				flag = true;
-			}
-			if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
-				target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
-				flag = true;
-			}
-			if(flag)
-				SetPositionInViewport(target_position);
-		}
-		}));
+	FVector2D viewport_size;
+	GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
+	FGeometry geometry = GetTickSpaceGeometry();
+	FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
+	FVector2D target_position = geometry.Position * abs_to_local_vector;
+	bool flag = false;
+	if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
+		target_position.X -= 85 * abs_to_local_vector.X + geometry.GetAbsoluteSize().X;
+		flag = true;
+	}
+	if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
+		target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
+		flag = true;
+	}
+	if (flag)
+		SetPositionInViewport(target_position);
+	//if (IsValid(this) == false && GetWorld() == nullptr)
+	//	return;
+	//FTimerManager asd;
+	//asd.SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
+	//	//지오메트리가 업데이트 될 때 까지 busy wait
+	//	if (GetTickSpaceGeometry().GetLocalSize().X == 0) { 
+	//		onViewPortCheck();
+	//	}
+	//	else {
+	//		FVector2D viewport_size;
+	//		GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
+	//		FGeometry geometry = GetTickSpaceGeometry();
+	//		FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
+	//		FVector2D target_position = geometry.Position * abs_to_local_vector;
+	//		bool flag = false;
+	//		if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
+	//			target_position.X -= 85*abs_to_local_vector.X +  geometry.GetAbsoluteSize().X;
+	//			flag = true;
+	//		}
+	//		if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
+	//			target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
+	//			flag = true;
+	//		}
+	//		if(flag)
+	//			SetPositionInViewport(target_position);
+	//		
+	//	}
+	//	}));
 }

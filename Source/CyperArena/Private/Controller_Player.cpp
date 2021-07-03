@@ -393,32 +393,45 @@ void AController_Player::removeInteractionText_Implementation()
 
 void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 {
-	if (inventory_list.Contains(__from)) {
-		
-		if (inventory_list.Contains(__to)) {
-			if (inventory_list[__from].item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(inventory_list[__from].item_id).item_type)) {
-				inventory_list[__to].count += inventory_list[__from].count;
-				inventory_list.Remove(__from);
-			}
-			else {
-				FInventoryData tmp = inventory_list[__from];
-				inventory_list[__from] = inventory_list[__to];
-				inventory_list[__to] = tmp;
-			}
+	FInventoryData fromdata = inventory_list[__from];
+	if (inventory_list.Contains(__to)) {
+		if (fromdata.item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(fromdata.item_id).item_type)) {
+			inventory_list[__to].count += fromdata.count;
+			inventory_list.Remove(__from);
 		}
 		else {
-			//inventory_list[__to] = inventory_list[__from];
-			inventory_list.Add(TTuple<int32, FInventoryData>(__to, inventory_list[__from]));
-			inventory_list.Remove(__from);
+			inventory_list[__from] = inventory_list[__to];
+			inventory_list[__to] = fromdata;
 		}
 	}
 	else {
-		//inventory_list[__from] = inventory_list[__to];
-		inventory_list.Add(TTuple<int32, FInventoryData>(__from, inventory_list[__to]));
-		inventory_list.Remove(__to);
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);
 	}
+}
+
+
+void AController_Player::swapQuickSlot_Implementation(FKey __from, FKey __to)
+{
+	int32 fromdata = quickslot_list[__from];
+	if (quickslot_list.Contains(__to)) {
+		quickslot_list[__from] = quickslot_list[__to];
+		quickslot_list[__to] = fromdata;
+		reverse_quickslot_list[fromdata] = __to;
+		reverse_quickslot_list[quickslot_list[__from]] = __from;
+	}
+	else {
+		quickslot_list.Add(TTuple<FKey, int32>(__to, fromdata));
+		quickslot_list.Remove(__from);
+		reverse_quickslot_list[fromdata] = __to;
+	}
+}
+
+void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey __to)
+{
 
 }
+
 
 FInventoryData AController_Player::getInventoryData_Implementation(int32 __index)
 {
@@ -429,4 +442,9 @@ FInventoryData AController_Player::getInventoryData_Implementation(int32 __index
 		dummy.item_id = "None";
 		return dummy;
 	}
+}
+
+bool AController_Player::isInteractionTarget_Implementation(AActor* __actor)
+{
+	return interaction_target == __actor;
 }

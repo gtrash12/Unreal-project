@@ -18,9 +18,9 @@ public :
 	//FEventReply OnMouseButtonDown(FGeometry MyGeometry, const FPointerEvent& MouseEvent);
 	//void OnMouseEnter(FGeometry MyGeometry, const FPointerEvent& MouseEvent);
 
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UImage* slot_image;
-	UPROPERTY(Meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Meta = (BindWidget))
 		class UTextBlock* count_text;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemData")

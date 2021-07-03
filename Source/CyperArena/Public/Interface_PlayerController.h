@@ -51,9 +51,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void swapInvenSlot(int32 __from, int32 __to);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void swapQuickSlot(FKey __slot1, FKey __slot2);
+		void swapQuickSlot(FKey __from, FKey __to);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
-		void swapInvenxQuick(int32 __slot1, FKey __slot2);
+		void registerInventoQuick(int32 __from, FKey __to);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		FInventoryData getInventoryData(int32 __index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		bool isInteractionTarget(AActor* __actor);
 };

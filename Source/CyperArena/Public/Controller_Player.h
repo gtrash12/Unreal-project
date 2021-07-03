@@ -38,8 +38,10 @@ public :
 		bool is_lock_on;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<int32, FInventoryData> inventory_list;
-	UPROPERTY(BlueprintReadWrite)
-		TMap<FKey, FInventoryData> quickslot_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<FKey, int32> quickslot_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<int32, FKey> reverse_quickslot_list;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 max_slot_size;
 
@@ -81,8 +83,17 @@ public :
 		void swapInvenSlot(int32 __from, int32 __to);
 		virtual void swapInvenSlot_Implementation(int32 __from, int32 __to);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void swapQuickSlot(FKey __from, FKey __to);
+		virtual void swapQuickSlot_Implementation(FKey __from, FKey __to);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void registerInventoQuick(int32 __from, FKey __to);
+		virtual void registerInventoQuick_Implementation(int32 __from, FKey __to);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		FInventoryData getInventoryData(int32 __index);
 		virtual FInventoryData getInventoryData_Implementation(int32 __index);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		bool isInteractionTarget(AActor* __actor);
+		virtual bool isInteractionTarget_Implementation(AActor* __actor);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();
