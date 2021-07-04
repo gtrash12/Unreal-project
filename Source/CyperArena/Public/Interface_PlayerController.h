@@ -58,4 +58,6 @@ public:
 		FInventoryData getInventoryData(int32 __index);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		bool isInteractionTarget(AActor* __actor);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void removeQuickSlot(FKey __key);
 };

@@ -94,6 +94,9 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		bool isInteractionTarget(AActor* __actor);
 		virtual bool isInteractionTarget_Implementation(AActor* __actor);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void removeQuickSlot(FKey __key);
+		virtual void removeQuickSlot_Implementation(FKey __key);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();
