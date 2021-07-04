@@ -352,6 +352,8 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 		int32 same_item_index = findSameItem(__item_id);
 		if (same_item_index >= 0) {
 			inventory_list[same_item_index].count += __num;
+			if (reverse_quickslot_list.Contains(same_item_index))
+				refreshQuickSlot(reverse_quickslot_list[same_item_index]);
 			return;
 		}
 		else {
