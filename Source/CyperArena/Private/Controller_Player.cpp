@@ -493,17 +493,19 @@ void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
 	bool fromflag = false;
 	bool toflag = false;
 	if (prevfromkey.IsValid()) {
-		if (inventory_list.Contains(__to)) {
-			reverse_quickslot_list.Remove(__from);
-			quickslot_list[prevfromkey] = __to;
-			fromflag = true;
-		}
+		reverse_quickslot_list.Remove(__from);
+		quickslot_list[prevfromkey] = __to;
+		fromflag = true;
 	}
 	if (prevtokey.IsValid()) {
 		if (inventory_list.Contains(__from)) {
 			reverse_quickslot_list.Remove(__to);
 			quickslot_list[prevtokey] = __from;
 			toflag = true;
+		}
+		else if(prevfromkey.IsValid()){
+			quickslot_list.Remove(prevfromkey);
+			fromflag = false;
 		}
 	}
 	if (prevfromkey.IsValid()) {
