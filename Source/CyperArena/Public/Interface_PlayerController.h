@@ -60,4 +60,8 @@ public:
 		bool isInteractionTarget(AActor* __actor);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void removeQuickSlot(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		bool isRegisteredQuickSlotKey(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
 };

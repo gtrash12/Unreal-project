@@ -543,3 +543,18 @@ bool AController_Player::isInteractionTarget_Implementation(AActor* __actor)
 {
 	return interaction_target == __actor;
 }
+
+bool AController_Player::isRegisteredQuickSlotKey_Implementation(FKey __key)
+{
+	return quickslot_list.Contains(__key);
+}
+
+int32 AController_Player::getRegisteredQuickSlotInvenIndex_Implementation(FKey __key)
+{
+	if (quickslot_list.Contains(__key)) {
+		return quickslot_list[__key];
+	}
+	else {
+		return -1;
+	}
+}

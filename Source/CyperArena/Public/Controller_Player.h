@@ -97,6 +97,12 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void removeQuickSlot(FKey __key);
 		virtual void removeQuickSlot_Implementation(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		bool isRegisteredQuickSlotKey(FKey __key);
+		virtual bool isRegisteredQuickSlotKey_Implementation(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
+		virtual int32 getRegisteredQuickSlotInvenIndex_Implementation(FKey __key);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+
 #include "Interface_ItemEffect.generated.h"
 
 // This class does not need to be modified.
@@ -24,7 +25,13 @@ class CYPERARENA_API IInterface_ItemEffect
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
-		void applyItemEffect(AActor* causer);
+		void applyItemEffect(ACharacter* causor, int32 __inven_index);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		FText describeItemEffect();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRegistration(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onActivate(ACharacter* causor, int32 __inven_index);
 };
