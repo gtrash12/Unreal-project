@@ -13,6 +13,27 @@
 void UWidget_Detail::initDetail(FName __item_id) {
 	FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
 	name_text->SetText(itemdata.name);
+	//UE_LOG(LogTemp, Warning, FString::Printf(TEXT("%d"),itemdata.item_rank));
+	switch (itemdata.item_rank)
+	{
+	case EItemRank::Common:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		break;
+	case EItemRank::Rare:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Blue));
+		break;
+	case EItemRank::Precious:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Purple)));
+		break;
+	case EItemRank::Unique:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+		break;
+	case EItemRank::Legendary:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Orange)));
+		break;
+	default:
+		break;
+	}
 	image->SetBrushFromTexture(itemdata.icon);
 	info_text->SetText(itemdata.item_info_text);
 	if (itemdata.item_effect_list.Num() > 0) {

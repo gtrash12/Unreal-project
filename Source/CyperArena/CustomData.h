@@ -162,6 +162,16 @@ enum class EItemType : uint8
 	Equipment_Gloves UMETA(DisplayName = "Equipment_Gloves")
 };
 
+UENUM(BlueprintType)
+enum class EItemRank : uint8
+{
+	Common,
+	Rare,
+	Precious,
+	Unique,
+	Legendary
+};
+
 USTRUCT(Atomic, BlueprintType)
 struct FItemEffect
 {
@@ -184,6 +194,8 @@ public:
 		UTexture2D* icon;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EItemType item_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemRank item_rank;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (MultiLine="true"))
 		FText item_info_text;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
@@ -201,6 +213,7 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 count;
 };
+
 /*
 UCLASS()
 class CYPERARENA_API ACustomData : public AActor
