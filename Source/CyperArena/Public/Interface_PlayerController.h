@@ -64,4 +64,6 @@ public:
 		bool isRegisteredQuickSlotKey(FKey __key);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+		void decreseItem(int32 __index, int32 __decrease_num);
 };

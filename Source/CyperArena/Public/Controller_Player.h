@@ -103,6 +103,9 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
 		virtual int32 getRegisteredQuickSlotInvenIndex_Implementation(FKey __key);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+		void decreseItem(int32 __index, int32 __decrease_num);
+		virtual void decreseItem_Implementation(int32 __index, int32 __decrease_num);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

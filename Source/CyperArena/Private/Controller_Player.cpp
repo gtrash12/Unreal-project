@@ -560,3 +560,25 @@ int32 AController_Player::getRegisteredQuickSlotInvenIndex_Implementation(FKey _
 		return -1;
 	}
 }
+
+
+void AController_Player::decreseItem_Implementation(int32 __index, int32 __decrease_num)
+{
+	if (inventory_list.Contains(__index) == false)
+		return;
+	if (inventory_list[__index].count - __decrease_num <= 0) {
+		inventory_list.Remove(__index);
+		if (reverse_quickslot_list.Contains(__index)) {
+			FKey tmpkey = reverse_quickslot_list[__index];
+			reverse_quickslot_list.Remove(__index);
+			quickslot_list.Remove(tmpkey);
+			refreshQuickSlot(tmpkey);
+		}
+	}
+	else {
+		inventory_list[__index].count -= __decrease_num;
+		if (reverse_quickslot_list.Contains(__index)) {
+			refreshQuickSlot(reverse_quickslot_list[__index]);
+		}
+	}
+}
