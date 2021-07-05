@@ -48,7 +48,7 @@ bool UPWOGameInstance::isStackable(EItemType __item_type)
 	return __item_type == EItemType::Consumables || __item_type == EItemType::Raw;
 }
 
-UObject* UPWOGameInstance::getClassDefaultObject(TSubclassOf<UObject> __class)
+UBaseItemEffect* UPWOGameInstance::getClassDefaultObject(TSubclassOf<UBaseItemEffect> __class)
 {
 	if (__class)
 		return __class.GetDefaultObject();

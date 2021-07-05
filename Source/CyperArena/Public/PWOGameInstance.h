@@ -59,6 +59,6 @@ public:
 		bool isStackable(EItemType __item_type);
 
 	UFUNCTION(BlueprintCallable, Category = "Class")
-		UObject* getClassDefaultObject(TSubclassOf<UObject> __class);
+		UBaseItemEffect* getClassDefaultObject(TSubclassOf<UBaseItemEffect> __class);
 };
 
