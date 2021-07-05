@@ -57,4 +57,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameInstance")
 		bool isStackable(EItemType __item_type);
+
+	UFUNCTION(BlueprintCallable, Category = "Class")
+		UObject* getClassDefaultObject(TSubclassOf<UObject> __class);
 };
+

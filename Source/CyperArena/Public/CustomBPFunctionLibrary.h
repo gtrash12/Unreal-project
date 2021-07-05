@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "../CustomData.h"
+#include "BaseItemEffect.h"
 
 #include "CustomBPFunctionLibrary.generated.h"
 
@@ -21,4 +22,6 @@ public :
 		static int32 findEmptyIndex(TMap<int32, FInventoryData> __inven);
 	UFUNCTION(BlueprintCallable, Category = "Map")
 		static int32 findSameItem(TMap<int32, FInventoryData> __inven, FName __item_id);
+	UFUNCTION(BlueprintCallable, Category = "Class")
+		static UBaseItemEffect* getClassDefaultObject(TSubclassOf<UBaseItemEffect> __class);
 };

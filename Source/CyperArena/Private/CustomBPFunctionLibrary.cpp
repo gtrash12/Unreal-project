@@ -34,3 +34,11 @@ int32 UCustomBPFunctionLibrary::findSameItem(TMap<int32, FInventoryData> __inven
 	//__controller->GetGameInstance()->
 	
 }
+
+UBaseItemEffect* UCustomBPFunctionLibrary::getClassDefaultObject(TSubclassOf<UBaseItemEffect> __class)
+{
+	if (__class)
+		return __class.GetDefaultObject();
+	else
+		return nullptr;
+}
