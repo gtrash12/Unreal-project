@@ -569,7 +569,6 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
 		equipment_list.Remove(__from);;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("ASDF"));
 	refreshEquipmentSlot(__from);
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	gameinstance->inventory_slot_reference[__to]->initSlot();
