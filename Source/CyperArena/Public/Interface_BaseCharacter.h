@@ -99,7 +99,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		float getStat_Hp();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		float getStat_Stamina(float __amount);
+		float getStat_Stamina();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);

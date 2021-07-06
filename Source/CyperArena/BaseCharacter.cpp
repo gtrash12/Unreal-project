@@ -523,7 +523,20 @@ void ABaseCharacter::increaseStat_Speed_Implementation(float __amount)
 	additive_speed += __amount;
 }
 
+float ABaseCharacter::getStat_Speed_Implementation()
+{
+	return walk_speed + additive_speed;
+}
 
+float ABaseCharacter::getStat_Hp_Implementation()
+{
+	return max_hp + additive_hp;
+}
+
+float ABaseCharacter::getStat_Stamina_Implementation()
+{
+	return max_stamina + additive_stamina;
+}
 
 // <-- 인터페이스 함수 정의 끝
 

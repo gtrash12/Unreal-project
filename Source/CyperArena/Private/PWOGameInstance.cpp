@@ -32,8 +32,14 @@ void UPWOGameInstance::findActionData_Implementation(FName __action_id, FActionD
 }
 
 FItemData UPWOGameInstance::findItemData_Implementation(FName __item_id){
-	FItemData* res = item_data_table->FindRow<FItemData>(__item_id, TEXT(""));
+	FItemData* res;
+	//if(item_data_table->row)
+	res = item_data_table->FindRow<FItemData>(__item_id, TEXT(""));
 	return *res;
+	/*if (res == nullptr)
+		return FItemData();
+	else
+		return *res;*/
 }
 
 void UPWOGameInstance::Interact_Implementation(AActor* __target, AActor* __causer) {

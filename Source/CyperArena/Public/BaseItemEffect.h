@@ -22,19 +22,19 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
 		float value;
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
-		void applyItemEffect(ACharacter* causor, int32 __inven_index);
-		virtual void applyItemEffect_Implementation(ACharacter* causor, int32 __inven_index);
-	/*UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
-		FText describeItemEffect();
-		virtual FText describeItemEffect_Implementation();*/
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
-		void onRegistration(ACharacter* causor, int32 __inven_index);
-		virtual void onRegistration_Implementation(ACharacter* causor, int32 __inven_index);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
-		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
-		virtual void onRemoveRegistration_Implementation(ACharacter* causor, int32 __inven_index);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
-		void onActivate(ACharacter* causor, int32 __inven_index);
-		virtual void onActivate_Implementation(ACharacter* causor, int32 __inven_index);
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
+	//	void applyItemEffect(ACharacter* causor, int32 __inven_index);
+	//	virtual void applyItemEffect_Implementation(ACharacter* causor, int32 __inven_index);
+	///*UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
+	//	FText describeItemEffect();
+	//	virtual FText describeItemEffect_Implementation();*/
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
+	//	void onRegistration(ACharacter* causor, int32 __inven_index);
+	//	virtual void onRegistration_Implementation(ACharacter* causor, int32 __inven_index);
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
+	//	void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	//	virtual void onRemoveRegistration_Implementation(ACharacter* causor, int32 __inven_index);
+	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
+	//	void onActivate(ACharacter* causor, int32 __inven_index);
+	//	virtual void onActivate_Implementation(ACharacter* causor, int32 __inven_index);
 };
