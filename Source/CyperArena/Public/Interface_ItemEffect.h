@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "CustomEnums.h"
 
 #include "Interface_ItemEffect.generated.h"
 
@@ -32,6 +33,10 @@ public:
 		void onRegistration(ACharacter* causor, int32 __inven_index);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onEquip(ACharacter* causor, EEquipmentType __key);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onUnequip(ACharacter* causor, EEquipmentType __key);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void onActivate(ACharacter* causor, int32 __inven_index);
 };
