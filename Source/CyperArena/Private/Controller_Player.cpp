@@ -167,7 +167,7 @@ AActor* AController_Player::findLockOnTarget()
 	AActor* result = nullptr;
 	for (AActor* i : founded) {
 		/* 거리 1000 이상이면 타게팅 후보에서 제외 */
-		if (GetPawn()->GetDistanceTo(i) > 1000)
+		if (GetPawn()->GetDistanceTo(i) > 2000)
 			continue;
 		/* 라인트레이스 해서 히트가 발생하면 후보에서 제외*/
 		FHitResult hit_result;
@@ -208,6 +208,8 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	AActor* result = nullptr;
 	for (AActor* i : founded) {
 		if (follow_cam->look_target == i)
+			continue;
+		if (GetPawn()->GetDistanceTo(i) > 2000)
 			continue;
 		FHitResult hit_result;
 		FVector target_location = i->GetActorLocation();
