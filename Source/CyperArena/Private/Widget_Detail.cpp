@@ -42,6 +42,9 @@ void UWidget_Detail::initDetail(FName __item_id) {
 			auto item_effect_obj = i.item_effect.GetDefaultObject();
 			item_effect_obj->value = i.value;
 			if (i.item_effect->ImplementsInterface(UInterface_ItemEffect::StaticClass())) {
+				FString cur_text = IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
+				if (cur_text == "")
+					continue;
 				final_effect_text += TEXT("\n");
 				final_effect_text += IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
 			}

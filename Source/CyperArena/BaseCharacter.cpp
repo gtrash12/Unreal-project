@@ -521,6 +521,8 @@ void ABaseCharacter::increaseStat_Power_Implementation(float __amount)
 void ABaseCharacter::increaseStat_Speed_Implementation(float __amount)
 {
 	additive_speed += __amount;
+	GetCharacterMovement()->MaxWalkSpeed = additive_speed + walk_speed;
+	is_on_sprint = false;
 }
 
 float ABaseCharacter::getStat_Speed_Implementation()
@@ -765,9 +767,9 @@ void ABaseCharacter::endKnock_Back() {
 		current_velocty = FVector::ZeroVector;
 	knock_back_speed = 0;
 	if (is_on_sprint)
-		GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
+		GetCharacterMovement()->MaxWalkSpeed = getStat_Speed()+500;
 	else
-		GetCharacterMovement()->MaxWalkSpeed = walk_speed;
+		GetCharacterMovement()->MaxWalkSpeed = getStat_Speed();
 	GetCharacterMovement()->MaxAcceleration = 2048.0f;
 	
 }
