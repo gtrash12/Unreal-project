@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "../CustomData.h"
+
 #include "Widget_ItemSlot.generated.h"
 
 /**
@@ -30,9 +32,11 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemData")
 		int32 count;
 
-	UFUNCTION(BlueprintCallable, Category = "itemslot")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "itemslot")
 		void initSlot();
+		virtual void initSlot_Implementation();
 	UFUNCTION(BlueprintCallable, Category = "itemslot")
 		void dropFromItemSlot(UWidget_ItemSlot* from);
-	
+	UFUNCTION(BlueprintCallable, Category = "itemslot")
+		void updateUI(FInventoryData __data);
 };

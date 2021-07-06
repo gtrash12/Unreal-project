@@ -43,7 +43,7 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<int32, FKey> reverse_quickslot_list;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TMap<EEquipmentType, FInventoryData> Equipment_list;
+		TMap<EEquipmentType, FInventoryData> equipment_list;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 max_slot_size;
 
@@ -111,6 +111,12 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void equipItem(int32 __from, EEquipmentType __to);
 		virtual void equipItem_Implementation(int32 __from, EEquipmentType __to);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
+		void unequipItem(EEquipmentType __from, int32 __to);
+		virtual void unequipItem_Implementation(EEquipmentType __from, int32 __to);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
+		void refreshEquipmentSlot(EEquipmentType __type);
+		virtual void refreshEquipmentSlot_Implementation(EEquipmentType __type);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

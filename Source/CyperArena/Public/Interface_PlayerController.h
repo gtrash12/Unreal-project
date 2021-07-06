@@ -70,4 +70,6 @@ public:
 		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void decreseItem(int32 __index, int32 __decrease_num);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
+		void refreshEquipmentSlot(EEquipmentType __type);
 };

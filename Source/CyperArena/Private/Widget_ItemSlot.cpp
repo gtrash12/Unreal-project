@@ -18,16 +18,31 @@
 //
 //}
 
-void UWidget_ItemSlot::initSlot() {
+void UWidget_ItemSlot::initSlot_Implementation() {
 	FInventoryData invendata;
 	if(GetWorld()->GetFirstPlayerController() == NULL)
 		return;
 	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
 		invendata = IInterface_PlayerController::Execute_getInventoryData(GetWorld()->GetFirstPlayerController(), my_index);
 	}
-	item_id = invendata.item_id;
-	count = invendata.count;
-	if (invendata.item_id == "None") {
+	updateUI(invendata);
+}
+
+void UWidget_ItemSlot::dropFromItemSlot(UWidget_ItemSlot* from) {
+	if (from->my_index == my_index)
+		return;
+	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
+		IInterface_PlayerController::Execute_swapInvenSlot(GetWorld()->GetFirstPlayerController(), from->my_index, my_index);
+	}
+	//from->init
+
+}
+
+void UWidget_ItemSlot::updateUI(FInventoryData __data)
+{
+	item_id = __data.item_id;
+	count = __data.count;
+	if (item_id == "None") {
 		slot_image->SetBrushFromTexture(Cast<UPWOGameInstance>(GetGameInstance())->empty_slot_image);
 		count_text->SetVisibility(ESlateVisibility::Collapsed);
 		//
@@ -43,15 +58,4 @@ void UWidget_ItemSlot::initSlot() {
 			count_text->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
-	
-}
-
-void UWidget_ItemSlot::dropFromItemSlot(UWidget_ItemSlot* from) {
-	if (from->my_index == my_index)
-		return;
-	if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
-		IInterface_PlayerController::Execute_swapInvenSlot(GetWorld()->GetFirstPlayerController(), from->my_index, my_index);
-	}
-	//from->init
-
 }

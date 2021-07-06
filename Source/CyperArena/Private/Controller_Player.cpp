@@ -473,22 +473,25 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 	Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference[__from]->initSlot();;
 }
 
+/// <summary>
+/// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 UI를 업데이트
+/// </summary>
+/// <param name="__key"></param>
 void AController_Player::refreshQuickSlot(FKey __key)
 {
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
+	FInventoryData invendatadata;
 	if (quickslot_list.Contains(__key) && inventory_list.Contains(quickslot_list[__key])) {
 		prev_quick_slot->my_index = quickslot_list[__key];
-		FInventoryData data = inventory_list[prev_quick_slot->my_index];
-		prev_quick_slot->item_id = data.item_id;
-		prev_quick_slot->count = data.count;
+		invendatadata = inventory_list[prev_quick_slot->my_index];
 	}
 	else {
-		prev_quick_slot->item_id = "None";
 		prev_quick_slot->my_index = -1;
-		prev_quick_slot->count = 0;
+		invendatadata.item_id = "None";
+		invendatadata.count = 0;
 	}
-	prev_quick_slot->initSlot();
+	prev_quick_slot->updateUI(invendatadata);
 }
 
 void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
@@ -540,14 +543,36 @@ void AController_Player::removeQuickSlot_Implementation(FKey __key)
 void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType __to)
 {
 	FInventoryData fromdata = inventory_list[__from];
-	if (Equipment_list.Contains(__to)) {
-		inventory_list[__from] = Equipment_list[__to];
-		Equipment_list[__to] = fromdata;
+	if (equipment_list.Contains(__to)) {
+		inventory_list[__from] = equipment_list[__to];
+		equipment_list[__to] = fromdata;
 	}
 	else {
-		Equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
+		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);;
 	}
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->inventory_slot_reference[__from]->initSlot();
+	refreshEquipmentSlot(__to);
+}
+
+void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32 __to)
+{
+	if (__to < 0)
+		__to = findInventoryEmptyIndex();
+	FInventoryData fromdata = equipment_list[__from];
+	if (inventory_list.Contains(__to)) {
+		equipment_list[__from] = inventory_list[__to];
+		inventory_list[__to] = fromdata;
+	}
+	else {
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		equipment_list.Remove(__from);;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("ASDF"));
+	refreshEquipmentSlot(__from);
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->inventory_slot_reference[__to]->initSlot();
 }
 
 
@@ -602,4 +627,22 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 			refreshQuickSlot(reverse_quickslot_list[__index]);
 		}
 	}
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	if (gameinstance->inventory_slot_reference.Contains(__index))
+		gameinstance->inventory_slot_reference[__index]->initSlot();
+}
+
+void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UWidget_ItemSlot* equipment_slot = gameinstance->equipment_slot_reference[__type];
+	FInventoryData invendata;
+	if (equipment_list.Contains(__type)) {
+		invendata = equipment_list[__type];
+	}
+	else {
+		invendata.item_id = "None";
+		invendata.count = 0;
+	}
+	equipment_slot->updateUI(invendata);
 }
