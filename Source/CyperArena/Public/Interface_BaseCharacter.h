@@ -94,6 +94,12 @@ public:
 		void increaseStat_Speed(float __amount);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void increaseStat_Power(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Speed();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Hp();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Stamina(float __amount);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);

@@ -542,8 +542,15 @@ void AController_Player::removeQuickSlot_Implementation(FKey __key)
 
 void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType __to)
 {
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	FInventoryData fromdata = inventory_list[__from];
 	if (equipment_list.Contains(__to)) {
+		FItemData previtemdata = gameinstance->findItemData(equipment_list[__to].item_id);
+		for (FItemEffect i : previtemdata.item_effect_list) {
+			auto item_effect_obj = i.item_effect.GetDefaultObject();
+			item_effect_obj->value = i.value;
+			IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+		}
 		inventory_list[__from] = equipment_list[__to];
 		equipment_list[__to] = fromdata;
 	}
@@ -551,7 +558,12 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);;
 	}
-	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	FItemData equipeditemdata = gameinstance->findItemData(equipment_list[__to].item_id);
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, GetCharacter(), __from);
+	}
 	gameinstance->inventory_slot_reference[__from]->initSlot();
 	refreshEquipmentSlot(__to);
 }

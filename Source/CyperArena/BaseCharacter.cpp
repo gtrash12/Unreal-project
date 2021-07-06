@@ -463,7 +463,7 @@ void ABaseCharacter::rotateActorWithInTime_Implementation(FRotator __target_rota
 /// </summary>
 /// <param name="__output_base_power"></param>
 void ABaseCharacter::getBasePower_Implementation(float& __output_base_power) {
-	__output_base_power = base_power;
+	__output_base_power = base_power + additive_power;
 }
 
 /// <summary>

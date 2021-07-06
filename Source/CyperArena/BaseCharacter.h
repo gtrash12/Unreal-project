@@ -298,6 +298,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void increaseStat_Power(float __amount);
 		virtual void increaseStat_Power_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Speed();
+		virtual float getStat_Speed_Implementation();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Hp();
+		virtual float getStat_Hp_Implementation();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		float getStat_Stamina();
+		virtual float getStat_Stamina_Implementation();
 // --> 클래스 멤버 함수선언
 
 
