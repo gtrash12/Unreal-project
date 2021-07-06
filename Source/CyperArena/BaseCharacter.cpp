@@ -498,20 +498,23 @@ void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
 
 void ABaseCharacter::recoverHP_Implementation(float __amount)
 {
-	hp = UKismetMathLibrary::Min(getStat_Hp(), hp + __amount);
+	hp = UKismetMathLibrary::FMin(getStat_Hp(), hp + __amount);
 }
 void ABaseCharacter::recoverStaminaMax_Implementation(float __amount)
 {
-	cur_max_stamina = UKismetMathLibrary::Min(getStat_Stamina(), cur_max_stamina + __amount);
-	stamina = UKismetMathLibrary::Min(cur_max_stamina, stamina + __amount);
+	cur_max_stamina = UKismetMathLibrary::FMin(getStat_Stamina(), cur_max_stamina + __amount);
+	stamina = UKismetMathLibrary::FMin(cur_max_stamina, stamina + __amount);
 }
 void ABaseCharacter::increaseStat_Hp_Implementation(float __amount)
 {
 	additive_hp += __amount;
+	hp = UKismetMathLibrary::FMin(getStat_Hp(), hp);
 }
 void ABaseCharacter::increaseStat_Stamina_Implementation(float __amount)
 {
 	additive_stamina += __amount;
+	cur_max_stamina = UKismetMathLibrary::FMin(getStat_Stamina(), cur_max_stamina);
+	stamina = UKismetMathLibrary::FMin(cur_max_stamina, stamina);
 }
 
 void ABaseCharacter::increaseStat_Power_Implementation(float __amount)
