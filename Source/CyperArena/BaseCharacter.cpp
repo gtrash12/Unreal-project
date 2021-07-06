@@ -496,6 +496,35 @@ void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
 	__output_is_dodge = is_dodge;
 }
 
+void ABaseCharacter::recoverHP_Implementation(float __amount)
+{
+	hp = UKismetMathLibrary::Min(max_hp, hp + __amount);
+}
+void ABaseCharacter::recoverStaminaMax_Implementation(float __amount)
+{
+	cur_max_stamina = UKismetMathLibrary::Min(max_stamina, cur_max_stamina + __amount);
+	stamina = UKismetMathLibrary::Min(cur_max_stamina, stamina + __amount);
+}
+void ABaseCharacter::increaseStat_Hp_Implementation(float __amount)
+{
+	additive_hp += __amount;
+}
+void ABaseCharacter::increaseStat_Stamina_Implementation(float __amount)
+{
+	additive_stamina += __amount;
+}
+
+void ABaseCharacter::increaseStat_Power_Implementation(float __amount)
+{
+	additive_power += __amount;
+}
+void ABaseCharacter::increaseStat_Speed_Implementation(float __amount)
+{
+	additive_speed += __amount;
+}
+
+
+
 // <-- 인터페이스 함수 정의 끝
 
 

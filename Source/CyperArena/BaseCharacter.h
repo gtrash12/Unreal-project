@@ -47,8 +47,21 @@ public:
 		float cur_max_stamina;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float max_stamina;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (DisplayName = "Base Power", Category = "Base-CharacterState"))
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float base_power;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float dex;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float additive_hp;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float additive_stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float additive_power;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float additive_dex;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float additive_speed;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))
 		bool is_on_sprint;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
@@ -266,6 +279,25 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getIsDodge(bool& __output_is_dodge);
 		virtual void getIsDodge_Implementation(bool& __output_is_dodge) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void recoverHP(float __amount);
+		virtual void recoverHP_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void recoverStaminaMax(float __amount);
+		virtual void recoverStaminaMax_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void increaseStat_Hp(float __amount);
+		virtual void increaseStat_Hp_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void increaseStat_Stamina(float __amount);
+		virtual void increaseStat_Stamina_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void increaseStat_Speed(float __amount);
+		virtual void increaseStat_Speed_Implementation(float __amount);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void increaseStat_Power(float __amount);
+		virtual void increaseStat_Power_Implementation(float __amount);
 // --> 클래스 멤버 함수선언
 
 
