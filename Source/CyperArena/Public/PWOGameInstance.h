@@ -35,6 +35,10 @@ public:
 		UWidget_Detail* detail_widget_reference;
 	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
 		TMap<FKey, UWidget_ItemSlot*> quickslot_references;
+	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
+		TMap<int32, UWidget_ItemSlot*> inventory_slot_reference;
+	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
+		TMap<EEquipmentType, UWidget_ItemSlot*> equipment_slot_reference;
 
 
 

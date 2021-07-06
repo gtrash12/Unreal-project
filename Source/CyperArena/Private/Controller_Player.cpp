@@ -395,6 +395,8 @@ void AController_Player::removeInteractionText_Implementation()
 
 void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 {
+	if (__from == __to)
+		return;
 	FInventoryData fromdata = inventory_list[__from];
 	if (inventory_list.Contains(__to)) {
 		if (fromdata.item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(fromdata.item_id).item_type)) {
@@ -411,11 +413,16 @@ void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 		inventory_list.Remove(__from);
 	}
 	updateQuickSlotData(__from, __to);
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->inventory_slot_reference[__from]->initSlot();;
+	gameinstance->inventory_slot_reference[__to]->initSlot();
 }
 
 
 void AController_Player::swapQuickSlot_Implementation(FKey __from, FKey __to)
 {
+	if (__from == __to)
+		return;
 	int32 fromdata = quickslot_list[__from];
 	if (quickslot_list.Contains(__to)) {
 		quickslot_list[__from] = quickslot_list[__to];
@@ -463,6 +470,7 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
 	}
 	refreshQuickSlot(__to);
+	Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference[__from]->initSlot();;
 }
 
 void AController_Player::refreshQuickSlot(FKey __key)
@@ -527,6 +535,19 @@ void AController_Player::removeQuickSlot_Implementation(FKey __key)
 	reverse_quickslot_list.Remove(quickslot_list[__key]);
 	quickslot_list.Remove(__key);
 	refreshQuickSlot(__key);
+}
+
+void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType __to)
+{
+	FInventoryData fromdata = inventory_list[__from];
+	if (Equipment_list.Contains(__to)) {
+		inventory_list[__from] = Equipment_list[__to];
+		Equipment_list[__to] = fromdata;
+	}
+	else {
+		Equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);;
+	}
 }
 
 

@@ -48,22 +48,26 @@ public:
 		void showInteractionText(const FText& __text);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		void removeInteractionText();
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void swapInvenSlot(int32 __from, int32 __to);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void swapQuickSlot(FKey __from, FKey __to);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void registerInventoQuick(int32 __from, FKey __to);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
+		void equipItem(int32 __from, EEquipmentType __to);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
+		void unequipItem(EEquipmentType __from, int32 __to);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		FInventoryData getInventoryData(int32 __index);
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
 		bool isInteractionTarget(AActor* __actor);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void removeQuickSlot(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		bool isRegisteredQuickSlotKey(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
 		void decreseItem(int32 __index, int32 __decrease_num);
 };

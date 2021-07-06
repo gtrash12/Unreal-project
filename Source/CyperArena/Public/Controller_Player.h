@@ -43,6 +43,8 @@ public :
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<int32, FKey> reverse_quickslot_list;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<EEquipmentType, FInventoryData> Equipment_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		int32 max_slot_size;
 
 	/* 인터페이스 */
@@ -79,33 +81,36 @@ public :
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void removeInteractionText();
 		virtual void removeInteractionText_Implementation();
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void swapInvenSlot(int32 __from, int32 __to);
 		virtual void swapInvenSlot_Implementation(int32 __from, int32 __to);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void swapQuickSlot(FKey __from, FKey __to);
 		virtual void swapQuickSlot_Implementation(FKey __from, FKey __to);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void registerInventoQuick(int32 __from, FKey __to);
 		virtual void registerInventoQuick_Implementation(int32 __from, FKey __to);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		FInventoryData getInventoryData(int32 __index);
 		virtual FInventoryData getInventoryData_Implementation(int32 __index);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		bool isInteractionTarget(AActor* __actor);
 		virtual bool isInteractionTarget_Implementation(AActor* __actor);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void removeQuickSlot(FKey __key);
 		virtual void removeQuickSlot_Implementation(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		bool isRegisteredQuickSlotKey(FKey __key);
 		virtual bool isRegisteredQuickSlotKey_Implementation(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		int32 getRegisteredQuickSlotInvenIndex(FKey __key);
 		virtual int32 getRegisteredQuickSlotInvenIndex_Implementation(FKey __key);
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
 		void decreseItem(int32 __index, int32 __decrease_num);
 		virtual void decreseItem_Implementation(int32 __index, int32 __decrease_num);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Inventory")
+		void equipItem(int32 __from, EEquipmentType __to);
+		virtual void equipItem_Implementation(int32 __from, EEquipmentType __to);
 	/* 클래스 메소드 */
 	UFUNCTION(BlueprintCallable, Category = "Targetting")
 		AActor* findLockOnTarget();

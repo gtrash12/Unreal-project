@@ -172,6 +172,21 @@ enum class EItemRank : uint8
 	Legendary
 };
 
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8
+{
+	Weapon,
+	Head,
+	UpperBody,
+	LowerBody,
+	Hand,
+	Shoes,
+	Artifact1,
+	Artifact2,
+	Artifact3,
+	Artifact4
+};
+
 USTRUCT(Atomic, BlueprintType)
 struct FItemEffect
 {
