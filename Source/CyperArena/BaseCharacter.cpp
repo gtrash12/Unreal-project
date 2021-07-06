@@ -498,11 +498,11 @@ void ABaseCharacter::getIsDodge_Implementation(bool& __output_is_dodge) {
 
 void ABaseCharacter::recoverHP_Implementation(float __amount)
 {
-	hp = UKismetMathLibrary::Min(max_hp, hp + __amount);
+	hp = UKismetMathLibrary::Min(getStat_Hp(), hp + __amount);
 }
 void ABaseCharacter::recoverStaminaMax_Implementation(float __amount)
 {
-	cur_max_stamina = UKismetMathLibrary::Min(max_stamina, cur_max_stamina + __amount);
+	cur_max_stamina = UKismetMathLibrary::Min(getStat_Stamina(), cur_max_stamina + __amount);
 	stamina = UKismetMathLibrary::Min(cur_max_stamina, stamina + __amount);
 }
 void ABaseCharacter::increaseStat_Hp_Implementation(float __amount)
