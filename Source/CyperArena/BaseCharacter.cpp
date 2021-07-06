@@ -538,6 +538,11 @@ float ABaseCharacter::getStat_Stamina_Implementation()
 	return max_stamina + additive_stamina;
 }
 
+void ABaseCharacter::changeWeaponMesh_Implementation(FName __item_id)
+{
+
+}
+
 // <-- 인터페이스 함수 정의 끝
 
 

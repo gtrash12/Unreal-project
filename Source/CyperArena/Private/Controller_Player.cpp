@@ -545,10 +545,12 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	FInventoryData fromdata = inventory_list[__from];
 	if (equipment_list.Contains(__to)) {
-		FItemData previtemdata = gameinstance->findItemData(equipment_list[__to].item_id);
+		FName previtemid = equipment_list[__to].item_id;
+		FItemData previtemdata = gameinstance->findItemData(previtemid);
 		for (FItemEffect i : previtemdata.item_effect_list) {
 			auto item_effect_obj = i.item_effect.GetDefaultObject();
 			item_effect_obj->value = i.value;
+			item_effect_obj->item_id = previtemid;
 			IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
 		}
 		inventory_list[__from] = equipment_list[__to];
@@ -558,10 +560,12 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);;
 	}
-	FItemData equipeditemdata = gameinstance->findItemData(equipment_list[__to].item_id);
+	FName equiped_item_id = equipment_list[__to].item_id;
+	FItemData equipeditemdata = gameinstance->findItemData(equiped_item_id);
 	for (FItemEffect i : equipeditemdata.item_effect_list) {
 		auto item_effect_obj = i.item_effect.GetDefaultObject();
 		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = equiped_item_id;
 		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, GetCharacter(), __from);
 	}
 	gameinstance->inventory_slot_reference[__from]->initSlot();
@@ -570,8 +574,17 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 
 void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32 __to)
 {
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	if (__to < 0)
 		__to = findInventoryEmptyIndex();
+	FName previtemid = equipment_list[__from].item_id;
+	FItemData previtemdata = gameinstance->findItemData(previtemid);
+	for (FItemEffect i : previtemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = previtemid;
+		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __to);
+	}
 	FInventoryData fromdata = equipment_list[__from];
 	if (inventory_list.Contains(__to)) {
 		equipment_list[__from] = inventory_list[__to];
@@ -579,10 +592,9 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 	}
 	else {
 		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
-		equipment_list.Remove(__from);;
+		equipment_list.Remove(__from);
 	}
 	refreshEquipmentSlot(__from);
-	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	gameinstance->inventory_slot_reference[__to]->initSlot();
 }
 

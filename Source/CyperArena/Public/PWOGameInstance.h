@@ -23,12 +23,14 @@ class CYPERARENA_API UPWOGameInstance : public UGameInstance
 public:
 	UPWOGameInstance();
 
-	UPROPERTY(BlueprintReadOnly, Category = "Base-Look")
+	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
 		UDataTable* damage_data_table;
-	UPROPERTY(BlueprintReadOnly, Category = "Base-Look")
+	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
 		UDataTable* action_data_table;
-	UPROPERTY(BlueprintReadOnly, Category = "Base-Look")
+	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
 		UDataTable* item_data_table;
+	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
+		UDataTable* item_mesh_data_table;
 	UPROPERTY()
 		UTexture2D* empty_slot_image;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Look")

@@ -99,6 +99,17 @@ public:
 
 
 USTRUCT(Atomic, BlueprintType)
+struct FItemMeshData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		USkeletalMesh* mesh;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FTransform transform;
+};
+
+USTRUCT(Atomic, BlueprintType)
 struct FInventoryData
 {
 	GENERATED_BODY()

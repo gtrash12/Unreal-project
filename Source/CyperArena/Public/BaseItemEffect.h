@@ -21,6 +21,8 @@ public :
 	~UBaseItemEffect();
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
 		float value;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
+		FName item_id;
 
 	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-ItemEffect")
 	//	void applyItemEffect(ACharacter* causor, int32 __inven_index);

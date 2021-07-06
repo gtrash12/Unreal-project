@@ -307,6 +307,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		float getStat_Stamina();
 		virtual float getStat_Stamina_Implementation();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void changeWeaponMesh(FName __item_id);
+		virtual void changeWeaponMesh_Implementation(FName __item_id);
 // --> 클래스 멤버 함수선언
 
 

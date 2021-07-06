@@ -20,6 +20,10 @@ UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UTexture2D> Icon_EmptySlot(TEXT("Texture2D'/Game/Image/Icon/Icon_EmptySlot.Icon_EmptySlot'"));
 		if (Icon_EmptySlot.Succeeded())
 			empty_slot_image = Icon_EmptySlot.Object;
+
+	static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDataTable.ItemMeshDataTable'"));
+	if (ItemMeshDataTable.Succeeded())
+		item_mesh_data_table = ItemMeshDataTable.Object;
 }
 
 
