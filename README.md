@@ -522,22 +522,41 @@ class CYPERARENA_API IInterface_ItemEffect
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
+	/* 아이템 효과 적용시 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void applyItemEffect(ACharacter* causor, int32 __inven_index);
+	/* 아이템 설명 텍스트 요구시 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		FText describeItemEffect();
+	/* 아이템을 퀵슬롯이나 장비 슬롯에 등록시 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void onRegistration(ACharacter* causor, int32 __inven_index);
+	/* 아이템을 퀵슬롯이나 장비 슬롯에서 해제시 */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	/* 아이템 사용시 (인벤토리에서 우클릭하거나 퀵슬롯에 등록 후 퀵슬롯 키 입력시 ) */
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
 		void onActivate(ACharacter* causor, int32 __inven_index);
 };
 ```
 - ItemEffect 는 아이템의 데이터와 효과를 분리하여 컴포넌트 처럼 아이템효과를 아이템데이터에 추가하는 것 만으로 해당 아이템의 효과를 정의할 수 있게 만든 시스템
 - 위의 BaseItemEffect 를 상속받은 클래스를 ItemEffect 리스트에 추가할 수 있음
+- ItemEffect 를 사용할 일이 있으면 ItemEffect의 클래스 디폴트 오브젝트의 프로퍼티를 FItemEffect의 value로 초기화하고 인터페이스를 통해 필요한 역할을 수행시킴
 - 아이템의 정보를 표시할 때 item_effect_list 의 모든 ItemEffect의 describeItemEffect() 를 실행해서 설명창에 추가
   - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)
+  - ![image](https://user-images.githubusercontent.com/12960463/124914499-5e957200-e02b-11eb-95ad-39ce26f401eb.png)
+- 아이템을 사용할 때 item_effect_list 의 모든 ItemEffect의 applyItemEffect()를 실행
+  - 초보자용 물약의 경우 item_effect_list에 IE_Action_Drink, IE_HealBase, IE_DecreaseCount 이 세 개의 ItemEffect가 들어가 있음
+  - IE_Action_Drink
+    - onActivate() 실행시 캐릭터의 drink 애니메이션을 실행함.
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
+  - IE_HealBase
+    - applyItemEffect() 실행시 캐릭터의 hp를 value 만큼 회복
+    - describeItemEffect() 실행시 "체력을 {value} 회복" 을 출력
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
+  - IE_DecreaseCount
+    - applyItemEffect() 실행시 아이템의 갯수를 1개 감소
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
 
 
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
