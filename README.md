@@ -400,9 +400,87 @@ void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSe
 ```
 ![image](https://user-images.githubusercontent.com/12960463/124948453-ac21d700-e04b-11eb-8f74-2041241ae63f.png)
 ![image](https://user-images.githubusercontent.com/12960463/124948599-c956a580-e04b-11eb-87f8-f9abcae36725.png)
-이런식으로 몽타주에서 notify 를 실행해 해당 기간 동안 충돌 판정
 
-### 전방향 피격모션 & 발동작 블렌딩 & 피지컬 애니메이션
+이런식으로 몽타주에서 notify 를 실행해 해당 기간 동안 충돌 판정
+- 위의 충돌 판정 notify 는 데디케이티드 서버에서 실행하지 않고 클라이언트에서만 실행
+  - 서버에서는 tick 속도가 느리기 때문에 비교적 부정확한 충돌판정이 발생
+  - 따라서 충돌 판정은 클라이언트에서 전담
+
+### 코드 : 위의 notify state를 통해 충돌이 감지되면 공격중인 캐릭터가 실행하는 
+```
+/// <summary>
+/// 공격이 적에게 맞았을 때 피격액터에게 데미지 이벤트를 전달
+/// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
+/// </summary>
+/// <param name="hit_actor">피격 액터</param>
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) {
+
+	bool flag = false;
+	getNetworkOwnerType(network_owner_type);
+	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
+		return;
+	}
+		
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
+	if (HasAuthority()) {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+			if (__hit_actor->GetOwner() != GetOwner()) {
+				flag = true;
+			}
+		}
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			if (network_owner_type == ENetworkOwnerType::OwnedAI) {
+				if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+					flag = true;
+				}
+			}
+		}
+	}
+	else {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+			if (__hit_actor->GetOwner() != GetOwner()) {
+				flag = true;
+			}
+		}
+		if (network_owner_type == ENetworkOwnerType::RemoteAI) {
+			if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+				flag = true;
+			}
+		}
+	}
+	if (flag && damage_data.attack_type != EAttackType::Earthquake) {
+		if (__hit_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			bool hit_actor_is_dodge;
+			IInterface_BaseCharacter::Execute_getIsDodge(__hit_actor, hit_actor_is_dodge);
+			if (hit_actor_is_dodge) {
+				flag = false;
+			}
+		}
+	}
+	/* pelvis 하위 본 히트시에만 applyDamage*/
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%d] %s"), GetMesh()->GetBoneIndex(__hit_bone_name), *(__hit_bone_name.ToString())));
+	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
+		flag = false;
+	}
+
+	if (flag) {
+		if (hit_actors_list.Contains(__hit_actor) == false) {
+			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name);
+			}
+			hit_actors_list.Add(__hit_actor);
+		}
+	}
+}
+```
+- 위 attackEvent 함수를 통해 플레이어 컨트롤러로 applyDamage에 필요한 데이터를 전달
+- 플레이어 컨트롤러에서 서버로 충돌이 발생했다고 알리는 함수를 실행
+- 서버에서 피격 캐릭터로 multicast로 applyDamage 함수를 실행
+- 충돌 관련 RPC에서 DamageData 가 아닌 damage_id를 전달하는 이유
+  - damage_id 를 전달하는 경우 DamageDataTable을 다시 검색해야함
+  - 하지만 DamageData 는 크기가 damage_id 보다 훨씬 크므로 네트워크에 부하가 더 큼
+
+### 넉백 & 피격 애니메이션 & 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
