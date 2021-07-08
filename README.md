@@ -421,6 +421,9 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 ## 인벤토리 시스템
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
+![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
+인벤토리 시스템의 데이터 구조
+
 ## 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
