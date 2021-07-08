@@ -707,6 +707,478 @@ UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 - 게임 인스턴스를 통해 프로그램 내 어디에서든 위젯에 접근할 수 있음
 - 위젯은 반드시 하나만 존재하는 것이기 때문에 게임에서 단 하나만 존재하는 GameInstance에서 관리하는 것이 효과적
 
+#### 코드 : 인벤토리에서 빈 index 반환 함수
+```
+/// <summary>
+/// 인벤토리에서 빈 index 반환
+/// </summary>
+/// <returns></returns>
+int32 AController_Player::findInventoryEmptyIndex_Implementation()
+{
+	TArray<int32> keys;
+	inventory_list.GetKeys(keys);
+	keys.Sort();
+	int32 min = 0;
+	for (auto i : keys) {
+		if (i != min)
+			return min;
+		else
+			min += 1;
+	}
+	return min;
+}
+```
+#### 코드 : 인벤토리에서 동일한 item_id 를 가진 index를 반환하는 함수
+```
+/// <summary>
+/// 동일한 __item_id를 가진 슬롯의 index 반환
+/// </summary>
+/// <param name="__item_id"></param>
+/// <returns></returns>
+int32 AController_Player::findSameItem_Implementation(FName __item_id)
+{
+	TArray<FInventoryData> values;
+	TArray<int32> keys;
+	inventory_list.GenerateValueArray(values);
+	inventory_list.GetKeys(keys);
+	int nums = values.Num();
+	for (int i = 0; i < nums; i++) {
+		if (values[i].item_id == __item_id) {
+			return keys[i];
+		}
+	}
+	return -1;
+}
+```
+#### 코드 : 아이템 획득 함수
+```
+/// <summary>
+/// 아이템 획득
+/// 획득 아이템이 이미 소지하고 있는 stackable 아이템이라면 해당 수치만 증가시키고 UI 를 업데이트
+/// 아니라면 findInventoryEmptyIndex() 함수를 이용해 인벤토리의 빈 인덱스를 찾아 그 곳에 아이템 데이터 삽입
+/// </summary>
+/// <param name="__item_id">획득 아이템 id</param>
+/// <param name="__num">획득 아이템 갯수</param>
+void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
+{
+	if (inventory_list.Num() >= max_slot_size)
+		return;
+	FItemData itemdata;
+	bool add_in_empty_slot = false;
+	itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* stackable 한 아이템일 때 findSameItem 결과가 있으면 그 슬롯의 count만 증가시킴*/
+	if (isStackable(itemdata.item_type)) {
+		int32 same_item_index = findSameItem(__item_id);
+		if (same_item_index >= 0) {
+			inventory_list[same_item_index].count += __num;
+			if (reverse_quickslot_list.Contains(same_item_index))
+				refreshQuickSlot(reverse_quickslot_list[same_item_index]);
+			return;
+		}
+		else {
+			add_in_empty_slot = true;
+		}
+	}
+	else {
+		add_in_empty_slot = true;
+	}
+	/* empty index에 아이템 add */
+	if (add_in_empty_slot) {
+		int32 empty_index = findInventoryEmptyIndex();
+		FInventoryData data;
+		data.item_id = __item_id;
+		data.count = __num;
+		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
+	}
+}
+```
+#### 코드 : 인벤토리 슬롯간 스왑 처리 함수
+```
+/// <summary>
+/// 인벤토리 슬롯간 drag&drop 으로 스왑했을 때 처리함수
+/// 동일 item_id 의 stackable 아이템이라면 두 슬롯을 결합
+/// 아니라면 inventory_list의 두 슬롯의 데이터를 단순 스왑
+/// 빈 슬롯과 스왑하면 해당 슬롯 인덱스에 add 후 이전 슬롯을 remove
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
+{
+	if (__from == __to)
+		return;
+	FInventoryData fromdata = inventory_list[__from];
+	if (inventory_list.Contains(__to)) {
+		/* 동일 item_id 의 stackable 아이템이라면 두 슬롯을 결합 */
+		if (fromdata.item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(fromdata.item_id).item_type)) {
+			inventory_list[__to].count += fromdata.count;
+			inventory_list.Remove(__from);
+		}
+		else {
+			/* 아니라면 단순 스왑*/
+			inventory_list[__from] = inventory_list[__to];
+			inventory_list[__to] = fromdata;
+		}
+	}
+	else {
+		/* 빈 슬롯과 스왑했으면 빈 슬롯에 이전 데이터 add 후 이전의 데이터는 remove */
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);
+	}
+	/* 퀵슬롯 정보를 업데이트하고 게임 인스턴스에서 각 슬롯의 위젯 레퍼런스를 받아와서 ui 업데이트 */
+	updateQuickSlotData(__from, __to);
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->inventory_slot_reference[__from]->initSlot();;
+	gameinstance->inventory_slot_reference[__to]->initSlot();
+}
+```
+#### 코드 : 퀵슬롯간의 스왑 처리 함수
+```
+/// <summary>
+/// 퀵슬롯간 스왑 이벤트 처리 함수
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::swapQuickSlot_Implementation(FKey __from, FKey __to)
+{
+	if (__from == __to)
+		return;
+	int32 fromdata = quickslot_list[__from];
+	if (quickslot_list.Contains(__to)) {
+		/* 다른 아이템이 등록된 퀵슬롯과의 스왑 */
+		quickslot_list[__from] = quickslot_list[__to];
+		quickslot_list[__to] = fromdata;
+		reverse_quickslot_list[fromdata] = __to;
+		reverse_quickslot_list[quickslot_list[__from]] = __from;
+	}
+	else {
+		/* 빈 퀵슬롯과의 스왑 */
+		quickslot_list.Add(TTuple<FKey, int32>(__to, fromdata));
+		quickslot_list.Remove(__from);
+		reverse_quickslot_list[fromdata] = __to;
+	}
+	/* 스왑 후 refreshQuickSlot() 함수로 퀵슬롯 UI 갱신 */
+	refreshQuickSlot(__from);
+	refreshQuickSlot(__to);
+}
+```
+#### 코드 : 퀵슬롯 등록 함수
+```
+/// <summary>
+/// 인벤토리에 있는 아이템을 퀵슬롯에 등록하는 함수
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey __to)
+{
+	if (reverse_quickslot_list.Contains(__from)) {
+		/* 옮기려는 인벤토리 슬롯(__from)이 이전에 이미 다른 퀵슬롯에 등록되어 있을 때의 처리 */
+		/* prev_key 옮기려는 슬롯이 이전에 등록되어있던 퀵슬롯 키 */
+		FKey prev_key = reverse_quickslot_list[__from];
+		if (__to == prev_key)
+			return;
+		if (quickslot_list.Contains(__to)) {
+			/* 목표 슬롯에 이미 다른 아이템이 등록되어 있을때의 처리 */
+			/* __from이 이전에 등록되어 있던 퀵슬롯의 데이터를 지우고 __to를 __from으로 변경 reverse_quickslot_list 정보는 새로운 키로 갱신하고 __to 퀵슬롯에 등록되어 있던 슬롯의 정보는 삭제 */
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			reverse_quickslot_list.Remove(quickslot_list[__to]);
+			quickslot_list[__to] = __from;
+		}
+		else {
+			/* 목표슬롯이 빈 슬롯일 때의 처리 */
+			/* quickslot_list 에서 이전 슬롯을 제거하고 새로운 정보를 삽입 reverse_quickslot_list 정보는 새로운 키로 갱신*/
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		}
+		refreshQuickSlot(prev_key);
+		refreshQuickSlot(__to);
+		return;
+	}
+	/* 옮기려는 슬롯이 퀵슬롯에 등록되어 있지 않은 슬롯일 때의 처리 */
+	if (quickslot_list.Contains(__to)) {
+		reverse_quickslot_list.Remove(quickslot_list[__to]);
+		quickslot_list[__to] = __from;
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
+	}
+	else {
+		quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
+	}
+	refreshQuickSlot(__to);
+	Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference[__from]->initSlot();;
+}
+```
+#### 코드 : 퀵슬롯 위젯 업데이트 함수
+```
+/// <summary>
+/// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::refreshQuickSlot(FKey __key)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 게임인스턴스로 부터 __key에 해당하는 퀵슬롯의 위젯 레퍼런스를 받아옴 */
+	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
+	FInventoryData invendatadata;
+	if (quickslot_list.Contains(__key) && inventory_list.Contains(quickslot_list[__key])) {
+		/* __key에 해당하는 퀵슬롯에 아이템이 등록되어 있다면 인벤토리 데이터의 해당 정보로 갱신 */
+		prev_quick_slot->my_index = quickslot_list[__key];
+		invendatadata = inventory_list[prev_quick_slot->my_index];
+	}
+	else {
+		/* 빈 퀵슬롯이라면 데이터 삭제 */
+		prev_quick_slot->my_index = -1;
+		invendatadata.item_id = "None";
+		invendatadata.count = 0;
+	}
+	/* 위젯 업데이트 */
+	prev_quick_slot->updateUI(invendatadata);
+}
+```
+#### 코드 : 인벤토리 스왑시  퀵슬롯 데이터 조정 함수
+```
+/// <summary>
+/// 인벤토리 슬롯시 해당 슬롯들이 퀵슬롯에 등록된 슬롯일 경우
+/// 퀵슬롯 관련 데이터인 reverse_quickslot_list, quickslot_list 을 적합하게 업데이트 하여 데이터 꼬임 방지를 위한 함수
+/// 인벤토리 슬롯간 스왑으로 인해 변경된 인벤토리 데이터에 맞게 퀵슬롯 데이터를 업데이트
+/// - 단순 과정 요약
+/// 1. 각 슬롯이 이전에 등록된 퀵슬롯의 키를 저장
+/// 2. 각 슬롯의 reverse_quickslot_list 를 삭제하고 quickslot_list 업데이트
+/// 3. reverse_quickslot_list에 변경된 quickslot_list 데이터에 맞게 삽입
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
+	FKey prevfromkey;
+	FKey prevtokey;
+	/* __from과 __to가 퀵슬롯에 등록되어 있다면 해당 퀵슬롯 키를 저장 */
+	if (reverse_quickslot_list.Contains(__from)) {
+		prevfromkey = reverse_quickslot_list[__from];
+	}
+	if (reverse_quickslot_list.Contains(__to)) {
+		prevtokey = reverse_quickslot_list[__to];
+	}
+	bool fromflag = false;
+	bool toflag = false;
+	/* __from 이 퀵슬롯에 등록되어 있을 경우 reverse_quickslot_list 에서 __from을 지우고 quickslot_list를 __to로 갱신 */
+	if (prevfromkey.IsValid()) {
+		reverse_quickslot_list.Remove(__from);
+		quickslot_list[prevfromkey] = __to;
+		fromflag = true;
+	}
+	/* __to 가 퀵슬롯에 등록되어 있을 경우 reverse_quickslot_list 에서 __to를 지우고 quickslot_list를 __from으로 갱신 */
+	/* 예외상황 : 인벤토리 결합에 의해 퀵슬롯이 결합되어 사라진 빈 슬롯의 인덱스를 가리키는 문제가 생길 수 있음 */
+	/* 만약 __from 슬롯이 퀵슬롯에 등록되어 있었는데 현재 인벤토리의 __from 슬롯이 비어있다면 __from과 __to 두 슬롯이 결합된 것이기 때문에 이에 맞게 데이터 업데이트 */
+	if (prevtokey.IsValid()) {
+		if (inventory_list.Contains(__from)) {
+			reverse_quickslot_list.Remove(__to);
+			quickslot_list[prevtokey] = __from;
+			toflag = true;
+		}
+		else if(prevfromkey.IsValid()){
+			/* 인벤토리 슬롯이 결합되었을때 */
+			/* fromflag 를 false 로 만듦으로써 reverse_quickslot_list 에 결합되어 사라진 __from슬롯의 정보가 삽입되지 않도록 함 */
+			quickslot_list.Remove(prevfromkey);
+			fromflag = false;
+		}
+	}
+	/* reverse_quickslot_list에 옳은 정보를 삽입하고 위젯 업데이트 */
+	if (prevfromkey.IsValid()) {
+		if(fromflag)
+			reverse_quickslot_list.Add(TTuple<int32, FKey>(__to, prevfromkey));
+		refreshQuickSlot(prevfromkey);
+	}
+	if (prevtokey.IsValid()) {
+		if(toflag)
+			reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, prevtokey));
+		refreshQuickSlot(prevtokey);
+	}
+}
+```
+
+```
+/// <summary>
+/// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::refreshQuickSlot(FKey __key)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 게임인스턴스로 부터 __key에 해당하는 퀵슬롯의 위젯 레퍼런스를 받아옴 */
+	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
+	FInventoryData invendatadata;
+	if (quickslot_list.Contains(__key) && inventory_list.Contains(quickslot_list[__key])) {
+		/* __key에 해당하는 퀵슬롯에 아이템이 등록되어 있다면 인벤토리 데이터의 해당 정보로 갱신 */
+		prev_quick_slot->my_index = quickslot_list[__key];
+		invendatadata = inventory_list[prev_quick_slot->my_index];
+	}
+	else {
+		/* 빈 퀵슬롯이라면 데이터 삭제 */
+		prev_quick_slot->my_index = -1;
+		invendatadata.item_id = "None";
+		invendatadata.count = 0;
+	}
+	/* 위젯 업데이트 */
+	prev_quick_slot->updateUI(invendatadata);
+}
+```
+#### 코드 : 퀵슬롯 등록 해제 함수
+```
+/// <summary>
+/// 퀵슬롯 등록 해제
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::removeQuickSlot_Implementation(FKey __key)
+{
+	reverse_quickslot_list.Remove(quickslot_list[__key]);
+	quickslot_list.Remove(__key);
+	refreshQuickSlot(__key);
+}
+```
+#### 코드 : 아이템 장착 함수
+```
+/// <summary>
+/// 아이템 장착
+/// 기본적으론 아이템 슬롯 스왑과 동일한 프로세스를 진행하는 시스템
+/// 추가적으로 해제될 아이템의 아이템 해제 효과를 실행하고 등록될 아이템의 아이템 등록 효과를 실행
+/// 이를통해 이전 장비의 효과를 모두 제거하고 새로운 장비의 효과를 모두 적용시킴
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType __to)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	FInventoryData fromdata = inventory_list[__from];
+	if (equipment_list.Contains(__to)) {
+		FName previtemid = equipment_list[__to].item_id;
+		FItemData previtemdata = gameinstance->findItemData(previtemid);
+		/* 해제될 아이템의 모든 아이템 이펙트의 onRemoveRegistration() 를 실행시킴 */
+		for (FItemEffect i : previtemdata.item_effect_list) {
+			auto item_effect_obj = i.item_effect.GetDefaultObject();
+			item_effect_obj->value = i.value;
+			item_effect_obj->item_id = previtemid;
+			IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+		}
+		inventory_list[__from] = equipment_list[__to];
+		equipment_list[__to] = fromdata;
+	}
+	else {
+		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);;
+	}
+	/* 새로 장착한 아이템의 모든 아이템 이펙트의 onRegistration() 를 실행시킴 */
+	FName equiped_item_id = equipment_list[__to].item_id;
+	FItemData equipeditemdata = gameinstance->findItemData(equiped_item_id);
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = equiped_item_id;
+		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, GetCharacter(), __from);
+	}
+	gameinstance->inventory_slot_reference[__from]->initSlot();
+	refreshEquipmentSlot(__to);
+}
+```
+#### 코드 : 아이템 장착 해제 함수
+```
+/// <summary>
+/// 장착중인 아이템 장비 해제
+/// 장비 슬롯과 인벤토리 슬롯간의 drag&drop이나 장비 슬롯의 우클릭에 의해 실행
+/// 빈슬롯과의 스왑에서만 실행됨
+/// 해제되는 아이템의 아이템 효과들에게 onRemoveRegistration()를 실행시켜 모든 장비의 효과를 해제를 수행 
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32 __to)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* __to < 0 이면 우클릭으로 장비를 해제한 것이라 findInventoryEmptyIndex()함수로 인벤토리의 empty 슬롯과 스왑 */
+	if (__to < 0)
+		__to = findInventoryEmptyIndex();
+	FName previtemid = equipment_list[__from].item_id;
+	FItemData previtemdata = gameinstance->findItemData(previtemid);
+	for (FItemEffect i : previtemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = previtemid;
+		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __to);
+	}
+	FInventoryData fromdata = equipment_list[__from];
+	if (inventory_list.Contains(__to)) {
+		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 실제로 절대 실행되지 않음 */
+		/* __to 위치에 다른 아이템이 있다면 위젯에서 unequipItem 함수가 아니라 equipItem 함수를 대신 실행함 */
+		equipment_list[__from] = inventory_list[__to];
+		inventory_list[__to] = fromdata;
+	}
+	else {
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		equipment_list.Remove(__from);
+	}
+	refreshEquipmentSlot(__from);
+	gameinstance->inventory_slot_reference[__to]->initSlot();
+}
+```
+#### 코드 : 장비 슬롯 위젯 프로퍼티 및 UI 업데이트 
+```
+/// <summary>
+/// 장비 슬롯 위젯의 프로퍼티를 업데이트 하고 UI를 업데이트
+/// </summary>
+/// <param name="__type"></param>
+void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UWidget_ItemSlot* equipment_slot = gameinstance->equipment_slot_reference[__type];
+	FInventoryData invendata;
+	if (equipment_list.Contains(__type)) {
+		invendata = equipment_list[__type];
+	}
+	else {
+		invendata.item_id = "None";
+		invendata.count = 0;
+	}
+	equipment_slot->updateUI(invendata);
+}
+```
+#### 코드 : 아이템 갯수 감소 함수
+```
+/// <summary>
+/// 아이템 갯수 감소 함수
+/// 아이템의 수를 감소시키고 아이템이 0개가 되면 인벤토리 슬롯과 퀵슬롯에서 제거
+/// UI 업데이트도 항상 수행
+/// </summary>
+/// <param name="__index"></param>
+/// <param name="__decrease_num"></param>
+void AController_Player::decreseItem_Implementation(int32 __index, int32 __decrease_num)
+{
+	if (inventory_list.Contains(__index) == false)
+		return;
+	if (inventory_list[__index].count - __decrease_num <= 0) {
+		/* 아이템 감소 결과 수가 0개 이하가 되었을 경우 */
+		/* inventory_list에서 제거 */
+		inventory_list.Remove(__index);
+		if (reverse_quickslot_list.Contains(__index)) {
+			/* 퀵슬롯에 등록된 아이템일 경우 퀵슬롯에서도 제거 */
+			FKey tmpkey = reverse_quickslot_list[__index];
+			reverse_quickslot_list.Remove(__index);
+			quickslot_list.Remove(tmpkey);
+			refreshQuickSlot(tmpkey);
+		}
+	}
+	else {
+		/* 감소 후에도 수가 1 이상이면 수를 감소시키고 퀵슬롯 ui 업데이트 */
+		inventory_list[__index].count -= __decrease_num;
+		if (reverse_quickslot_list.Contains(__index)) {
+			refreshQuickSlot(reverse_quickslot_list[__index]);
+		}
+	}
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
+	if (gameinstance->inventory_slot_reference.Contains(__index))
+		gameinstance->inventory_slot_reference[__index]->initSlot();
+}
+```
+
 ## 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
