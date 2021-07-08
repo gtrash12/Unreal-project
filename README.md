@@ -543,8 +543,7 @@ public:
 - 위의 BaseItemEffect 를 상속받은 클래스를 ItemEffect 리스트에 추가할 수 있음
 - ItemEffect 를 사용할 일이 있으면 ItemEffect의 클래스 디폴트 오브젝트의 프로퍼티를 FItemEffect의 value로 초기화하고 인터페이스를 통해 필요한 역할을 수행시킴
 - 아이템의 정보를 표시할 때 item_effect_list 의 모든 ItemEffect의 describeItemEffect() 를 실행해서 설명창에 추가
-  - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)
-  - ![image](https://user-images.githubusercontent.com/12960463/124914499-5e957200-e02b-11eb-95ad-39ce26f401eb.png)
+  - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)![image](https://user-images.githubusercontent.com/12960463/124914499-5e957200-e02b-11eb-95ad-39ce26f401eb.png)
 - 아이템을 사용할 때 item_effect_list 의 모든 ItemEffect의 applyItemEffect()를 실행
   - 초보자용 물약의 경우 item_effect_list에 IE_Action_Drink, IE_HealBase, IE_DecreaseCount 이 세 개의 ItemEffect가 들어가 있음
   - IE_Action_Drink
