@@ -3,6 +3,7 @@
 
 # 영상
 - 아래 이미지 클릭시 유튜브 영상 링크
+
 [![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
 
 # 주요 파일
