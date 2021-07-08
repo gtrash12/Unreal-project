@@ -419,7 +419,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	}
 }
 ```
-## 인벤토리 시스템
+## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
 - 보급형 롱소드 데이터
