@@ -582,6 +582,7 @@ for (FItemEffect i : Itemdata.item_effect_list) {
 }
 ```
 - 아이템 디테일 윈도우
+
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 #### 코드 : 아이템 디테일 위젯 초기화 함수
 ```
