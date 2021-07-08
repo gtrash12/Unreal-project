@@ -229,8 +229,180 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 }
 ```
 
+## 전투 시스템
+### 액션 시스템
+- 액션 데이터
 
-## 전방향 피격모션 & 발동작 블렌딩 & 피지컬 
+![image](https://user-images.githubusercontent.com/12960463/124944008-f2753700-e047-11eb-8f99-97194d782d9d.png)
+#### 코드 : 액션 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FActionData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UAnimMontage* anim_montage;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina_penalty;
+	/* 라스트 인풋으로 회전하는데 걸리는 시간 */
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float rotate_time;
+	/* 액션 시 회전 방향 결정 */
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EActionRotateType action_rotate_type;
+};
+```
+- 액션 데이터 구조체의 각 프로퍼티 상세
+  - name : 액션의 이름
+  - anim_montage : 액션의 애니메이션 애셋(몽타주)
+  - stamina : 액션의 소비 스테미너
+  - stamina_penalty : 액션의 스테미너 패널티 ( 스테미너 최대값 감소량 )
+  - rotate_time : 액션 실행시 타겟 방향으로 회전하는 시간
+  - action_rotate_type : 액션 실행시 회전 방식
+    - Target : 액션 실행시 타게팅 중인 적을 향해 회전
+    - Input : 액션 실행시 last input vector 로 회전
+    - Static : 액션 실행시 회전하지 않음
+- 액션은 BaseCharacter 의 상위 클래스인 BP_PlayerCharacter_cpp 블루프린트에서 구현되어 있음
+
+### 데미지 시스템
+- 데미지 데이터
+
+![image](https://user-images.githubusercontent.com/12960463/124945527-33218000-e049-11eb-83a8-168392876127.png)
+#### 코드 : 데미지 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FdamageData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float base_damage;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float base_damage_percent;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FVector knock_back;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EKnockBackType knock_back_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EDamageElementalType elemental;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		ETargetControlType target_control;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EBuffAndDebuffType buff_and_debuff;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EAttackType attack_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float durability_level;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FVector knock_back_offset;
+
+};
+```
+- 데미지 데이터 구조체의 프로퍼티 상세
+  - base_damage : 데미지의 기본 데미지
+  - base_damage_percent : damage_causer 의 power 계수
+  - knock_back : 넉백 벡터
+  - knock_back_type : 넉백 벡터 적용 방식
+    - Directional : damage_causer 가 보는 방향을 기준으로 knock_back 벡터 적용
+    - Radial : damage_causer 와 피격된 객체의 look_at 방향을 기준으로 knock_back 벡터 적용 ( 방사형으로 퍼짐 )
+    - RadialXY : Radial 과 동일하지만 XY 평면상의 위치 관계에서 적용
+    - RadialXYDistanceReverse : RadialXY 에서 두 객체의 거리가 가까울 수록 knock_back 벡터의 크기를 줄여서 적용 ( damage_causer 위치로 끌어당김 )
+  - knock_back_offset : knock_back 적용시 기준이 될 위치 ( damage_causer 의 위치에서 상대적인 위치로 계산 )
+
+#### 충돌 판정
+#### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
+```
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "NS_Attack_1Sock_Trace.h"
+#include "../Public/Interface_BaseCharacter.h"
+#include "../Public/Interface_PlayerController.h"
+#include "../CustomData.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "../Public/PWOGameInstance.h"
+
+/// <summary>
+/// 노티파이 시작시 damage_id 로 부터 damage_data를 얻어서 저장하고
+/// 시전자의 hit_actor_list를 초기화
+/// 시전자의 attack_trace_channel을 얻어서 트레이스할 대상을 설정
+/// 메쉬의 VisibilityBasedAnimTickOption 을 AlwaysTickPoseAndRefreshBones 으로 전환해서 실행 캐릭터가 플레이어의 화면에 안보여도 본 트랜스폼을 매 틱 갱신해서 충돌 판정이 정확하게 일어나도록 설정
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+/// <param name="TotalDuration"></param>
+void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
+
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	AActor* actor = MeshComp->GetOwner();
+	FdamageData damage_data;
+	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
+	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
+		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
+		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+	}
+}
+
+/// <summary>
+/// notify 실행 기간 동안 매 틱 BoxTraceMulti 를 실행해서 탐지된 모든 액터에 대해 attackEvent를 실행시킴 
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+/// <param name="FrameDeltaTime"></param>
+void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
+	AActor* actor = MeshComp->GetOwner();
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		FVector cur_sock_loc;
+		FRotator trace_rotation;
+		TArray<FHitResult> hit_results;
+		const TArray<AActor*> ignore_actors;
+		cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
+
+		if (cur_sock_loc == prev_sock_loc)
+			return;
+		else
+			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
+		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume * actor->GetActorScale().X, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		for (auto i : hit_results) {
+			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+			}
+		}
+		prev_sock_loc = cur_sock_loc;
+	}
+}
+/// <summary>
+/// 노티파이 종료시 실행 메쉬의 VisibilityBasedAnimTickOption 을 OnlyTickMontagesWhenNotRendered 으로 전환해서 비렌더링시 본 트랜스폼을 갱신하지 않고 Tick 이벤트만 수행하도록 변경
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+
+	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+}
+```
+![image](https://user-images.githubusercontent.com/12960463/124948453-ac21d700-e04b-11eb-8f74-2041241ae63f.png)
+![image](https://user-images.githubusercontent.com/12960463/124948599-c956a580-e04b-11eb-87f8-f9abcae36725.png)
+이런식으로 몽타주에서 notify 를 실행해 해당 기간 동안 충돌 판정
+
+### 전방향 피격모션 & 발동작 블렌딩 & 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
