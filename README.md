@@ -2,8 +2,9 @@
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
 # 영상
+- 아래 이미지 클릭시 유튜브 영상 링크
+
 [![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
-클릭하면 유튜브 영상 링크
 
 # 주요 파일
 ## c++ 파일
@@ -120,7 +121,48 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 이 시스템의 문제점
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
+#### 코드 : 캐릭터를 래그돌로 전환 함수
+```
+/// <summary>
+/// 서버에서 래그돌 세팅 수행
+/// 가장 가까운 플레이어를 시뮬레이션 담당 액터로 저장
+/// </summary>
+void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
+	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+	/* 래그돌 시뮬레이션을 당담해야할 클라이언트 판단 기준 : 소유 클라이언트 or 클라이언트 소유 액터가 래그돌 전환 액터에게 가장 가까운 액터일 때 */
+	findClosestPlayer(simulation_responsible_actor);
+	ragdoll_SetMultiCast(simulation_responsible_actor);
+}
 
+/// <summary>
+/// 멀티캐스트로 래그돌 세팅 동기화
+/// 실행중인 모든 애니메이션 몽타주 종료하고 래그돌로 전환
+/// 래그돌 동기화 관련 프로퍼티 초기화
+/// </summary>
+void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
+	/* 서버는 래그돌 시뮬레이션을 수행하지 않기 위해 데디케이티드 서버는 래그돌로 전환하지 않음  */
+	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+		ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+		prev_ragdoll_server_location = ragdoll_server_location;
+		last_ragdoll_server_location = ragdoll_server_location;
+		replication_delay_count = 0.0f;
+		last_replication_delay = 0.1f;
+		is_ragdoll_on_the_ground = false;
+		FVector tmpvec = GetVelocity();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
+		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		if (is_simulation_responsible) {
+			/*tmpvec.Z = 0;
+			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, tmpvec]() {
+				}));*/
+		}
+	}
+	character_state = ECharacterState::Ragdoll;
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	main_anim_instance->Montage_StopGroupByName(0.0f, "DefaultGroup");
+}
+```
 #### 코드 : Tick 함수 내에서 래그돌 동기화 함수 매 프레임 실행시키는 코드 ( Tick 함수 코드 일부 )
 ```
 //... Tick함수
@@ -228,8 +270,258 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 }
 ```
 
+## 전투 시스템
+### 액션 시스템
+- 액션 데이터
 
-## 전방향 피격모션 & 발동작 블렌딩 & 피지컬 
+![image](https://user-images.githubusercontent.com/12960463/124944008-f2753700-e047-11eb-8f99-97194d782d9d.png)
+#### 코드 : 액션 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FActionData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UAnimMontage* anim_montage;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float stamina_penalty;
+	/* 라스트 인풋으로 회전하는데 걸리는 시간 */
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float rotate_time;
+	/* 액션 시 회전 방향 결정 */
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EActionRotateType action_rotate_type;
+};
+```
+- 액션 데이터 구조체의 각 프로퍼티 상세
+  - name : 액션의 이름
+  - anim_montage : 액션의 애니메이션 애셋(몽타주)
+  - stamina : 액션의 소비 스테미너
+  - stamina_penalty : 액션의 스테미너 패널티 ( 스테미너 최대값 감소량 )
+  - rotate_time : 액션 실행시 타겟 방향으로 회전하는 시간
+  - action_rotate_type : 액션 실행시 회전 방식
+    - Target : 액션 실행시 타게팅 중인 적을 향해 회전
+    - Input : 액션 실행시 last input vector 로 회전
+    - Static : 액션 실행시 회전하지 않음
+- 액션은 BaseCharacter 의 상위 클래스인 BP_PlayerCharacter_cpp 블루프린트에서 구현되어 있음
+
+### 데미지 시스템
+- 데미지 데이터
+
+![image](https://user-images.githubusercontent.com/12960463/124945527-33218000-e049-11eb-83a8-168392876127.png)
+#### 코드 : 데미지 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FdamageData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FString name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float base_damage;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float base_damage_percent;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FVector knock_back;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EKnockBackType knock_back_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EDamageElementalType elemental;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		ETargetControlType target_control;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EBuffAndDebuffType buff_and_debuff;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EAttackType attack_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		float durability_level;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FVector knock_back_offset;
+
+};
+```
+- 데미지 데이터 구조체의 프로퍼티 상세
+  - base_damage : 데미지의 기본 데미지
+  - base_damage_percent : damage_causer 의 power 계수
+  - knock_back : 넉백 벡터
+  - knock_back_type : 넉백 벡터 적용 방식
+    - Directional : damage_causer 가 보는 방향을 기준으로 knock_back 벡터 적용
+    - Radial : damage_causer 와 피격된 객체의 look_at 방향을 기준으로 knock_back 벡터 적용 ( 방사형으로 퍼짐 )
+    - RadialXY : Radial 과 동일하지만 XY 평면상의 위치 관계에서 적용
+    - RadialXYDistanceReverse : RadialXY 에서 두 객체의 거리가 가까울 수록 knock_back 벡터의 크기를 줄여서 적용 ( damage_causer 위치로 끌어당김 )
+  - knock_back_offset : knock_back 적용시 기준이 될 위치 ( damage_causer 의 위치에서 상대적인 위치로 계산 )
+
+#### 충돌 판정
+#### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
+```
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "NS_Attack_1Sock_Trace.h"
+#include "../Public/Interface_BaseCharacter.h"
+#include "../Public/Interface_PlayerController.h"
+#include "../CustomData.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "../Public/PWOGameInstance.h"
+
+/// <summary>
+/// 노티파이 시작시 damage_id 로 부터 damage_data를 얻어서 저장하고
+/// 시전자의 hit_actor_list를 초기화
+/// 시전자의 attack_trace_channel을 얻어서 트레이스할 대상을 설정
+/// 메쉬의 VisibilityBasedAnimTickOption 을 AlwaysTickPoseAndRefreshBones 으로 전환해서 실행 캐릭터가 플레이어의 화면에 안보여도 본 트랜스폼을 매 틱 갱신해서 충돌 판정이 정확하게 일어나도록 설정
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+/// <param name="TotalDuration"></param>
+void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
+
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	AActor* actor = MeshComp->GetOwner();
+	FdamageData damage_data;
+	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
+	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
+		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
+		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
+		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+	}
+}
+
+/// <summary>
+/// notify 실행 기간 동안 매 틱 BoxTraceMulti 를 실행해서 탐지된 모든 액터에 대해 attackEvent를 실행시킴 
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+/// <param name="FrameDeltaTime"></param>
+void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
+	AActor* actor = MeshComp->GetOwner();
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+		FVector cur_sock_loc;
+		FRotator trace_rotation;
+		TArray<FHitResult> hit_results;
+		const TArray<AActor*> ignore_actors;
+		cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
+
+		if (cur_sock_loc == prev_sock_loc)
+			return;
+		else
+			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
+		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume * actor->GetActorScale().X, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		for (auto i : hit_results) {
+			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+			}
+		}
+		prev_sock_loc = cur_sock_loc;
+	}
+}
+/// <summary>
+/// 노티파이 종료시 실행 메쉬의 VisibilityBasedAnimTickOption 을 OnlyTickMontagesWhenNotRendered 으로 전환해서 비렌더링시 본 트랜스폼을 갱신하지 않고 Tick 이벤트만 수행하도록 변경
+/// </summary>
+/// <param name="MeshComp"></param>
+/// <param name="Animation"></param>
+void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
+	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+		return;
+
+	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
+}
+```
+![image](https://user-images.githubusercontent.com/12960463/124948453-ac21d700-e04b-11eb-8f74-2041241ae63f.png)
+![image](https://user-images.githubusercontent.com/12960463/124948599-c956a580-e04b-11eb-87f8-f9abcae36725.png)
+
+이런식으로 몽타주에서 notify 를 실행해 해당 기간 동안 충돌 판정
+- 위의 충돌 판정 notify 는 데디케이티드 서버에서 실행하지 않고 클라이언트에서만 실행
+  - 서버에서는 tick 속도가 느리기 때문에 비교적 부정확한 충돌판정이 발생
+  - 따라서 충돌 판정은 클라이언트에서 전담
+
+### 코드 : 위의 notify state를 통해 충돌이 감지되면 공격중인 캐릭터가 실행하는 함수
+```
+/// <summary>
+/// 공격이 적에게 맞았을 때 피격액터에게 데미지 이벤트를 전달
+/// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
+/// </summary>
+/// <param name="hit_actor">피격 액터</param>
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) {
+
+	bool flag = false;
+	getNetworkOwnerType(network_owner_type);
+	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
+		return;
+	}
+		
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
+	if (HasAuthority()) {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+			if (__hit_actor->GetOwner() != GetOwner()) {
+				flag = true;
+			}
+		}
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			if (network_owner_type == ENetworkOwnerType::OwnedAI) {
+				if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+					flag = true;
+				}
+			}
+		}
+	}
+	else {
+		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
+			if (__hit_actor->GetOwner() != GetOwner()) {
+				flag = true;
+			}
+		}
+		if (network_owner_type == ENetworkOwnerType::RemoteAI) {
+			if (__hit_actor == GetWorld()->GetFirstPlayerController()->GetPawn()) {
+				flag = true;
+			}
+		}
+	}
+	if (flag && damage_data.attack_type != EAttackType::Earthquake) {
+		if (__hit_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			bool hit_actor_is_dodge;
+			IInterface_BaseCharacter::Execute_getIsDodge(__hit_actor, hit_actor_is_dodge);
+			if (hit_actor_is_dodge) {
+				flag = false;
+			}
+		}
+	}
+	/* pelvis 하위 본 히트시에만 applyDamage*/
+	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%d] %s"), GetMesh()->GetBoneIndex(__hit_bone_name), *(__hit_bone_name.ToString())));
+	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
+		flag = false;
+	}
+
+	if (flag) {
+		if (hit_actors_list.Contains(__hit_actor) == false) {
+			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name);
+			}
+			hit_actors_list.Add(__hit_actor);
+		}
+	}
+}
+```
+- 위 attackEvent 함수를 통해 플레이어 컨트롤러로 applyDamage에 필요한 데이터를 전달
+- 플레이어 컨트롤러에서 서버로 충돌이 발생했다고 알리는 함수를 실행
+- 서버에서 피격 캐릭터로 multicast로 applyDamage 함수를 실행
+- 충돌 관련 RPC에서 DamageData 가 아닌 damage_id를 전달하는 이유
+  - damage_id 를 전달하는 경우 DamageDataTable을 다시 검색해야함
+  - 하지만 DamageData 는 크기가 damage_id 보다 훨씬 크므로 네트워크에 부하가 더 큼
+
+### 넉백 & 피격 애니메이션 & 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
@@ -418,8 +710,777 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	}
 }
 ```
-## 인벤토리 시스템
+## 아이템 데이터 구조와 작동 방식
+- 보급형 롱소드 데이터
+![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
+- 보급형 체력 포션 데이터
+![image](https://user-images.githubusercontent.com/12960463/124911056-4ae80c80-e027-11eb-9e1f-f313a343598d.png)
+
+#### 코드 : 아이템 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FText name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UTexture2D* icon;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemType item_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemRank item_rank;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (MultiLine="true"))
+		FText item_info_text;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TArray<FItemEffect> item_effect_list;
+};
+```
+- 구조체의 각 프로퍼티 상세
+  - name : 로컬라이징 가능한 아이템의 이름
+  - icon : 아이템의 아이콘 레퍼런스
+  - item_type : 아이템의 타입
+    - Consumables : 소비 아이템
+    - Raw : 재료 아이템
+    - Key : 게임 진행 관련 중요 아이템
+    - Equipment_Weapon : 무기 장비 아이템
+    - Equipment_Head : 모자 장비 아이템
+    - ...
+  - item_rank : 아이템 등급
+    - Common, Rare, Precious, Unique, Legendary
+  - item_info_text : 아이템의 기본 설명
+  - item_effect_list : 아이템의 효과들
+### ItemEffect (아이템 효과)
+- 아이템의 실제 정체성과 효과를 정의
+- ItemEffect 위치
+![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
+- ItemEffect 목록
+![image](https://user-images.githubusercontent.com/12960463/124912229-a8c92400-e028-11eb-8a72-d3df8e45777a.png)
+- ItemEffect 클래스들
+![image](https://user-images.githubusercontent.com/12960463/124914833-c6e45380-e02b-11eb-9eb5-d4b5519104f2.png)
+
+
+#### 코드 : BaseItemEffect 헤더파일
+```
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
+#include "Interface_ItemEffect.h"
+
+
+#include "BaseItemEffect.generated.h"
+
+/**
+ * 
+ */
+UCLASS(Blueprintable, BlueprintType)
+class CYPERARENA_API UBaseItemEffect : public UObject, public IInterface_ItemEffect
+{
+	GENERATED_BODY()
+public :
+	UBaseItemEffect();
+	~UBaseItemEffect();
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
+		float value;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
+		FName item_id;
+};
+```
+#### 코드 : 아이템 이펙트 인터페이스
+```
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Interface.h"
+#include "CustomEnums.h"
+
+#include "Interface_ItemEffect.generated.h"
+
+// This class does not need to be modified.
+UINTERFACE(MinimalAPI)
+class UInterface_ItemEffect : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 
+ */
+class CYPERARENA_API IInterface_ItemEffect
+{
+	GENERATED_BODY()
+
+	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+public:
+
+	/* 아이템 효과 적용시 */
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void applyItemEffect(ACharacter* causor, int32 __inven_index);
+	/* 아이템 설명 텍스트 요구시 */
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		FText describeItemEffect();
+	/* 아이템을 퀵슬롯이나 장비 슬롯에 등록시 */
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRegistration(ACharacter* causor, int32 __inven_index);
+	/* 아이템을 퀵슬롯이나 장비 슬롯에서 해제시 */
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	/* 아이템 사용시 (인벤토리에서 우클릭하거나 퀵슬롯에 등록 후 퀵슬롯 키 입력시 ) */
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onActivate(ACharacter* causor, int32 __inven_index);
+};
+```
+- ItemEffect 는 아이템의 데이터와 효과를 분리하여 컴포넌트 처럼 아이템효과를 아이템데이터에 추가하는 것 만으로 해당 아이템의 효과를 정의할 수 있게 만든 시스템
+- 위의 BaseItemEffect 를 상속받은 클래스를 ItemEffect 리스트에 추가할 수 있음
+- ItemEffect 를 사용할 일이 있으면 ItemEffect의 클래스 디폴트 오브젝트의 프로퍼티를 FItemEffect의 value로 초기화하고 인터페이스를 통해 필요한 역할을 수행시킴
+- 아이템의 정보를 표시할 때 item_effect_list 의 모든 ItemEffect의 describeItemEffect() 를 실행해서 설명창에 추가
+  - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)![image](https://user-images.githubusercontent.com/12960463/124914499-5e957200-e02b-11eb-95ad-39ce26f401eb.png)
+- 아이템을 사용할 때 item_effect_list 의 모든 ItemEffect의 applyItemEffect()를 실행
+  - 위의 보급형 체력 포션의 경우 item_effect_list에 IE_Action_Drink, IE_HealBase, IE_DecreaseCount 이 세 개의 ItemEffect가 들어가 있음
+  - IE_Action_Drink
+    - onActivate() 실행시 캐릭터의 drink 애니메이션을 실행함.
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
+  - IE_HealBase
+    - applyItemEffect() 실행시 캐릭터의 hp를 value 만큼 회복
+    - describeItemEffect() 실행시 "체력을 {value} 회복" 을 출력
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
+  - IE_DecreaseCount
+    - applyItemEffect() 실행시 아이템의 갯수를 1개 감소
+    - 그 외 다른 인터페이스 함수는 구현하지 않음
+- 아이템 장착시에도 동일한 ItemEffect 시스템을 사용해서 구현
+  - 아이템 장착시 ItemEffect의 onRegistration() 함수를 실행하여 아이템의 공격력 + 20 같은 효과를 적용
+  - 아이템 장착 해제시 ItemEffect의 onRemoveRegistration() 함수를 실행하여 아이템의 공격력 + 20 효과를 역으로 적용해서 캐릭터를 원상태로 돌려놓음
+  - IE_Equip
+    - onActivate() 실행시 아이템에 해당하는 장비 슬롯에 장착
+  - IE_Stat_Power
+    - onRegistration() 실행시 캐릭터의 공격력을 value 만큼 상승
+    - onRemoveRegistration() 실행시 캐릭터의 공격력을 value 만큼 감소
+    - describeItemEffect() 실행시 "공격력 + {value}"를 출력
+  - IE_ChangeMesh_Weapon
+    - onRegistration() 실행시 캐릭터의 무기 메쉬를 해당 아이템의 item_id 에 해당하는 메쉬로 바꿈 ( ItemMeshDataTable 참조 )
+    - onRemoveRegistration() 실행시 캐릭터의 무기 메쉬를 ItemMeshDataTable 의 sword_none 으로 바꿈
+  - 위의 세 가지 ItemEffect 를 추가하면 장착시 무기의 외형이 변하고 공격력이 20 상승하는 무기를 만들 수 있음. 
+
+#### 코드 : 아이템 이펙트 실행 예시 코드 ( onRemoveRegistration() 실행 )
+```
+for (FItemEffect i : Itemdata.item_effect_list) {
+	auto item_effect_obj = i.item_effect.GetDefaultObject();
+	item_effect_obj->value = i.value;
+	item_effect_obj->item_id = previtemid;
+	IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+}
+```
+- 아이템 디테일 윈도우
+
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
+#### 코드 : 아이템 디테일 위젯 초기화 함수
+```
+void UWidget_Detail::initDetail(FName __item_id) {
+	FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	name_text->SetText(itemdata.name);
+	/* 아이템 랭크에 따라 name_text의 폰트 색 변경 */
+	switch (itemdata.item_rank)
+	{
+	case EItemRank::Common:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		break;
+	case EItemRank::Rare:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Blue));
+		break;
+	case EItemRank::Precious:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Purple)));
+		break;
+	case EItemRank::Unique:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+		break;
+	case EItemRank::Legendary:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Orange)));
+		break;
+	default:
+		break;
+	}
+	image->SetBrushFromTexture(itemdata.icon);
+	info_text->SetText(itemdata.item_info_text);
+	/* itemdata 에서 item_effect_list 를 순회하며 모든 ItemEffect 의 describeItemEffect()를 실행해서 출력값을 effect_text에 추가 */
+	if (itemdata.item_effect_list.Num() > 0) {
+		FString final_effect_text;
+		for (FItemEffect i : itemdata.item_effect_list) {
+			auto item_effect_obj = i.item_effect.GetDefaultObject();
+			item_effect_obj->value = i.value;
+			if (i.item_effect->ImplementsInterface(UInterface_ItemEffect::StaticClass())) {
+				FString cur_text = IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
+				if (cur_text == "")
+					continue;
+				final_effect_text += TEXT("\n");
+				final_effect_text += IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
+			}
+		}
+		effect_text->SetText(FText::FromString(final_effect_text.TrimStartAndEnd()));
+		effect_text->SetVisibility(ESlateVisibility::Visible);
+	}
+	else {
+		effect_text->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+```
+#### 코드 : 위젯이 화면을 벗어나지 않도록 위치 조정 ( 크기와 위치가 가변적인 위젯이라 필요. 항상 아이템 슬롯의 모서리를 기준으로 위치 )
+```
+/// <summary>
+/// 위젯이 화면 밖을 벗어났는지 체크
+/// 화면에서 벗어났으면 위치를 조정
+/// </summary>
+void UWidget_Detail::onViewPortCheck()
+{
+	FVector2D viewport_size;
+	GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
+	FGeometry geometry = GetTickSpaceGeometry();
+	FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
+	FVector2D target_position = geometry.Position * abs_to_local_vector;
+	bool flag = false;
+	if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
+		target_position.X -= 85 * abs_to_local_vector.X + geometry.GetAbsoluteSize().X;
+		flag = true;
+	}
+	if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
+		target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
+		flag = true;
+	}
+	if (flag)
+		SetPositionInViewport(target_position);
+}
+```
+## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
+- 아이템 등록
+
+![아이템 등록50%](https://user-images.githubusercontent.com/12960463/124921237-25f99680-e033-11eb-9bea-b26386210702.gif)
+- 아이템 장착 (장비 효과 적용)
+
+![아이템 장착50%](https://user-images.githubusercontent.com/12960463/124920900-ca2f0d80-e032-11eb-93f5-6a30e75dbe2c.gif)
+- 퀵슬롯 아이템 사용
+
+![퀵슬롯 아이템 사용70%](https://user-images.githubusercontent.com/12960463/124921509-7244d680-e033-11eb-9fef-fcc32719ba26.gif)
+
+![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
+
+인벤토리 시스템의 데이터 구조
+- 인벤토리 데이터는 PlayerController 내에 존재
+  - 이유
+    - 인벤토리 데이터는 클라이언트와 서버 양쪽에 존재해야함
+    - 클라이언트는 다른 클라이언트의 인벤토리 정보에 대해 알 필요가 없음
+    - 따라서 서버에는 유저 수 만큼 존재하며 클라이언트에서는 자신의 PlayerController 하나만 존재하는 PlayerController가 적합하다고 판단했음
+#### 코드 : 인벤토리 관련 4가지 프로퍼티
+```
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<int32, FInventoryData> inventory_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<FKey, int32> quickslot_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<int32, FKey> reverse_quickslot_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<EEquipmentType, FInventoryData> equipment_list;
+```
+- 각 프로퍼티 
+  - inventory_list
+    - 키 : 인벤토리내 해당 아이템의 인덱스
+    - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
+    - 인벤토리의 특성상 희소 행렬인 경우가 많기 때문에 array 보다는 map 을 이용하여 구현했음
+    - map을 이용함으로써 메모리를 절약하고, 저장시 구현을 간편하게 함
+  - quickslot_list
+    - 키 : 퀵슬롯을 발동하는 입력 키
+    - 밸류 : 등록된 아이템의 inventory_list 내의 index(키)
+    - 퀵슬롯은 인벤토리의 인덱스를 가리키도록 구현
+  - reverse_quickslot_list
+    - 키 : 인벤토리내 해당 아이템의 인덱스
+    - 밸류 : 해당 아이템이 등록된 퀵슬롯의 키
+    - 퀵슬롯을 순회하지 않고 인벤토리 내 아이템에 연결된 퀵슬롯의 키를 얻어내기 위한 데이터
+      - 모든 아이템에 퀵슬롯 매칭 정보를 넣으면 더 간편하게 구현할 수 있겠지만 인벤토리 아이템에서 퀵슬롯에 등록된 아이템의 수는 매우 적기 때문에 불필요한 메모리 사용을 줄이기 위해 quickslot_list 과 reverse_quickslot_list 가 서로를 가리키는 양방향 맵으로 구현하여 퀵슬롯, 인벤토리 슬롯 어디에서도 빠르게 연관된 퀵슬롯 데이터, 인벤토리 데이터에 접근할 수 있도록 구현
+  - equipment_list
+    - 키 : 장비 슬롯의 고유 키
+    - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
+    - inventory_list 동일한 구성으로 동일한 방식으로 작동
+
+- GameInstance를 이용한 아이템 슬롯 위젯 레퍼런스 관리
+![image](https://user-images.githubusercontent.com/12960463/124918626-365c4200-e030-11eb-8c8c-5cb60f600c5a.png)
+![image](https://user-images.githubusercontent.com/12960463/124918816-702d4880-e030-11eb-9094-2004c5b12e47.png)
+- 위 블루프린트 처럼 위젯 Construct 이벤트에서 GameInstance 의 Inventory_Slot_Reference 맵에 등록
+- 위젯 Destruct 시 GameInstance 의 Inventory_Slot_Reference 맵에서 삭제
+- 이를통해 인벤토리를 열었을 때만 위젯의 레퍼런스를 관리해서 메모리를 절약할 수 있음
+- 게임 인스턴스를 통해 프로그램 내 어디에서든 위젯에 접근할 수 있음
+- 위젯은 반드시 하나만 존재하는 것이기 때문에 게임에서 단 하나만 존재하는 GameInstance에서 관리하는 것이 효과적
+
+#### 코드 : 인벤토리에서 빈 index 반환 함수
+```
+/// <summary>
+/// 인벤토리에서 빈 index 반환
+/// </summary>
+/// <returns></returns>
+int32 AController_Player::findInventoryEmptyIndex_Implementation()
+{
+	TArray<int32> keys;
+	inventory_list.GetKeys(keys);
+	keys.Sort();
+	int32 min = 0;
+	for (auto i : keys) {
+		if (i != min)
+			return min;
+		else
+			min += 1;
+	}
+	return min;
+}
+```
+#### 코드 : 인벤토리에서 동일한 item_id 를 가진 index를 반환하는 함수
+```
+/// <summary>
+/// 동일한 __item_id를 가진 슬롯의 index 반환
+/// </summary>
+/// <param name="__item_id"></param>
+/// <returns></returns>
+int32 AController_Player::findSameItem_Implementation(FName __item_id)
+{
+	TArray<FInventoryData> values;
+	TArray<int32> keys;
+	inventory_list.GenerateValueArray(values);
+	inventory_list.GetKeys(keys);
+	int nums = values.Num();
+	for (int i = 0; i < nums; i++) {
+		if (values[i].item_id == __item_id) {
+			return keys[i];
+		}
+	}
+	return -1;
+}
+```
+#### 코드 : 아이템 획득 함수
+```
+/// <summary>
+/// 아이템 획득
+/// 획득 아이템이 이미 소지하고 있는 stackable 아이템이라면 해당 수치만 증가시키고 UI 를 업데이트
+/// 아니라면 findInventoryEmptyIndex() 함수를 이용해 인벤토리의 빈 인덱스를 찾아 그 곳에 아이템 데이터 삽입
+/// </summary>
+/// <param name="__item_id">획득 아이템 id</param>
+/// <param name="__num">획득 아이템 갯수</param>
+void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
+{
+	if (inventory_list.Num() >= max_slot_size)
+		return;
+	FItemData itemdata;
+	bool add_in_empty_slot = false;
+	itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* stackable 한 아이템일 때 findSameItem 결과가 있으면 그 슬롯의 count만 증가시킴*/
+	if (isStackable(itemdata.item_type)) {
+		int32 same_item_index = findSameItem(__item_id);
+		if (same_item_index >= 0) {
+			inventory_list[same_item_index].count += __num;
+			if (reverse_quickslot_list.Contains(same_item_index))
+				refreshQuickSlot(reverse_quickslot_list[same_item_index]);
+			return;
+		}
+		else {
+			add_in_empty_slot = true;
+		}
+	}
+	else {
+		add_in_empty_slot = true;
+	}
+	/* empty index에 아이템 add */
+	if (add_in_empty_slot) {
+		int32 empty_index = findInventoryEmptyIndex();
+		FInventoryData data;
+		data.item_id = __item_id;
+		data.count = __num;
+		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
+	}
+}
+```
+#### 코드 : 인벤토리 슬롯간 스왑 처리 함수
+```
+/// <summary>
+/// 인벤토리 슬롯간 drag&drop 으로 스왑했을 때 처리함수
+/// 동일 item_id 의 stackable 아이템이라면 두 슬롯을 결합
+/// 아니라면 inventory_list의 두 슬롯의 데이터를 단순 스왑
+/// 빈 슬롯과 스왑하면 해당 슬롯 인덱스에 add 후 이전 슬롯을 remove
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
+{
+	if (__from == __to)
+		return;
+	FInventoryData fromdata = inventory_list[__from];
+	if (inventory_list.Contains(__to)) {
+		/* 동일 item_id 의 stackable 아이템이라면 두 슬롯을 결합 */
+		if (fromdata.item_id == inventory_list[__to].item_id && isStackable(Cast<UPWOGameInstance>(GetGameInstance())->findItemData(fromdata.item_id).item_type)) {
+			inventory_list[__to].count += fromdata.count;
+			inventory_list.Remove(__from);
+		}
+		else {
+			/* 아니라면 단순 스왑*/
+			inventory_list[__from] = inventory_list[__to];
+			inventory_list[__to] = fromdata;
+		}
+	}
+	else {
+		/* 빈 슬롯과 스왑했으면 빈 슬롯에 이전 데이터 add 후 이전의 데이터는 remove */
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);
+	}
+	/* 퀵슬롯 정보를 업데이트하고 게임 인스턴스에서 각 슬롯의 위젯 레퍼런스를 받아와서 ui 업데이트 */
+	updateQuickSlotData(__from, __to);
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->inventory_slot_reference[__from]->initSlot();;
+	gameinstance->inventory_slot_reference[__to]->initSlot();
+}
+```
+#### 코드 : 퀵슬롯간의 스왑 처리 함수
+```
+/// <summary>
+/// 퀵슬롯간 스왑 이벤트 처리 함수
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::swapQuickSlot_Implementation(FKey __from, FKey __to)
+{
+	if (__from == __to)
+		return;
+	int32 fromdata = quickslot_list[__from];
+	if (quickslot_list.Contains(__to)) {
+		/* 다른 아이템이 등록된 퀵슬롯과의 스왑 */
+		quickslot_list[__from] = quickslot_list[__to];
+		quickslot_list[__to] = fromdata;
+		reverse_quickslot_list[fromdata] = __to;
+		reverse_quickslot_list[quickslot_list[__from]] = __from;
+	}
+	else {
+		/* 빈 퀵슬롯과의 스왑 */
+		quickslot_list.Add(TTuple<FKey, int32>(__to, fromdata));
+		quickslot_list.Remove(__from);
+		reverse_quickslot_list[fromdata] = __to;
+	}
+	/* 스왑 후 refreshQuickSlot() 함수로 퀵슬롯 UI 갱신 */
+	refreshQuickSlot(__from);
+	refreshQuickSlot(__to);
+}
+```
+#### 코드 : 퀵슬롯 등록 함수
+```
+/// <summary>
+/// 인벤토리에 있는 아이템을 퀵슬롯에 등록하는 함수
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey __to)
+{
+	if (reverse_quickslot_list.Contains(__from)) {
+		/* 옮기려는 인벤토리 슬롯(__from)이 이전에 이미 다른 퀵슬롯에 등록되어 있을 때의 처리 */
+		/* prev_key 옮기려는 슬롯이 이전에 등록되어있던 퀵슬롯 키 */
+		FKey prev_key = reverse_quickslot_list[__from];
+		if (__to == prev_key)
+			return;
+		if (quickslot_list.Contains(__to)) {
+			/* 목표 슬롯에 이미 다른 아이템이 등록되어 있을때의 처리 */
+			/* __from이 이전에 등록되어 있던 퀵슬롯의 데이터를 지우고 __to를 __from으로 변경 reverse_quickslot_list 정보는 새로운 키로 갱신하고 __to 퀵슬롯에 등록되어 있던 슬롯의 정보는 삭제 */
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			reverse_quickslot_list.Remove(quickslot_list[__to]);
+			quickslot_list[__to] = __from;
+		}
+		else {
+			/* 목표슬롯이 빈 슬롯일 때의 처리 */
+			/* quickslot_list 에서 이전 슬롯을 제거하고 새로운 정보를 삽입 reverse_quickslot_list 정보는 새로운 키로 갱신*/
+			quickslot_list.Remove(prev_key);
+			reverse_quickslot_list[__from] = __to;
+			quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		}
+		refreshQuickSlot(prev_key);
+		refreshQuickSlot(__to);
+		return;
+	}
+	/* 옮기려는 슬롯이 퀵슬롯에 등록되어 있지 않은 슬롯일 때의 처리 */
+	if (quickslot_list.Contains(__to)) {
+		reverse_quickslot_list.Remove(quickslot_list[__to]);
+		quickslot_list[__to] = __from;
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
+	}
+	else {
+		quickslot_list.Add(TTuple<FKey, int32>(__to, __from));
+		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
+	}
+	refreshQuickSlot(__to);
+	Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference[__from]->initSlot();;
+}
+```
+#### 코드 : 퀵슬롯 위젯 업데이트 함수
+```
+/// <summary>
+/// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::refreshQuickSlot(FKey __key)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 게임인스턴스로 부터 __key에 해당하는 퀵슬롯의 위젯 레퍼런스를 받아옴 */
+	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
+	FInventoryData invendatadata;
+	if (quickslot_list.Contains(__key) && inventory_list.Contains(quickslot_list[__key])) {
+		/* __key에 해당하는 퀵슬롯에 아이템이 등록되어 있다면 인벤토리 데이터의 해당 정보로 갱신 */
+		prev_quick_slot->my_index = quickslot_list[__key];
+		invendatadata = inventory_list[prev_quick_slot->my_index];
+	}
+	else {
+		/* 빈 퀵슬롯이라면 데이터 삭제 */
+		prev_quick_slot->my_index = -1;
+		invendatadata.item_id = "None";
+		invendatadata.count = 0;
+	}
+	/* 위젯 업데이트 */
+	prev_quick_slot->updateUI(invendatadata);
+}
+```
+#### 코드 : 인벤토리 스왑시  퀵슬롯 데이터 조정 함수
+```
+/// <summary>
+/// 인벤토리 슬롯시 해당 슬롯들이 퀵슬롯에 등록된 슬롯일 경우
+/// 퀵슬롯 관련 데이터인 reverse_quickslot_list, quickslot_list 을 적합하게 업데이트 하여 데이터 꼬임 방지를 위한 함수
+/// 인벤토리 슬롯간 스왑으로 인해 변경된 인벤토리 데이터에 맞게 퀵슬롯 데이터를 업데이트
+/// - 단순 과정 요약
+/// 1. 각 슬롯이 이전에 등록된 퀵슬롯의 키를 저장
+/// 2. 각 슬롯의 reverse_quickslot_list 를 삭제하고 quickslot_list 업데이트
+/// 3. reverse_quickslot_list에 변경된 quickslot_list 데이터에 맞게 삽입
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
+	FKey prevfromkey;
+	FKey prevtokey;
+	/* __from과 __to가 퀵슬롯에 등록되어 있다면 해당 퀵슬롯 키를 저장 */
+	if (reverse_quickslot_list.Contains(__from)) {
+		prevfromkey = reverse_quickslot_list[__from];
+	}
+	if (reverse_quickslot_list.Contains(__to)) {
+		prevtokey = reverse_quickslot_list[__to];
+	}
+	bool fromflag = false;
+	bool toflag = false;
+	/* __from 이 퀵슬롯에 등록되어 있을 경우 reverse_quickslot_list 에서 __from을 지우고 quickslot_list를 __to로 갱신 */
+	if (prevfromkey.IsValid()) {
+		reverse_quickslot_list.Remove(__from);
+		quickslot_list[prevfromkey] = __to;
+		fromflag = true;
+	}
+	/* __to 가 퀵슬롯에 등록되어 있을 경우 reverse_quickslot_list 에서 __to를 지우고 quickslot_list를 __from으로 갱신 */
+	/* 예외상황 : 인벤토리 결합에 의해 퀵슬롯이 결합되어 사라진 빈 슬롯의 인덱스를 가리키는 문제가 생길 수 있음 */
+	/* 만약 __from 슬롯이 퀵슬롯에 등록되어 있었는데 현재 인벤토리의 __from 슬롯이 비어있다면 __from과 __to 두 슬롯이 결합된 것이기 때문에 이에 맞게 데이터 업데이트 */
+	if (prevtokey.IsValid()) {
+		if (inventory_list.Contains(__from)) {
+			reverse_quickslot_list.Remove(__to);
+			quickslot_list[prevtokey] = __from;
+			toflag = true;
+		}
+		else if(prevfromkey.IsValid()){
+			/* 인벤토리 슬롯이 결합되었을때 */
+			/* fromflag 를 false 로 만듦으로써 reverse_quickslot_list 에 결합되어 사라진 __from슬롯의 정보가 삽입되지 않도록 함 */
+			quickslot_list.Remove(prevfromkey);
+			fromflag = false;
+		}
+	}
+	/* reverse_quickslot_list에 옳은 정보를 삽입하고 위젯 업데이트 */
+	if (prevfromkey.IsValid()) {
+		if(fromflag)
+			reverse_quickslot_list.Add(TTuple<int32, FKey>(__to, prevfromkey));
+		refreshQuickSlot(prevfromkey);
+	}
+	if (prevtokey.IsValid()) {
+		if(toflag)
+			reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, prevtokey));
+		refreshQuickSlot(prevtokey);
+	}
+}
+```
+
+```
+/// <summary>
+/// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::refreshQuickSlot(FKey __key)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 게임인스턴스로 부터 __key에 해당하는 퀵슬롯의 위젯 레퍼런스를 받아옴 */
+	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
+	FInventoryData invendatadata;
+	if (quickslot_list.Contains(__key) && inventory_list.Contains(quickslot_list[__key])) {
+		/* __key에 해당하는 퀵슬롯에 아이템이 등록되어 있다면 인벤토리 데이터의 해당 정보로 갱신 */
+		prev_quick_slot->my_index = quickslot_list[__key];
+		invendatadata = inventory_list[prev_quick_slot->my_index];
+	}
+	else {
+		/* 빈 퀵슬롯이라면 데이터 삭제 */
+		prev_quick_slot->my_index = -1;
+		invendatadata.item_id = "None";
+		invendatadata.count = 0;
+	}
+	/* 위젯 업데이트 */
+	prev_quick_slot->updateUI(invendatadata);
+}
+```
+#### 코드 : 퀵슬롯 등록 해제 함수
+```
+/// <summary>
+/// 퀵슬롯 등록 해제
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::removeQuickSlot_Implementation(FKey __key)
+{
+	reverse_quickslot_list.Remove(quickslot_list[__key]);
+	quickslot_list.Remove(__key);
+	refreshQuickSlot(__key);
+}
+```
+#### 코드 : 아이템 장착 함수
+```
+/// <summary>
+/// 아이템 장착
+/// 기본적으론 아이템 슬롯 스왑과 동일한 프로세스를 진행하는 시스템
+/// 추가적으로 해제될 아이템의 아이템 해제 효과를 실행하고 등록될 아이템의 아이템 등록 효과를 실행
+/// 이를통해 이전 장비의 효과를 모두 제거하고 새로운 장비의 효과를 모두 적용시킴
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType __to)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	FInventoryData fromdata = inventory_list[__from];
+	if (equipment_list.Contains(__to)) {
+		FName previtemid = equipment_list[__to].item_id;
+		FItemData previtemdata = gameinstance->findItemData(previtemid);
+		/* 해제될 아이템의 모든 아이템 이펙트의 onRemoveRegistration() 를 실행시킴 */
+		for (FItemEffect i : previtemdata.item_effect_list) {
+			auto item_effect_obj = i.item_effect.GetDefaultObject();
+			item_effect_obj->value = i.value;
+			item_effect_obj->item_id = previtemid;
+			IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+		}
+		inventory_list[__from] = equipment_list[__to];
+		equipment_list[__to] = fromdata;
+	}
+	else {
+		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
+		inventory_list.Remove(__from);;
+	}
+	/* 새로 장착한 아이템의 모든 아이템 이펙트의 onRegistration() 를 실행시킴 */
+	FName equiped_item_id = equipment_list[__to].item_id;
+	FItemData equipeditemdata = gameinstance->findItemData(equiped_item_id);
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = equiped_item_id;
+		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, GetCharacter(), __from);
+	}
+	gameinstance->inventory_slot_reference[__from]->initSlot();
+	refreshEquipmentSlot(__to);
+}
+```
+#### 코드 : 아이템 장착 해제 함수
+```
+/// <summary>
+/// 장착중인 아이템 장비 해제
+/// 장비 슬롯과 인벤토리 슬롯간의 drag&drop이나 장비 슬롯의 우클릭에 의해 실행
+/// 빈슬롯과의 스왑에서만 실행됨
+/// 해제되는 아이템의 아이템 효과들에게 onRemoveRegistration()를 실행시켜 모든 장비의 효과를 해제를 수행 
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32 __to)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* __to < 0 이면 우클릭으로 장비를 해제한 것이라 findInventoryEmptyIndex()함수로 인벤토리의 empty 슬롯과 스왑 */
+	if (__to < 0)
+		__to = findInventoryEmptyIndex();
+	FName previtemid = equipment_list[__from].item_id;
+	FItemData previtemdata = gameinstance->findItemData(previtemid);
+	for (FItemEffect i : previtemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = previtemid;
+		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __to);
+	}
+	FInventoryData fromdata = equipment_list[__from];
+	if (inventory_list.Contains(__to)) {
+		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 실제로 절대 실행되지 않음 */
+		/* __to 위치에 다른 아이템이 있다면 위젯에서 unequipItem 함수가 아니라 equipItem 함수를 대신 실행함 */
+		equipment_list[__from] = inventory_list[__to];
+		inventory_list[__to] = fromdata;
+	}
+	else {
+		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
+		equipment_list.Remove(__from);
+	}
+	refreshEquipmentSlot(__from);
+	gameinstance->inventory_slot_reference[__to]->initSlot();
+}
+```
+#### 코드 : 장비 슬롯 위젯 프로퍼티 및 UI 업데이트 
+```
+/// <summary>
+/// 장비 슬롯 위젯의 프로퍼티를 업데이트 하고 UI를 업데이트
+/// </summary>
+/// <param name="__type"></param>
+void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UWidget_ItemSlot* equipment_slot = gameinstance->equipment_slot_reference[__type];
+	FInventoryData invendata;
+	if (equipment_list.Contains(__type)) {
+		invendata = equipment_list[__type];
+	}
+	else {
+		invendata.item_id = "None";
+		invendata.count = 0;
+	}
+	equipment_slot->updateUI(invendata);
+}
+```
+#### 코드 : 아이템 갯수 감소 함수
+```
+/// <summary>
+/// 아이템 갯수 감소 함수
+/// 아이템의 수를 감소시키고 아이템이 0개가 되면 인벤토리 슬롯과 퀵슬롯에서 제거
+/// UI 업데이트도 항상 수행
+/// </summary>
+/// <param name="__index"></param>
+/// <param name="__decrease_num"></param>
+void AController_Player::decreseItem_Implementation(int32 __index, int32 __decrease_num)
+{
+	if (inventory_list.Contains(__index) == false)
+		return;
+	if (inventory_list[__index].count - __decrease_num <= 0) {
+		/* 아이템 감소 결과 수가 0개 이하가 되었을 경우 */
+		/* inventory_list에서 제거 */
+		inventory_list.Remove(__index);
+		if (reverse_quickslot_list.Contains(__index)) {
+			/* 퀵슬롯에 등록된 아이템일 경우 퀵슬롯에서도 제거 */
+			FKey tmpkey = reverse_quickslot_list[__index];
+			reverse_quickslot_list.Remove(__index);
+			quickslot_list.Remove(tmpkey);
+			refreshQuickSlot(tmpkey);
+		}
+	}
+	else {
+		/* 감소 후에도 수가 1 이상이면 수를 감소시키고 퀵슬롯 ui 업데이트 */
+		inventory_list[__index].count -= __decrease_num;
+		if (reverse_quickslot_list.Contains(__index)) {
+			refreshQuickSlot(reverse_quickslot_list[__index]);
+		}
+	}
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
+	if (gameinstance->inventory_slot_reference.Contains(__index))
+		gameinstance->inventory_slot_reference[__index]->initSlot();
+}
+```
 
 ## 락온타게팅 시스템
 
@@ -535,6 +1596,42 @@ PowerIK 플러그인 사용
 ![카메라 위치 조정](https://user-images.githubusercontent.com/12960463/117242789-e8c92a80-ae70-11eb-9c74-ab0ccb0a2107.gif)
 
 캐릭터가 등을 벽에 대고 있어도 시야 확보를 보장하는 카메라 위치를 자동으로 찾아줌
+
+#### 코드 : 카메라 위치 조정 코드 및 타게팅 코드
+```
+void AFollowCam_Base::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+    if (follow_target->IsValidLowLevel() == false)
+        return;
+    FVector trace_start = follow_target->GetActorLocation();
+    trace_start.Z += 50;
+    FVector trace_end = spring_arm->GetRightVector() * 60 + trace_start;
+
+    const TArray<AActor*> ignore;
+    FHitResult hit_result;
+    /* 캐릭터의 카메라 기준 우측으로 LineTraceSingle 을 수행해 벽이 감지되면 카메라를 충돌 거리만큼 좌측으로 옮김 */
+    UKismetSystemLibrary::LineTraceSingle(this, trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, ignore, EDrawDebugTrace::Type::None, hit_result, true);
+    if (hit_result.bBlockingHit) {
+        location_offset.Y = hit_result.Distance - 60;
+    }
+    else {
+        location_offset.Y = 0;
+    }
+
+    FVector target_location = follow_target->GetActorLocation() + follow_target->GetActorRightVector() * location_offset.Y;
+    FRotator target_rotation;
+    /* 락온 타게팅 상태라면 락온 타겟의 look at 방향으로 controlRotation 을 대체 */
+    if (is_lock_on) {
+        target_rotation = UKismetMathLibrary::FindLookAtRotation(camera->GetComponentLocation(), look_target->GetActorLocation());
+        GetWorld()->GetFirstPlayerController()->SetControlRotation(UKismetMathLibrary::FindLookAtRotation(follow_target->GetActorLocation(), look_target->GetActorLocation()));
+    }
+    else {
+        target_rotation = GetWorld()->GetFirstPlayerController()->GetControlRotation();
+    }
+    SetActorLocationAndRotation(target_location, target_rotation);
+}
+```
 
 ## 데모 레벨 (WIP)
 
