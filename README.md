@@ -434,8 +434,6 @@ UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<int32, FKey> reverse_quickslot_list;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		TMap<EEquipmentType, FInventoryData> equipment_list;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		int32 max_slot_size;
 
 ```
 - 인벤토리 데이터는 PlayerController 내에 존재
@@ -453,10 +451,14 @@ UPROPERTY(EditAnyWhere, BlueprintReadWrite)
     - 밸류 : 등록된 아이템의 inventory_list 내의 index(키)
     - 퀵슬롯은 인벤토리의 인덱스를 가리키도록 구현
   - reverse_quickslot_list
-    - 키 : 인벤토리내 인덱스
+    - 키 : 인벤토리내 해당 아이템의 인덱스
     - 밸류 : 해당 아이템이 등록된 퀵슬롯의 키
     - 퀵슬롯을 순회하지 않고 인벤토리 내 아이템에 연결된 퀵슬롯의 키를 얻어내기 위한 데이터
       - 모든 아이템에 퀵슬롯 매칭 정보를 넣으면 더 간편하게 구현할 수 있겠지만 인벤토리 아이템에서 퀵슬롯에 등록된 아이템의 수는 매우 적기 때문에 불필요한 메모리 사용을 줄이기 위해 quickslot_list 과 reverse_quickslot_list 가 서로를 가리키는 양방향 맵으로 구현하여 퀵슬롯, 인벤토리 슬롯 어디에서도 빠르게 연관된 퀵슬롯 데이터, 인벤토리 데이터에 접근할 수 있도록 구현
+  - equipment_list
+    - 키 : 장비 슬롯의 고유 키
+    - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
+    - inventory_list 동일한 구성으로 동일한 방식으로 작동
 
 ## 락온타게팅 시스템
 
