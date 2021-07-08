@@ -698,6 +698,15 @@ UPROPERTY(EditAnyWhere, BlueprintReadWrite)
     - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
     - inventory_list 동일한 구성으로 동일한 방식으로 작동
 
+- GameInstance를 이용한 아이템 슬롯 위젯 레퍼런스 관리
+![image](https://user-images.githubusercontent.com/12960463/124918626-365c4200-e030-11eb-8c8c-5cb60f600c5a.png)
+![image](https://user-images.githubusercontent.com/12960463/124918816-702d4880-e030-11eb-9094-2004c5b12e47.png)
+- 위 블루프린트 처럼 위젯 Construct 이벤트에서 GameInstance 의 Inventory_Slot_Reference 맵에 등록
+- 위젯 Destruct 시 GameInstance 의 Inventory_Slot_Reference 맵에서 삭제
+- 이를통해 인벤토리를 열었을 때만 위젯의 레퍼런스를 관리해서 메모리를 절약할 수 있음
+- 게임 인스턴스를 통해 프로그램 내 어디에서든 위젯에 접근할 수 있음
+- 위젯은 반드시 하나만 존재하는 것이기 때문에 게임에서 단 하나만 존재하는 GameInstance에서 관리하는 것이 효과적
+
 ## 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
