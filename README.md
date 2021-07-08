@@ -447,7 +447,7 @@ void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSe
   - 서버에서는 tick 속도가 느리기 때문에 비교적 부정확한 충돌판정이 발생
   - 따라서 충돌 판정은 클라이언트에서 전담
 
-### 코드 : 위의 notify state를 통해 충돌이 감지되면 공격중인 캐릭터가 실행하는 
+### 코드 : 위의 notify state를 통해 충돌이 감지되면 공격중인 캐릭터가 실행하는 함수
 ```
 /// <summary>
 /// 공격이 적에게 맞았을 때 피격액터에게 데미지 이벤트를 전달
