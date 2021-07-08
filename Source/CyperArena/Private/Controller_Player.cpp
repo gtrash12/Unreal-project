@@ -645,7 +645,10 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 }
 
 /// <summary>
-/// 
+/// 장착중인 아이템 장비 해제
+/// 장비 슬롯과 인벤토리 슬롯간의 drag&drop이나 장비 슬롯의 우클릭에 의해 실행
+/// 빈슬롯과의 스왑에서만 실행됨
+/// 해제되는 아이템의 아이템 효과들에게 onRemoveRegistration()를 실행시켜 모든 장비의 효과를 해제를 수행 
 /// </summary>
 /// <param name="__from"></param>
 /// <param name="__to"></param>
@@ -665,6 +668,8 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 	}
 	FInventoryData fromdata = equipment_list[__from];
 	if (inventory_list.Contains(__to)) {
+		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 실제로 절대 실행되지 않음 */
+		/* __to 위치에 다른 아이템이 있다면 위젯에서 unequipItem 함수가 아니라 equipItem 함수를 대신 실행함 */
 		equipment_list[__from] = inventory_list[__to];
 		inventory_list[__to] = fromdata;
 	}
@@ -708,14 +713,23 @@ int32 AController_Player::getRegisteredQuickSlotInvenIndex_Implementation(FKey _
 	}
 }
 
-
+/// <summary>
+/// 아이템 갯수 감소 함수
+/// 아이템의 수를 감소시키고 아이템이 0개가 되면 인벤토리 슬롯과 퀵슬롯에서 제거
+/// UI 업데이트도 항상 수행
+/// </summary>
+/// <param name="__index"></param>
+/// <param name="__decrease_num"></param>
 void AController_Player::decreseItem_Implementation(int32 __index, int32 __decrease_num)
 {
 	if (inventory_list.Contains(__index) == false)
 		return;
 	if (inventory_list[__index].count - __decrease_num <= 0) {
+		/* 아이템 감소 결과 수가 0개 이하가 되었을 경우 */
+		/* inventory_list에서 제거 */
 		inventory_list.Remove(__index);
 		if (reverse_quickslot_list.Contains(__index)) {
+			/* 퀵슬롯에 등록된 아이템일 경우 퀵슬롯에서도 제거 */
 			FKey tmpkey = reverse_quickslot_list[__index];
 			reverse_quickslot_list.Remove(__index);
 			quickslot_list.Remove(tmpkey);
@@ -723,16 +737,22 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 		}
 	}
 	else {
+		/* 감소 후에도 수가 1 이상이면 수를 감소시키고 퀵슬롯 ui 업데이트 */
 		inventory_list[__index].count -= __decrease_num;
 		if (reverse_quickslot_list.Contains(__index)) {
 			refreshQuickSlot(reverse_quickslot_list[__index]);
 		}
 	}
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
 	if (gameinstance->inventory_slot_reference.Contains(__index))
 		gameinstance->inventory_slot_reference[__index]->initSlot();
 }
 
+/// <summary>
+/// 장비 슬롯 위젯의 프로퍼티를 업데이트 하고 UI를 업데이트
+/// </summary>
+/// <param name="__type"></param>
 void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
 {
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
