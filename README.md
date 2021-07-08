@@ -663,11 +663,15 @@ void UWidget_Detail::onViewPortCheck()
 ## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 - 아이템 등록
+
 ![아이템 등록50%](https://user-images.githubusercontent.com/12960463/124921237-25f99680-e033-11eb-9bea-b26386210702.gif)
 - 아이템 장착 (장비 효과 적용)
+
 ![아이템 장착50%](https://user-images.githubusercontent.com/12960463/124920900-ca2f0d80-e032-11eb-93f5-6a30e75dbe2c.gif)
 - 퀵슬롯 아이템 사용
+
 ![퀵슬롯 아이템 사용70%](https://user-images.githubusercontent.com/12960463/124921509-7244d680-e033-11eb-9fef-fcc32719ba26.gif)
+
 인벤토리 시스템의 데이터 구조
 - 인벤토리 데이터는 PlayerController 내에 존재
   - 이유
