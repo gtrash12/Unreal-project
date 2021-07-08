@@ -421,10 +421,10 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 ## 인벤토리 시스템
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
-![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
 - 보급형 롱소드 데이터
-![image](https://user-images.githubusercontent.com/12960463/124911056-4ae80c80-e027-11eb-9e1f-f313a343598d.png)
+![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
 - 보급형 체력 포션 데이터
+![image](https://user-images.githubusercontent.com/12960463/124911056-4ae80c80-e027-11eb-9e1f-f313a343598d.png)
 
 #### 코드 : 아이템 데이터 구조체
 ```
