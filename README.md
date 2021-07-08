@@ -419,7 +419,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	}
 }
 ```
-## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
+## 아이템 데이터 구조와 작동 방식
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
 - 보급형 롱소드 데이터
@@ -574,7 +574,7 @@ public:
     - onRemoveRegistration() 실행시 캐릭터의 무기 메쉬를 ItemMeshDataTable 의 sword_none 으로 바꿈
   - 위의 세 가지 ItemEffect 를 추가하면 장착시 무기의 외형이 변하고 공격력이 20 상승하는 무기를 만들 수 있음. 
 
-
+## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
 - 인벤토리 데이터는 PlayerController 내에 존재
