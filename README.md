@@ -462,6 +462,83 @@ public:
     - Common, Rare, Precious, Unique, Legendary
   - item_info_text : 아이템의 기본 설명
   - item_effect_list : 아이템의 효과들
+### ItemEffect (아이템 효과)
+- ItemEffect 위치
+![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
+- ItemEffect 목록
+![image](https://user-images.githubusercontent.com/12960463/124912229-a8c92400-e028-11eb-8a72-d3df8e45777a.png)
+
+#### 코드 : BaseItemEffect 헤더파일
+```
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
+#include "Interface_ItemEffect.h"
+
+
+#include "BaseItemEffect.generated.h"
+
+/**
+ * 
+ */
+UCLASS(Blueprintable, BlueprintType)
+class CYPERARENA_API UBaseItemEffect : public UObject, public IInterface_ItemEffect
+{
+	GENERATED_BODY()
+public :
+	UBaseItemEffect();
+	~UBaseItemEffect();
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
+		float value;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "ItemEffect")
+		FName item_id;
+};
+```
+#### 코드 : 아이템 이펙트 인터페이스
+```
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Interface.h"
+#include "CustomEnums.h"
+
+#include "Interface_ItemEffect.generated.h"
+
+// This class does not need to be modified.
+UINTERFACE(MinimalAPI)
+class UInterface_ItemEffect : public UInterface
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 
+ */
+class CYPERARENA_API IInterface_ItemEffect
+{
+	GENERATED_BODY()
+
+	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void applyItemEffect(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		FText describeItemEffect();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRegistration(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onRemoveRegistration(ACharacter* causor, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interface-ItemEffect")
+		void onActivate(ACharacter* causor, int32 __inven_index);
+};
+```
+- ItemEffect 는 아이템의 데이터와 효과를 분리하여 컴포넌트 처럼 아이템효과를 아이템데이터에 추가하는 것 만으로 해당 아이템의 효과를 정의할 수 있게 만든 시스템
+- 위의 BaseItemEffect 를 상속받은 클래스를 ItemEffect 리스트에 추가할 수 있음
+- 아이템의 정보를 표시할 때 item_effect_list 의 모든 ItemEffect의 describeItemEffect() 를 실행해서 설명창에 추가
+  - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)
+
 
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
