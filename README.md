@@ -28,7 +28,7 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_AI.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_ItemEffect.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_General.h
-- anim notify state c++ 파일
+- anim notify state ( 충돌 판정, 회피 판정 )
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_Collision_Bind.h 
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_2Sock_Trace.h
@@ -37,6 +37,8 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Dodge.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Dodge.cpp
 - 커스텀 함수 라이브러리
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomBPFunctionLibrary.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/CustomBPFunctionLibrary.cpp
@@ -66,8 +68,7 @@
 - 점프 : Shift + Spacebar
 - 걷기 : ctrl
 - 타게팅 : 마우스 휠 버튼
-- 락온 타게팅 오른쪽에 위치한 타겟으로 전환 : 마우스 휠 위로 회전
-- 락온 타게팅 왼쪽에 위치한 타겟으로 전환 : 마우스 휠 아래로 회전
+- 락온 타게팅 타겟 전환 : 마우스 휠 회전
 
 
 # 핵심 기능
@@ -228,7 +229,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 ```
 
 
-## 전방향 피격모션 & 발동작 블렌딩
+## 전방향 피격모션 & 발동작 블렌딩 & 피지컬 
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
@@ -417,27 +418,8 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	}
 }
 ```
-
-## 발 IK
-![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
-PowerIK 플러그인 사용
-
-## 디렉셔널 로코모션 & 기울이기 & 블렌딩
-![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
-
-- 엉덩이의 방향이 매우 자유분방한 모션을 자연스럽게 블렌딩하는 것은 꽤 힘든 작업이었음
-- 기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
-- 180도 와 180도 에서의 블렌딩을 자연스럽게 하기 위해 백워드 디렉션을 함께 구해서 사용
-- 90 ~ -180, 90 ~ 180도 구간에서는 백워드 디렉션을 구해 -90 ~ 90도로 변환한 뒤 린 계산
-
-![디렉셔널 로코모션 블렌딩2](https://user-images.githubusercontent.com/12960463/117235046-0b534780-ae61-11eb-93de-7e2f9104c2bb.gif)
-
-걷기도 자연스럽게
-스피드에 따라 lean 수치 조정
-
-![디렉셔널 로코모션 블렌딩3(린)](https://user-images.githubusercontent.com/12960463/117235254-59684b00-ae61-11eb-85f1-f7707509fbd7.gif)
-
-착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
+## 인벤토리 시스템
+![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
 ## 락온타게팅 시스템
 
@@ -448,6 +430,105 @@ PowerIK 플러그인 사용
 ![락온 릴리즈(sm)](https://user-images.githubusercontent.com/12960463/117236828-836f3c80-ae64-11eb-8c3d-ef1bade18afc.gif)
 
 일정 시간 적이 시야에서 사라지면 타게팅을 해제하고 체력바 위젯을 숨김
+
+#### 코드 : 타게팅 계산 서치 
+```
+/// <summary>
+/// 타게팅 대상을 선정
+/// ABaseEnemy를 상속하는 대상 중 카메라 각과 최소각을 이루는 대상을 선택
+/// </summary>
+/// <returns> 타게팅 대상 </returns>
+AActor* AController_Player::findLockOnTarget()
+{
+	TArray<AActor*> founded;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), founded);
+	float min_angle = -1;
+	AActor* result = nullptr;
+	for (AActor* i : founded) {
+		/* 거리 1000 이상이면 타게팅 후보에서 제외 */
+		if (GetPawn()->GetDistanceTo(i) > 2000)
+			continue;
+		/* 라인트레이스 해서 히트가 발생하면 후보에서 제외*/
+		FHitResult hit_result;
+		FVector cam_location = follow_cam->camera->GetComponentLocation();
+		FVector target_location = i->GetActorLocation();
+		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), cam_location, target_location, ETraceTypeQuery::TraceTypeQuery1, false, founded, EDrawDebugTrace::Type::None, hit_result, true);
+		if (is_hit)
+			continue;
+
+		/* 액터간 lookat 벡터와 카메라 벡터를 내적한 결과가 가장 큰 ( 카메라와 이루는 각이 가장 작은 ) 액터를 선택 */
+		FVector lookat_vector = UKismetMathLibrary::GetDirectionUnitVector(cam_location, target_location);
+		FVector camera_vector = UKismetMathLibrary::Normal(UKismetMathLibrary::GetForwardVector(follow_cam->camera->GetComponentRotation()), 0.0001f);
+		float angle = UKismetMathLibrary::Dot_VectorVector(lookat_vector, camera_vector);
+		if (angle > min_angle) {
+			min_angle = angle;
+			result = i;
+		}
+	}
+	return result;
+}
+```
+
+#### 코드 : 타게팅 전환 대상 서치
+```
+AActor* AController_Player::changeLockOnTarget(float __direction)
+{
+	FVector camera_location = follow_cam->camera->GetComponentLocation();
+	FVector prev_look_vector = UKismetMathLibrary::GetDirectionUnitVector(camera_location, follow_cam->look_target->GetActorLocation());
+	FRotator camera_rotation = follow_cam->camera->GetComponentRotation();
+	FVector camera_forward_vector = UKismetMathLibrary::GetForwardVector(camera_rotation);
+	TArray<AActor*> founded;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), founded);
+	float min_angle = -1;
+	AActor* result = nullptr;
+	for (AActor* i : founded) {
+		if (follow_cam->look_target == i)
+			continue;
+		if (GetPawn()->GetDistanceTo(i) > 2000)
+			continue;
+		FHitResult hit_result;
+		FVector target_location = i->GetActorLocation();
+		bool is_hit = UKismetSystemLibrary::LineTraceSingle(GetWorld(), camera_location, target_location, ETraceTypeQuery::TraceTypeQuery1, false, founded, EDrawDebugTrace::Type::None, hit_result, true);
+		if (is_hit)
+			continue;
+		FVector target_look_vector = UKismetMathLibrary::GetDirectionUnitVector(camera_location, target_location);
+		float angle = UKismetMathLibrary::Dot_VectorVector(target_look_vector, camera_forward_vector);
+		/* angle 이 0.6 이하라면 화면에 적이 없다고 판단하고 후보에서 제외, min_angle 과 비교하여 최소각을 가진 타겟을 찾음 */
+		if (angle > 0.6f && angle > min_angle) {
+			FVector rotated_target_prev_lookat_vector = UKismetMathLibrary::Quat_UnrotateVector(camera_rotation.Quaternion(), target_look_vector - camera_forward_vector);
+			float prev_target_angle;
+			float dummy;
+			UKismetMathLibrary::GetYawPitchFromVector(rotated_target_prev_lookat_vector, prev_target_angle, dummy);
+			/* 현재 타겟과 이전 타겟과의 좌우 방향 관계가 입력된 __direction 과 일치 하는지 검사 */
+			if (prev_target_angle * __direction > 10) {
+				min_angle = angle;
+				result = i;
+			}
+		}
+	}
+	return result;
+}
+```
+
+## 발 IK
+![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
+PowerIK 플러그인 사용
+
+## 디렉셔널 로코모션 & 기울이기 & 블렌딩
+![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
+
+- 기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
+- 180도 와 180도 에서의 블렌딩을 자연스럽게 하기 위해 백워드 디렉션을 함께 구해서 사용
+- 90 ~ -180, 90 ~ 180도 구간에서는 백워드 디렉션을 구해 -90 ~ 90도로 변환한 뒤 lean 계산
+
+![디렉셔널 로코모션 블렌딩2](https://user-images.githubusercontent.com/12960463/117235046-0b534780-ae61-11eb-93de-7e2f9104c2bb.gif)
+
+걷기도 자연스럽게
+스피드에 따라 lean 수치 조정
+
+![디렉셔널 로코모션 블렌딩3(린)](https://user-images.githubusercontent.com/12960463/117235254-59684b00-ae61-11eb-85f1-f7707509fbd7.gif)
+
+착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
 
 ## 카메라 위치 조정
 
