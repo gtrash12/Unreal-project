@@ -121,7 +121,48 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 이 시스템의 문제점
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
+#### 코드 : 캐릭터를 래그돌로 전환 함수
+```
+/// <summary>
+/// 서버에서 래그돌 세팅 수행
+/// 가장 가까운 플레이어를 시뮬레이션 담당 액터로 저장
+/// </summary>
+void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
+	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+	/* 래그돌 시뮬레이션을 당담해야할 클라이언트 판단 기준 : 소유 클라이언트 or 클라이언트 소유 액터가 래그돌 전환 액터에게 가장 가까운 액터일 때 */
+	findClosestPlayer(simulation_responsible_actor);
+	ragdoll_SetMultiCast(simulation_responsible_actor);
+}
 
+/// <summary>
+/// 멀티캐스트로 래그돌 세팅 동기화
+/// 실행중인 모든 애니메이션 몽타주 종료하고 래그돌로 전환
+/// 래그돌 동기화 관련 프로퍼티 초기화
+/// </summary>
+void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
+	/* 서버는 래그돌 시뮬레이션을 수행하지 않기 위해 데디케이티드 서버는 래그돌로 전환하지 않음  */
+	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+		ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+		prev_ragdoll_server_location = ragdoll_server_location;
+		last_ragdoll_server_location = ragdoll_server_location;
+		replication_delay_count = 0.0f;
+		last_replication_delay = 0.1f;
+		is_ragdoll_on_the_ground = false;
+		FVector tmpvec = GetVelocity();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
+		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		if (is_simulation_responsible) {
+			/*tmpvec.Z = 0;
+			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, tmpvec]() {
+				}));*/
+		}
+	}
+	character_state = ECharacterState::Ragdoll;
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	main_anim_instance->Montage_StopGroupByName(0.0f, "DefaultGroup");
+}
+```
 #### 코드 : Tick 함수 내에서 래그돌 동기화 함수 매 프레임 실행시키는 코드 ( Tick 함수 코드 일부 )
 ```
 //... Tick함수
