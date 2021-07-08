@@ -559,6 +559,19 @@ public:
   - IE_DecreaseCount
     - applyItemEffect() 실행시 아이템의 갯수를 1개 감소
     - 그 외 다른 인터페이스 함수는 구현하지 않음
+- 아이템 장착시에도 동일한 ItemEffect 시스템을 사용해서 구현
+  - 아이템 장착시 ItemEffect의 onRegistration() 함수를 실행하여 아이템의 공격력 + 20 같은 효과를 적용
+  - 아이템 장착 해제시 ItemEffect의 onRemoveRegistration() 함수를 실행하여 아이템의 공격력 + 20 효과를 역으로 적용해서 캐릭터를 원상태로 돌려놓음
+  - IE_Equip
+    - onActivate() 실행시 아이템에 해당하는 장비 슬롯에 장착
+  - IE_Stat_Power
+    - onRegistration() 실행시 캐릭터의 공격력을 value 만큼 상승
+    - onRemoveRegistration() 실행시 캐릭터의 공격력을 value 만큼 감소
+    - describeItemEffect() 실행시 "공격력 + {value}"를 출력
+  - IE_ChangeMesh_Weapon
+    - onRegistration() 실행시 캐릭터의 무기 메쉬를 해당 아이템의 item_id 에 해당하는 메쉬로 바꿈 ( ItemMeshDataTable 참조 )
+    - onRemoveRegistration() 실행시 캐릭터의 무기 메쉬를 ItemMeshDataTable 의 sword_none 으로 바꿈
+  - 위의 세 가지 ItemEffect 를 추가하면 장착시 무기의 외형이 변하고 공격력이 20 상승하는 무기를 만들 수 있음. 
 
 
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
