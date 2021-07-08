@@ -54,15 +54,10 @@ public:
 		float stamina;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		float stamina_penalty;
-	/// <summary>
-	/// 라스트 인풋으로 회전하는데 걸리는 시간
-	/// </summary>
+	/* 라스트 인풋으로 회전하는데 걸리는 시간 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		float rotate_time;
-
-	/// <summary>
-	/// 액션 시 회전 방향 결정
-	/// </summary>
+	/* 액션 시 회전 방향 결정 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EActionRotateType action_rotate_type;
 };

@@ -13,7 +13,7 @@
 void UWidget_Detail::initDetail(FName __item_id) {
 	FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
 	name_text->SetText(itemdata.name);
-	//UE_LOG(LogTemp, Warning, FString::Printf(TEXT("%d"),itemdata.item_rank));
+	/* 아이템 랭크에 따라 name_text의 폰트 색 변경 */
 	switch (itemdata.item_rank)
 	{
 	case EItemRank::Common:
@@ -36,6 +36,7 @@ void UWidget_Detail::initDetail(FName __item_id) {
 	}
 	image->SetBrushFromTexture(itemdata.icon);
 	info_text->SetText(itemdata.item_info_text);
+	/* itemdata 에서 item_effect_list 를 순회하며 모든 ItemEffect 의 describeItemEffect()를 실행해서 출력값을 effect_text에 추가 */
 	if (itemdata.item_effect_list.Num() > 0) {
 		FString final_effect_text;
 		for (FItemEffect i : itemdata.item_effect_list) {
@@ -58,6 +59,10 @@ void UWidget_Detail::initDetail(FName __item_id) {
 	//onViewPortCheck();
 }
 
+/// <summary>
+/// 위젯이 화면 밖을 벗어났는지 체크
+/// 화면에서 벗어났으면 위치를 조정
+/// </summary>
 void UWidget_Detail::onViewPortCheck()
 {
 	FVector2D viewport_size;
@@ -76,32 +81,4 @@ void UWidget_Detail::onViewPortCheck()
 	}
 	if (flag)
 		SetPositionInViewport(target_position);
-	//if (IsValid(this) == false && GetWorld() == nullptr)
-	//	return;
-	//FTimerManager asd;
-	//asd.SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
-	//	//지오메트리가 업데이트 될 때 까지 busy wait
-	//	if (GetTickSpaceGeometry().GetLocalSize().X == 0) { 
-	//		onViewPortCheck();
-	//	}
-	//	else {
-	//		FVector2D viewport_size;
-	//		GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
-	//		FGeometry geometry = GetTickSpaceGeometry();
-	//		FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
-	//		FVector2D target_position = geometry.Position * abs_to_local_vector;
-	//		bool flag = false;
-	//		if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
-	//			target_position.X -= 85*abs_to_local_vector.X +  geometry.GetAbsoluteSize().X;
-	//			flag = true;
-	//		}
-	//		if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
-	//			target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
-	//			flag = true;
-	//		}
-	//		if(flag)
-	//			SetPositionInViewport(target_position);
-	//		
-	//	}
-	//	}));
 }

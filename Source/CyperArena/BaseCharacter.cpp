@@ -981,17 +981,22 @@ void ABaseCharacter::setCharacterState_Implementation(ECharacterState target_cha
 
 /// <summary>
 /// 서버에서 래그돌 세팅 수행
+/// 가장 가까운 플레이어를 시뮬레이션 담당 액터로 저장
 /// </summary>
 void ABaseCharacter::ragdoll_SetOnServer_Implementation() {
 	ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
+	/* 래그돌 시뮬레이션을 당담해야할 클라이언트 판단 기준 : 소유 클라이언트 or 클라이언트 소유 액터가 래그돌 전환 액터에게 가장 가까운 액터일 때 */
 	findClosestPlayer(simulation_responsible_actor);
 	ragdoll_SetMultiCast(simulation_responsible_actor);
 }
 
 /// <summary>
 /// 멀티캐스트로 래그돌 세팅 동기화
+/// 실행중인 모든 애니메이션 몽타주 종료하고 래그돌로 전환
+/// 래그돌 동기화 관련 프로퍼티 초기화
 /// </summary>
 void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_actor) {
+	/* 서버는 래그돌 시뮬레이션을 수행하지 않기 위해 데디케이티드 서버는 래그돌로 전환하지 않음  */
 	if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 		ragdoll_server_location = GetMesh()->GetSocketLocation("pelvis");
 		prev_ragdoll_server_location = ragdoll_server_location;
@@ -1001,24 +1006,17 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		is_ragdoll_on_the_ground = false;
 		FVector tmpvec = GetVelocity();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		//GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		//GetMesh()->RecreatePhysicsState();
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
-
 		if (is_simulation_responsible) {
-			tmpvec.Z = 0;
+			/*tmpvec.Z = 0;
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, tmpvec]() {
-				//GetMesh()->AddImpulse(tmpvec * 50, TEXT("pelvis"), true);
-				//GetMesh()->recalc
-				}));
-			//GetMesh()->ShouldUpdateTransform(false);
+				}));*/
 		}
 	}
 	character_state = ECharacterState::Ragdoll;
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	main_anim_instance->Montage_StopGroupByName(0.0f, "DefaultGroup");
-	
 }
 
 /// <summary>
