@@ -463,6 +463,7 @@ public:
   - item_info_text : 아이템의 기본 설명
   - item_effect_list : 아이템의 효과들
 ### ItemEffect (아이템 효과)
+- 아이템의 실제 정체성과 효과를 정의
 - ItemEffect 위치
 ![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
 - ItemEffect 목록
