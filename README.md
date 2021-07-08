@@ -1596,6 +1596,42 @@ PowerIK 플러그인 사용
 
 캐릭터가 등을 벽에 대고 있어도 시야 확보를 보장하는 카메라 위치를 자동으로 찾아줌
 
+#### 코드 : 카메라 위치 조정 코드 및 타게팅 코드
+```
+void AFollowCam_Base::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+    if (follow_target->IsValidLowLevel() == false)
+        return;
+    FVector trace_start = follow_target->GetActorLocation();
+    trace_start.Z += 50;
+    FVector trace_end = spring_arm->GetRightVector() * 60 + trace_start;
+
+    const TArray<AActor*> ignore;
+    FHitResult hit_result;
+    /* 캐릭터의 카메라 기준 우측으로 LineTraceSingle 을 수행해 벽이 감지되면 카메라를 충돌 거리만큼 좌측으로 옮김 */
+    UKismetSystemLibrary::LineTraceSingle(this, trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, ignore, EDrawDebugTrace::Type::None, hit_result, true);
+    if (hit_result.bBlockingHit) {
+        location_offset.Y = hit_result.Distance - 60;
+    }
+    else {
+        location_offset.Y = 0;
+    }
+
+    FVector target_location = follow_target->GetActorLocation() + follow_target->GetActorRightVector() * location_offset.Y;
+    FRotator target_rotation;
+    /* 락온 타게팅 상태라면 락온 타겟의 look at 방향으로 controlRotation 을 대체 */
+    if (is_lock_on) {
+        target_rotation = UKismetMathLibrary::FindLookAtRotation(camera->GetComponentLocation(), look_target->GetActorLocation());
+        GetWorld()->GetFirstPlayerController()->SetControlRotation(UKismetMathLibrary::FindLookAtRotation(follow_target->GetActorLocation(), look_target->GetActorLocation()));
+    }
+    else {
+        target_rotation = GetWorld()->GetFirstPlayerController()->GetControlRotation();
+    }
+    SetActorLocationAndRotation(target_location, target_rotation);
+}
+```
+
 ## 데모 레벨 (WIP)
 
 일반 몬스터와 보스 몬스터가 있는 매우 짧은 데모 레벨 구현중 
