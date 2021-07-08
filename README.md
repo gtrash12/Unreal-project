@@ -545,7 +545,7 @@ public:
 - 아이템의 정보를 표시할 때 item_effect_list 의 모든 ItemEffect의 describeItemEffect() 를 실행해서 설명창에 추가
   - ![image](https://user-images.githubusercontent.com/12960463/124913259-e2e6f580-e029-11eb-9eae-9cc4ed767f96.png)![image](https://user-images.githubusercontent.com/12960463/124914499-5e957200-e02b-11eb-95ad-39ce26f401eb.png)
 - 아이템을 사용할 때 item_effect_list 의 모든 ItemEffect의 applyItemEffect()를 실행
-  - 초보자용 물약의 경우 item_effect_list에 IE_Action_Drink, IE_HealBase, IE_DecreaseCount 이 세 개의 ItemEffect가 들어가 있음
+  - 위의 보급형 체력 포션의 경우 item_effect_list에 IE_Action_Drink, IE_HealBase, IE_DecreaseCount 이 세 개의 ItemEffect가 들어가 있음
   - IE_Action_Drink
     - onActivate() 실행시 캐릭터의 drink 애니메이션을 실행함.
     - 그 외 다른 인터페이스 함수는 구현하지 않음
