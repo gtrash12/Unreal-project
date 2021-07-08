@@ -423,24 +423,23 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
-
-#### 코드 : 인벤토리 관련 4가지 프로퍼티
-```
-UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TMap<int32, FInventoryData> inventory_list;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TMap<FKey, int32> quickslot_list;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TMap<int32, FKey> reverse_quickslot_list;
-	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
-		TMap<EEquipmentType, FInventoryData> equipment_list;
-
-```
 - 인벤토리 데이터는 PlayerController 내에 존재
   - 이유
     - 인벤토리 데이터는 클라이언트와 서버 양쪽에 존재해야함
     - 클라이언트는 다른 클라이언트의 인벤토리 정보에 대해 알 필요가 없음
     - 따라서 서버에는 유저 수 만큼 존재하며 클라이언트에서는 자신의 PlayerController 하나만 존재하는 PlayerController가 적합하다고 판단했음
+#### 코드 : 인벤토리 관련 4가지 프로퍼티
+```
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<int32, FInventoryData> inventory_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<FKey, int32> quickslot_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<int32, FKey> reverse_quickslot_list;
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+	TMap<EEquipmentType, FInventoryData> equipment_list;
+```
+- 각 프로퍼티 
   - inventory_list
     - 키 : 인벤토리내 해당 아이템의 인덱스
     - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
