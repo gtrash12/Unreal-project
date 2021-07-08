@@ -420,8 +420,6 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 }
 ```
 ## 아이템 데이터 구조와 작동 방식
-![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
-
 - 보급형 롱소드 데이터
 ![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
 - 보급형 체력 포션 데이터
@@ -583,7 +581,84 @@ for (FItemEffect i : Itemdata.item_effect_list) {
 	IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
 }
 ```
-
+- 아이템 디테일 윈도우
+![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
+#### 코드 : 아이템 디테일 위젯 초기화 함수
+```
+void UWidget_Detail::initDetail(FName __item_id) {
+	FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	name_text->SetText(itemdata.name);
+	/* 아이템 랭크에 따라 name_text의 폰트 색 변경 */
+	switch (itemdata.item_rank)
+	{
+	case EItemRank::Common:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		break;
+	case EItemRank::Rare:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Blue));
+		break;
+	case EItemRank::Precious:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Purple)));
+		break;
+	case EItemRank::Unique:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+		break;
+	case EItemRank::Legendary:
+		name_text->SetColorAndOpacity(FSlateColor(FLinearColor::FromSRGBColor(FColor::Orange)));
+		break;
+	default:
+		break;
+	}
+	image->SetBrushFromTexture(itemdata.icon);
+	info_text->SetText(itemdata.item_info_text);
+	/* itemdata 에서 item_effect_list 를 순회하며 모든 ItemEffect 의 describeItemEffect()를 실행해서 출력값을 effect_text에 추가 */
+	if (itemdata.item_effect_list.Num() > 0) {
+		FString final_effect_text;
+		for (FItemEffect i : itemdata.item_effect_list) {
+			auto item_effect_obj = i.item_effect.GetDefaultObject();
+			item_effect_obj->value = i.value;
+			if (i.item_effect->ImplementsInterface(UInterface_ItemEffect::StaticClass())) {
+				FString cur_text = IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
+				if (cur_text == "")
+					continue;
+				final_effect_text += TEXT("\n");
+				final_effect_text += IInterface_ItemEffect::Execute_describeItemEffect(item_effect_obj).ToString();
+			}
+		}
+		effect_text->SetText(FText::FromString(final_effect_text.TrimStartAndEnd()));
+		effect_text->SetVisibility(ESlateVisibility::Visible);
+	}
+	else {
+		effect_text->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+```
+#### 코드 : 위젯이 화면을 벗어나지 않도록 위치 조정 ( 크기와 위치가 가변적인 위젯이라 필요. 항상 아이템 슬롯의 모서리를 기준으로 위치 )
+```
+/// <summary>
+/// 위젯이 화면 밖을 벗어났는지 체크
+/// 화면에서 벗어났으면 위치를 조정
+/// </summary>
+void UWidget_Detail::onViewPortCheck()
+{
+	FVector2D viewport_size;
+	GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
+	FGeometry geometry = GetTickSpaceGeometry();
+	FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
+	FVector2D target_position = geometry.Position * abs_to_local_vector;
+	bool flag = false;
+	if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
+		target_position.X -= 85 * abs_to_local_vector.X + geometry.GetAbsoluteSize().X;
+		flag = true;
+	}
+	if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {
+		target_position.Y -= 85 * abs_to_local_vector.Y + geometry.GetAbsoluteSize().Y;
+		flag = true;
+	}
+	if (flag)
+		SetPositionInViewport(target_position);
+}
+```
 ## 인벤토리 시스템 ( 현재 싱글 플레이 모드에서만 제대로 작동 )
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
