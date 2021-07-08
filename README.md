@@ -10,11 +10,24 @@
 - 최상위 베이스 캐릭터 클래스 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
+- 베이스 캐릭터를 상속받는 최상위 BaseEnemy 클래스 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/BaseEnemy.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/BaseEnemy.cpp
 - 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/CustomData.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomEnums.h
+- 플레이어 컨트롤러
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Controller_Player.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Controller_Player.cpp
+- 카메라
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/FollowCam_Base.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/FollowCam_Base.cpp
 - c++ 인터페이스 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_AI.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_ItemEffect.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_General.h
 - anim notify state c++ 파일
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_Collision_Bind.h 
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
@@ -24,6 +37,17 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
+- 커스텀 함수 라이브러리
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomBPFunctionLibrary.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/CustomBPFunctionLibrary.cpp
+- 게임 인스턴스 ( 위젯, 데이터 테이블 관리 )
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/PWOGameInstance.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/PWOGameInstance.cpp
+- 위젯
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_ItemSlot.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_ItemSlot.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_Detail.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_Detail.cpp
 
 - 그외 접두사에 따라
   - AN : 애님 노티파이
