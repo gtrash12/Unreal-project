@@ -421,6 +421,47 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 ## 인벤토리 시스템
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 
+![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
+- 보급형 롱소드 데이터
+![image](https://user-images.githubusercontent.com/12960463/124911056-4ae80c80-e027-11eb-9e1f-f313a343598d.png)
+- 보급형 체력 포션 데이터
+
+#### 코드 : 아이템 데이터 구조체
+```
+USTRUCT(Atomic, BlueprintType)
+struct FItemData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FText name;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		UTexture2D* icon;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemType item_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EItemRank item_rank;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, meta = (MultiLine="true"))
+		FText item_info_text;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TArray<FItemEffect> item_effect_list;
+};
+```
+- 구조체의 각 프로퍼티 상세
+  - name : 로컬라이징 가능한 아이템의 이름
+  - icon : 아이템의 아이콘 레퍼런스
+  - item_type : 아이템의 타입
+    - Consumables : 소비 아이템
+    - Raw : 재료 아이템
+    - Key : 게임 진행 관련 중요 아이템
+    - Equipment_Weapon : 무기 장비 아이템
+    - Equipment_Head : 모자 장비 아이템
+    - ...
+  - item_rank : 아이템 등급
+    - Common, Rare, Precious, Unique, Legendary
+  - item_info_text : 아이템의 기본 설명
+  - item_effect_list : 아이템의 효과들
+
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
 - 인벤토리 데이터는 PlayerController 내에 존재
