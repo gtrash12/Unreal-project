@@ -424,6 +424,40 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 ![image](https://user-images.githubusercontent.com/12960463/124903877-618a6580-e01f-11eb-9dbe-2b4c4d29de3e.png)
 인벤토리 시스템의 데이터 구조
 
+#### 코드 : 인벤토리 관련 4가지 프로퍼티
+```
+UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<int32, FInventoryData> inventory_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<FKey, int32> quickslot_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<int32, FKey> reverse_quickslot_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TMap<EEquipmentType, FInventoryData> equipment_list;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		int32 max_slot_size;
+
+```
+- 인벤토리 데이터는 PlayerController 내에 존재
+  - 이유
+    - 인벤토리 데이터는 클라이언트와 서버 양쪽에 존재해야함
+    - 클라이언트는 다른 클라이언트의 인벤토리 정보에 대해 알 필요가 없음
+    - 따라서 서버에는 유저 수 만큼 존재하며 클라이언트에서는 자신의 PlayerController 하나만 존재하는 PlayerController가 적합하다고 판단했음
+  - inventory_list
+    - 키 : 인벤토리내 해당 아이템의 인덱스
+    - 밸류 : 인벤토리 데이터 ( 아이템의 ID, 갯수 )
+    - 인벤토리의 특성상 희소 행렬인 경우가 많기 때문에 array 보다는 map 을 이용하여 구현했음
+    - map을 이용함으로써 메모리를 절약하고, 저장시 구현을 간편하게 함
+  - quickslot_list
+    - 키 : 퀵슬롯을 발동하는 입력 키
+    - 밸류 : 등록된 아이템의 inventory_list 내의 index(키)
+    - 퀵슬롯은 인벤토리의 인덱스를 가리키도록 구현
+  - reverse_quickslot_list
+    - 키 : 인벤토리내 인덱스
+    - 밸류 : 해당 아이템이 등록된 퀵슬롯의 키
+    - 퀵슬롯을 순회하지 않고 인벤토리 내 아이템에 연결된 퀵슬롯의 키를 얻어내기 위한 데이터
+      - 모든 아이템에 퀵슬롯 매칭 정보를 넣으면 더 간편하게 구현할 수 있겠지만 인벤토리 아이템에서 퀵슬롯에 등록된 아이템의 수는 매우 적기 때문에 불필요한 메모리 사용을 줄이기 위해 quickslot_list 과 reverse_quickslot_list 가 서로를 가리키는 양방향 맵으로 구현하여 퀵슬롯, 인벤토리 슬롯 어디에서도 빠르게 연관된 퀵슬롯 데이터, 인벤토리 데이터에 접근할 수 있도록 구현
+
 ## 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
