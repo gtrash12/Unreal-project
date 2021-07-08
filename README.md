@@ -467,6 +467,9 @@ public:
 ![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
 - ItemEffect 목록
 ![image](https://user-images.githubusercontent.com/12960463/124912229-a8c92400-e028-11eb-8a72-d3df8e45777a.png)
+- ItemEffect 클래스들
+![image](https://user-images.githubusercontent.com/12960463/124914833-c6e45380-e02b-11eb-9eb5-d4b5519104f2.png)
+
 
 #### 코드 : BaseItemEffect 헤더파일
 ```
