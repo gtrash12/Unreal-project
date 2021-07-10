@@ -1668,9 +1668,9 @@ void AFollowCam_Base::Tick(float DeltaTime)
 }
 ```
 
-## 데모 레벨 (WIP)
+## 데모 레벨
 
-일반 몬스터와 보스 몬스터가 있는 매우 짧은 데모 레벨 구현중 
+일반 몬스터와 보스 몬스터가 있는 매우 짧은 데모 레벨 구현 완료
 
 ![데모레벨초입](https://user-images.githubusercontent.com/12960463/118310475-a1563480-b529-11eb-80b6-7e6bdc3e4f20.gif)
 ![데모레벨전투](https://user-images.githubusercontent.com/12960463/118310458-9bf8ea00-b529-11eb-8ba0-9f58d192846f.gif)
