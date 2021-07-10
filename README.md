@@ -356,6 +356,41 @@ public:
     - RadialXY : Radial 과 동일하지만 XY 평면상의 위치 관계에서 적용
     - RadialXYDistanceReverse : RadialXY 에서 두 객체의 거리가 가까울 수록 knock_back 벡터의 크기를 줄여서 적용 ( damage_causer 위치로 끌어당김 )
   - knock_back_offset : knock_back 적용시 기준이 될 위치 ( damage_causer 의 위치에서 상대적인 위치로 계산 )
+#### 코드 : 넉백 벡터 계산 코드 ( 코드 일부 )
+```
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
+	...
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FVector rotated_vector;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
+	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	else if(target_damage_data.knock_back_type == EKnockBackType::Radial) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
+		rotated_vector.X *= distance;
+		rotated_vector.Y *= distance;
+	}
+	else {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	}
+	...
+}
+```
 
 #### 충돌 판정
 #### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
