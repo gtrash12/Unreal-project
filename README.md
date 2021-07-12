@@ -1529,7 +1529,7 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 
 일정 시간 적이 시야에서 사라지면 타게팅을 해제하고 체력바 위젯을 숨김
 
-#### 코드 : 타게팅 계산 서치 
+#### 코드 : 타게팅 대상 서치 
 ```
 /// <summary>
 /// 타게팅 대상을 선정
