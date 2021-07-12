@@ -356,6 +356,8 @@ public:
     - RadialXY : Radial 과 동일하지만 XY 평면상의 위치 관계에서 적용
     - RadialXYDistanceReverse : RadialXY 에서 두 객체의 거리가 가까울 수록 knock_back 벡터의 크기를 줄여서 적용 ( damage_causer 위치로 끌어당김 )
   - knock_back_offset : knock_back 적용시 기준이 될 위치 ( damage_causer 의 위치에서 상대적인 위치로 계산 )
+  - durability_level : 적을 경직시키는 레벨
+    - 데미지 데이터의 durability_level 이 피격 캐릭터의 durability_level 보다 높으면 적은 경직과 넉백이 
 #### 코드 : 넉백 벡터 계산 코드 ( 코드 일부 )
 ```
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
