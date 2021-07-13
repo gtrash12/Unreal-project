@@ -1607,11 +1607,6 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	return result;
 }
 ```
-
-## 발 IK
-![발IK](https://user-images.githubusercontent.com/12960463/117233132-7d299200-ae5d-11eb-8fdf-ce9a459c60a6.gif)
-PowerIK 플러그인 사용
-
 ## 디렉셔널 로코모션 & 기울이기 & 블렌딩
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
