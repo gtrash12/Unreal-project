@@ -358,7 +358,6 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 			inventory_list[same_item_index].count += __num;
 			if (reverse_quickslot_list.Contains(same_item_index))
 				refreshQuickSlot(reverse_quickslot_list[same_item_index]);
-			return;
 		}
 		else {
 			add_in_empty_slot = true;
@@ -375,6 +374,15 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 		data.count = __num;
 		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
 	}
+	if (HasAuthority() && IsLocalController() == false) {
+		Client_getItem(__item_id, __num);
+	}
+}
+
+void AController_Player::Client_getItem_Implementation(FName __item_id, int32 __num)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ASDF"));
+	getItem(__item_id, __num);
 }
 
 bool AController_Player::getIsLockOn_Implementation()

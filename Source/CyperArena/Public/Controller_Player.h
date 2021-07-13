@@ -132,6 +132,9 @@ public :
 		void refreshQuickSlot(FKey __key);
 	UFUNCTION(BlueprintCallable)
 		void updateQuickSlotData(int32 __from, int32 __to);
+	UFUNCTION(BlueprintCallable, Client, Reliable, Category = "Inventory")
+		void Client_getItem(FName __item_id, int32 __num);
+		virtual void Client_getItem_Implementation(FName __item_id, int32 __num);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		void Server_ApplyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
