@@ -122,7 +122,7 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
 #### 코드 : 캐릭터를 래그돌로 전환 함수
-```
+```c++
 /// <summary>
 /// 서버에서 래그돌 세팅 수행
 /// 가장 가까운 플레이어를 시뮬레이션 담당 액터로 저장
@@ -164,7 +164,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 }
 ```
 #### 코드 : Tick 함수 내에서 래그돌 동기화 함수 매 프레임 실행시키는 코드 ( Tick 함수 코드 일부 )
-```
+```c++
 //... Tick함수
 //래그돌 위치 동기화 시스템
 	else if (character_state == ECharacterState::Ragdoll) {
@@ -201,7 +201,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
   // ...
 ```
 #### 코드 : 동기화 함수 ( 액터가 클라이언트 소유인 경우 )
-```
+```c++
 /// <summary>
 /// 클라이언트 소유 액터 : 래그돌의 위치로 액터를 이동시키고 서버에서 위치를 리플리케이트 할 수 있도록 서버로 전달
 /// 0.2초 간격으로 RPC를 통해 서버의 ragdoll_server_location를 업데이트
@@ -228,7 +228,7 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 ```
 
 #### 코드 : 동기화 함수 ( 스탠드얼론 or 데디케이티드 서버일 때 )
-```
+```c++
 /// <summary>
 /// 서버 소유 액터 or 스탠드얼론 : 래그돌의 위치로 액터를 이동
 /// </summary>
@@ -240,7 +240,7 @@ void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
 ```
 
 #### 코드 : 동기화 함수 ( 리모트 액터일 때 )
-```
+```c++
 /// <summary>
 /// 래그돌 위치 동기화
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
@@ -276,7 +276,7 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 
 ![image](https://user-images.githubusercontent.com/12960463/124944008-f2753700-e047-11eb-8f99-97194d782d9d.png)
 #### 코드 : 액션 데이터 구조체
-```
+```c++
 USTRUCT(Atomic, BlueprintType)
 struct FActionData : public FTableRowBase
 {
@@ -315,7 +315,7 @@ public:
 
 ![image](https://user-images.githubusercontent.com/12960463/124945527-33218000-e049-11eb-83a8-168392876127.png)
 #### 코드 : 데미지 데이터 구조체
-```
+```c++
 USTRUCT(Atomic, BlueprintType)
 struct FdamageData : public FTableRowBase
 {
@@ -359,7 +359,7 @@ public:
   - durability_level : 적을 경직시키는 레벨
     - 데미지 데이터의 durability_level 이 피격 캐릭터의 durability_level 보다 높으면 적은 경직과 넉백이 
 #### 코드 : 넉백 벡터 계산 코드 ( 코드 일부 )
-```
+```c++
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
 	...
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
@@ -396,7 +396,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 
 #### 충돌 판정
 #### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
-```
+```c++
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
@@ -485,7 +485,7 @@ void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSe
   - 따라서 충돌 판정은 클라이언트에서 전담
 
 ### 코드 : 위의 notify state를 통해 충돌이 감지되면 공격중인 캐릭터가 실행하는 함수
-```
+```c++
 /// <summary>
 /// 공격이 적에게 맞았을 때 피격액터에게 데미지 이벤트를 전달
 /// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
@@ -573,7 +573,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 슈퍼아머인 적은 경직 hit 애니메이션을 실행하지 않기 때문에 기존 애니메이션 위에 피격 부위만 덜렁거리는 피지컬 애니메이션으로 구현
 
 #### 코드 : applyDamage 코드 ( 피지컬 애니메이션, 넉백 )
-```
+```c++
 /// <summary>
 /// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
 /// 피격 액터의 durability_level 이 공격의 durability_level 보다 크면 넉백과 에어본, 경직을 무시하고 히트 부위에 피지컬 애니메이션 실행
@@ -673,7 +673,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 ```
 
 #### 코드 : 넉백 프로세스 ( 틱 함수 내에서 매 틱 실행 )
-```
+```c++
 /// <summary>
 /// 넉백 연산 수행 (매 틱 실행)
 /// </summary>
@@ -703,7 +703,7 @@ void ABaseCharacter::knock_BackProcess_Implementation() {
 ```
 
 #### 코드 : 히트 본 피지컬 애니메이션 프로세스 ( 틱 함수 내에서 매 틱 실행 )
-```
+```c++
 /// <summary>
 /// 히트 본 덜렁거리는 피지컬 애니메이션 적용 프로세스 ( 매 틱 실행 )
 /// TMap 타입의 hit_bone_physics_weight_map 에 원소가 있다면 해당 원소의 밸류를 매 틱 감소시키고 해당 본의 PhysicsBlendWeight 를 밸류 값으로 업데이트
@@ -754,7 +754,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 ![image](https://user-images.githubusercontent.com/12960463/124911056-4ae80c80-e027-11eb-9e1f-f313a343598d.png)
 
 #### 코드 : 아이템 데이터 구조체
-```
+```c++
 USTRUCT(Atomic, BlueprintType)
 struct FItemData : public FTableRowBase
 {
@@ -799,7 +799,7 @@ public:
 
 
 #### 코드 : BaseItemEffect 헤더파일
-```
+```c++
 #pragma once
 
 #include "CoreMinimal.h"
@@ -826,7 +826,7 @@ public :
 };
 ```
 #### 코드 : 아이템 이펙트 인터페이스
-```
+```c++
 #pragma once
 
 #include "CoreMinimal.h"
@@ -900,20 +900,81 @@ public:
     - onRemoveRegistration() 실행시 캐릭터의 무기 메쉬를 ItemMeshDataTable 의 sword_none 으로 바꿈
   - 위의 세 가지 ItemEffect 를 추가하면 장착시 무기의 외형이 변하고 공격력이 20 상승하는 무기를 만들 수 있음. 
 
-#### 코드 : 아이템 이펙트 실행 예시 코드 ( onRemoveRegistration() 실행 )
-```
-for (FItemEffect i : Itemdata.item_effect_list) {
-	auto item_effect_obj = i.item_effect.GetDefaultObject();
-	item_effect_obj->value = i.value;
-	item_effect_obj->item_id = previtemid;
-	IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+#### 코드 : 아이템 이펙트 실행 예시 코드 ( 멀티캐스트를 위해 플레이어 캐릭터에서 실행됨 )
+```c++
+/* ->>> 아이템 이펙트 관련 */
+
+void ABaseCharacter::ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onRegistration(__item_id, __inven_index);
+}
+
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onRegistration 을 발동시킴
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"> 해당 아이템의 인벤토리에서의 인덱스 </param>
+void ABaseCharacter::Multicast_ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onRegistration 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, this, __inven_index);
+	}
+}
+void ABaseCharacter::ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onRemoveRegistration(__item_id, __inven_index);
+}
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onRemoveRegistration 을 발동시킴
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"></param>
+void ABaseCharacter::Multicast_ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onRemoveRegistration 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, this, __inven_index);
+	}
+}
+
+void ABaseCharacter::ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onActivate(__item_id, __inven_index);
+}
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onActivate 을 발동시킴 
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"></param>
+void ABaseCharacter::Multicast_ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onActivate 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onActivate(item_effect_obj, this, __inven_index);
+	}
 }
 ```
 - 아이템 디테일 윈도우
 
 ![아이템 등급](https://user-images.githubusercontent.com/12960463/124884700-7fe76580-e00d-11eb-9303-29563c5ee4f3.gif)
 #### 코드 : 아이템 디테일 위젯 초기화 함수
-```
+```c++
 void UWidget_Detail::initDetail(FName __item_id) {
 	FItemData itemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
 	name_text->SetText(itemdata.name);
@@ -963,7 +1024,7 @@ void UWidget_Detail::initDetail(FName __item_id) {
 }
 ```
 #### 코드 : 위젯이 화면을 벗어나지 않도록 위치 조정 ( 크기와 위치가 가변적인 위젯이라 필요. 항상 아이템 슬롯의 모서리를 기준으로 위치 )
-```
+```c++
 /// <summary>
 /// 위젯이 화면 밖을 벗어났는지 체크
 /// 화면에서 벗어났으면 위치를 조정
@@ -1008,7 +1069,7 @@ void UWidget_Detail::onViewPortCheck()
     - 클라이언트는 다른 클라이언트의 인벤토리 정보에 대해 알 필요가 없음
     - 따라서 서버에는 유저 수 만큼 존재하며 클라이언트에서는 자신의 PlayerController 하나만 존재하는 PlayerController가 적합하다고 판단했음
 #### 코드 : 인벤토리 관련 4가지 프로퍼티
-```
+```c++
 UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 	TMap<int32, FInventoryData> inventory_list;
 UPROPERTY(EditAnyWhere, BlueprintReadWrite)
@@ -1048,7 +1109,7 @@ UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 - 위젯은 반드시 하나만 존재하는 것이기 때문에 게임에서 단 하나만 존재하는 GameInstance에서 관리하는 것이 효과적
 
 #### 코드 : 인벤토리에서 빈 index 반환 함수
-```
+```c++
 /// <summary>
 /// 인벤토리에서 빈 index 반환
 /// </summary>
@@ -1069,7 +1130,7 @@ int32 AController_Player::findInventoryEmptyIndex_Implementation()
 }
 ```
 #### 코드 : 인벤토리에서 동일한 item_id 를 가진 index를 반환하는 함수
-```
+```c++
 /// <summary>
 /// 동일한 __item_id를 가진 슬롯의 index 반환
 /// </summary>
@@ -1091,7 +1152,7 @@ int32 AController_Player::findSameItem_Implementation(FName __item_id)
 }
 ```
 #### 코드 : 아이템 획득 함수
-```
+```c++
 /// <summary>
 /// 아이템 획득
 /// 획득 아이템이 이미 소지하고 있는 stackable 아이템이라면 해당 수치만 증가시키고 UI 를 업데이트
@@ -1147,7 +1208,7 @@ void AController_Player::Client_getItem_Implementation(FName __item_id, int32 __
 }
 ```
 #### 코드 : 인벤토리 슬롯간 스왑 처리 함수
-```
+```c++
 /// <summary>
 /// 인벤토리 슬롯간 drag&drop 으로 스왑했을 때 처리함수
 /// 동일 item_id 의 stackable 아이템이라면 두 슬롯을 결합
@@ -1205,7 +1266,7 @@ void AController_Player::Server_swapInvenSlot_Implementation(int32 __from, int32
 }
 ```
 #### 코드 : 퀵슬롯간의 스왑 처리 함수
-```
+```c++
 /// <summary>
 /// 퀵슬롯간 스왑 이벤트 처리 함수
 /// </summary>
@@ -1248,7 +1309,7 @@ void AController_Player::Server_swapQuickSlot_Implementation(FKey __from, FKey _
 }
 ```
 #### 코드 : 퀵슬롯 등록 함수
-```
+```c++
 /// <summary>
 /// 인벤토리에 있는 아이템을 퀵슬롯에 등록하는 함수
 /// </summary>
@@ -1314,7 +1375,7 @@ void AController_Player::Server_registerInventoQuick_Implementation(int32 __from
 }
 ```
 #### 코드 : 퀵슬롯 위젯 업데이트 함수
-```
+```c++
 /// <summary>
 /// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
 /// </summary>
@@ -1341,7 +1402,7 @@ void AController_Player::refreshQuickSlot(FKey __key)
 }
 ```
 #### 코드 : 인벤토리 스왑시  퀵슬롯 데이터 조정 함수
-```
+```c++
 /// <summary>
 /// 인벤토리 슬롯시 해당 슬롯들이 퀵슬롯에 등록된 슬롯일 경우
 /// 퀵슬롯 관련 데이터인 reverse_quickslot_list, quickslot_list 을 적합하게 업데이트 하여 데이터 꼬임 방지를 위한 함수
@@ -1401,7 +1462,7 @@ void AController_Player::updateQuickSlotData(int32 __from, int32 __to) {
 }
 ```
 #### 코드 : 퀵슬롯 위젯 업데이트 함수
-```
+```c++
 /// <summary>
 /// 퀵슬롯 데이터로 부터 해당 키에 해당하는 퀵슬롯 위젯의 프로퍼티를 갱신하고 UI를 업데이트
 /// </summary>
@@ -1428,7 +1489,7 @@ void AController_Player::refreshQuickSlot(FKey __key)
 }
 ```
 #### 코드 : 퀵슬롯 등록 해제 함수
-```
+```c++
 /// <summary>
 /// 퀵슬롯 등록 해제
 /// </summary>
@@ -1512,7 +1573,7 @@ void AController_Player::Server_equipItem_Implementation(int32 __from, EEquipmen
 }
 ```
 #### 코드 : 아이템 장착 해제 함수
-```
+```c++
 /// <summary>
 /// 장착중인 아이템 장비 해제
 /// 장비 슬롯과 인벤토리 슬롯간의 drag&drop이나 장비 슬롯의 우클릭에 의해 실행
@@ -1528,16 +1589,14 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 	if (__to < 0)
 		__to = findInventoryEmptyIndex();
 	FName previtemid = equipment_list[__from].item_id;
-	FItemData previtemdata = gameinstance->findItemData(previtemid);
-	for (FItemEffect i : previtemdata.item_effect_list) {
-		auto item_effect_obj = i.item_effect.GetDefaultObject();
-		item_effect_obj->value = i.value;
-		item_effect_obj->item_id = previtemid;
-		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __to);
+	if (HasAuthority()) {
+		if (GetCharacter()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			IInterface_BaseCharacter::Execute_ItemEffect_onRemoveRegistration(GetCharacter(), previtemid, __to);
+		}
 	}
 	FInventoryData fromdata = equipment_list[__from];
 	if (inventory_list.Contains(__to)) {
-		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 실제로 절대 실행되지 않음 */
+		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 현재는 절대 실행되지 않음 */
 		/* __to 위치에 다른 아이템이 있다면 위젯에서 unequipItem 함수가 아니라 equipItem 함수를 대신 실행함 */
 		equipment_list[__from] = inventory_list[__to];
 		inventory_list[__to] = fromdata;
@@ -1547,17 +1606,39 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 		equipment_list.Remove(__from);
 	}
 	refreshEquipmentSlot(__from);
-	gameinstance->inventory_slot_reference[__to]->initSlot();
+	if (IsLocalController()) {
+		UWidget_ItemSlot* slot_ref = gameinstance->inventory_slot_reference.FindRef(__to);
+		if (slot_ref)
+			slot_ref->initSlot();
+	}
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
+	if (HasAuthority() == false) {
+		Server_unequipItem(__from, __to);
+		if (gameinstance->detail_widget_reference->IsValidLowLevel())
+			gameinstance->detail_widget_reference->RemoveFromParent();
+	}
+}
+
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_unequipItem_Implementation(EEquipmentType __from, int32 __to)
+{
+	unequipItem(__from, __to);
 }
 ```
 #### 코드 : 장비 슬롯 위젯 프로퍼티 및 UI 업데이트 
-```
+```c++
 /// <summary>
 /// 장비 슬롯 위젯의 프로퍼티를 업데이트 하고 UI를 업데이트
 /// </summary>
 /// <param name="__type"></param>
 void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
 {
+	if (IsLocalController() == false)
+		return;
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	UWidget_ItemSlot* equipment_slot = gameinstance->equipment_slot_reference[__type];
 	FInventoryData invendata;
@@ -1572,7 +1653,7 @@ void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __ty
 }
 ```
 #### 코드 : 아이템 갯수 감소 함수
-```
+```c++
 /// <summary>
 /// 아이템 갯수 감소 함수
 /// 아이템의 수를 감소시키고 아이템이 0개가 되면 인벤토리 슬롯과 퀵슬롯에서 제거
@@ -1584,7 +1665,8 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 {
 	if (inventory_list.Contains(__index) == false)
 		return;
-	if (inventory_list[__index].count - __decrease_num <= 0) {
+	int32 after_decreased = inventory_list[__index].count - __decrease_num;
+	if (after_decreased <= 0) {
 		/* 아이템 감소 결과 수가 0개 이하가 되었을 경우 */
 		/* inventory_list에서 제거 */
 		inventory_list.Remove(__index);
@@ -1603,10 +1685,15 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 			refreshQuickSlot(reverse_quickslot_list[__index]);
 		}
 	}
-	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-	/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
-	if (gameinstance->inventory_slot_reference.Contains(__index))
-		gameinstance->inventory_slot_reference[__index]->initSlot();
+	if (IsLocalController()) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
+		if (gameinstance->inventory_slot_reference.Contains(__index))
+			gameinstance->inventory_slot_reference[__index]->initSlot();
+		/* 아이템이 삭제되었을 때 디테일 위젯 열려있으면 삭제 */
+		if (after_decreased > 0 && gameinstance->detail_widget_reference->IsValidLowLevel())
+			gameinstance->detail_widget_reference->RemoveFromParent();
+	}
 }
 ```
 
@@ -1621,7 +1708,7 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 일정 시간 적이 시야에서 사라지면 타게팅을 해제하고 체력바 위젯을 숨김
 
 #### 코드 : 타게팅 대상 서치 
-```
+```c++
 /// <summary>
 /// 타게팅 대상을 선정
 /// ABaseEnemy를 상속하는 대상 중 카메라 각과 최소각을 이루는 대상을 선택
@@ -1659,7 +1746,7 @@ AActor* AController_Player::findLockOnTarget()
 ```
 
 #### 코드 : 타게팅 전환 대상 서치
-```
+```c++
 AActor* AController_Player::changeLockOnTarget(float __direction)
 {
 	FVector camera_location = follow_cam->camera->GetComponentLocation();
@@ -1721,7 +1808,7 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 캐릭터가 등을 벽에 대고 있어도 시야 확보를 보장하는 카메라 위치를 자동으로 찾아줌
 
 #### 코드 : 카메라 위치 조정 코드 및 타게팅 코드
-```
+```c++
 void AFollowCam_Base::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
