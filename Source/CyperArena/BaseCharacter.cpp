@@ -1235,3 +1235,71 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 		hit_bone_physics_weight_map.Remove(i);
 	}
 }
+
+/* ->>> 아이템 이펙트 관련 */
+
+void ABaseCharacter::ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onRegistration(__item_id, __inven_index);
+}
+
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onRegistration 을 발동시킴
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"> 해당 아이템의 인벤토리에서의 인덱스 </param>
+void ABaseCharacter::Multicast_ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onRegistration 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, this, __inven_index);
+	}
+}
+void ABaseCharacter::ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onRemoveRegistration(__item_id, __inven_index);
+}
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onRemoveRegistration 을 발동시킴
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"></param>
+void ABaseCharacter::Multicast_ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onRemoveRegistration 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, this, __inven_index);
+	}
+}
+
+void ABaseCharacter::ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index)
+{
+	Multicast_ItemEffect_onActivate(__item_id, __inven_index);
+}
+/// <summary>
+/// 해당 아이템의 모든 아이템 이펙트의 onActivate 을 발동시킴 
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__inven_index"></param>
+void ABaseCharacter::Multicast_ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index)
+{
+	/* 게임 인스턴스에서 아이템 데이터 테이블을 검색해 item data를 찾아냄 */
+	FItemData equipeditemdata = Cast<UPWOGameInstance>(GetGameInstance())->findItemData(__item_id);
+	/* item data 의 item_effect_list를 순회하며 모든 ItemEffect의 클래스 디폴트 객체를 초기화 시키고 onActivate 을 실행시킴 */
+	for (FItemEffect i : equipeditemdata.item_effect_list) {
+		auto item_effect_obj = i.item_effect.GetDefaultObject();
+		item_effect_obj->value = i.value;
+		item_effect_obj->item_id = __item_id;
+		IInterface_ItemEffect::Execute_onActivate(item_effect_obj, this, __inven_index);
+	}
+}

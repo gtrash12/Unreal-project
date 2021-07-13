@@ -297,6 +297,26 @@ AActor* AController_Player::getLockOnTargetActor_Implementation()
 		return nullptr;
 }
 
+bool AController_Player::getIsLockOn_Implementation()
+{
+	return is_lock_on;
+}
+
+AFollowCam_Base* AController_Player::getFollowCam_Implementation()
+{
+	return follow_cam;
+}
+
+void AController_Player::showInteractionText_Implementation(const FText& __text)
+{
+
+}
+
+void AController_Player::removeInteractionText_Implementation()
+{
+
+}
+
 /// <summary>
 /// 인벤토리에서 빈 index 반환
 /// </summary>
@@ -374,35 +394,21 @@ void AController_Player::getItem_Implementation(FName __item_id, int32 __num)
 		data.count = __num;
 		inventory_list.Add(TTuple<int32, FInventoryData>(empty_index, data));
 	}
+
+	/* 현재 서버라면 소유 클라이언트에서도 동일한 작업을 수행하기 위해 클라이언트 함수 실행 */
 	if (HasAuthority() && IsLocalController() == false) {
 		Client_getItem(__item_id, __num);
 	}
 }
 
+/// <summary>
+/// 클라이언트 에서도 서버에서 수행한 작업을 수행해서 인벤토리가 동기화 되도록 함
+/// </summary>
+/// <param name="__item_id"></param>
+/// <param name="__num"></param>
 void AController_Player::Client_getItem_Implementation(FName __item_id, int32 __num)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ASDF"));
 	getItem(__item_id, __num);
-}
-
-bool AController_Player::getIsLockOn_Implementation()
-{
-	return is_lock_on;
-}
-
-AFollowCam_Base* AController_Player::getFollowCam_Implementation()
-{
-	return follow_cam;
-}
-
-void AController_Player::showInteractionText_Implementation(const FText& __text)
-{
-
-}
-
-void AController_Player::removeInteractionText_Implementation()
-{
-
 }
 
 /// <summary>
@@ -435,11 +441,30 @@ void AController_Player::swapInvenSlot_Implementation(int32 __from, int32 __to)
 		inventory_list.Add(TTuple<int32, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);
 	}
-	/* 퀵슬롯 정보를 업데이트하고 게임 인스턴스에서 각 슬롯의 위젯 레퍼런스를 받아와서 ui 업데이트 */
+	/* 위젯이 존재한다면 퀵슬롯 정보를 업데이트하고 게임 인스턴스에서 각 슬롯의 위젯 레퍼런스를 받아와서 ui 업데이트 */
 	updateQuickSlotData(__from, __to);
-	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-	gameinstance->inventory_slot_reference[__from]->initSlot();;
-	gameinstance->inventory_slot_reference[__to]->initSlot();
+	if (IsLocalController()) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		UWidget_ItemSlot* from_widget = gameinstance->inventory_slot_reference.FindRef(__from);
+		if(from_widget)
+			from_widget->initSlot();
+		UWidget_ItemSlot* to_widget = gameinstance->inventory_slot_reference.FindRef(__to);
+		if (to_widget)
+			to_widget->initSlot();
+	}
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행 */
+	if (HasAuthority() == false)
+		Server_swapInvenSlot(__from, __to);
+}
+
+/// <summary>
+/// 서버에서 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_swapInvenSlot_Implementation(int32 __from, int32 __to)
+{
+	swapInvenSlot(__from, __to);
 }
 
 /// <summary>
@@ -468,6 +493,19 @@ void AController_Player::swapQuickSlot_Implementation(FKey __from, FKey __to)
 	/* 스왑 후 refreshQuickSlot() 함수로 퀵슬롯 UI 갱신 */
 	refreshQuickSlot(__from);
 	refreshQuickSlot(__to);
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행 */
+	if (HasAuthority() == false)
+		Server_swapQuickSlot(__from, __to);
+}
+
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_swapQuickSlot_Implementation(FKey __from, FKey __to)
+{
+	swapQuickSlot(__from, __to);
 }
 
 /// <summary>
@@ -500,10 +538,9 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 		}
 		refreshQuickSlot(prev_key);
 		refreshQuickSlot(__to);
-		return;
 	}
 	/* 옮기려는 슬롯이 퀵슬롯에 등록되어 있지 않은 슬롯일 때의 처리 */
-	if (quickslot_list.Contains(__to)) {
+	else if (quickslot_list.Contains(__to)) {
 		reverse_quickslot_list.Remove(quickslot_list[__to]);
 		quickslot_list[__to] = __from;
 		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
@@ -513,7 +550,26 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 		reverse_quickslot_list.Add(TTuple<int32, FKey>(__from, __to));
 	}
 	refreshQuickSlot(__to);
-	Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference[__from]->initSlot();;
+	if (IsLocalController()) {
+		UWidget_ItemSlot* slot_ref = Cast<UPWOGameInstance>(GetGameInstance())->inventory_slot_reference.FindRef(__from);
+		if (slot_ref)
+			slot_ref->initSlot();
+	}
+	
+
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행 */
+	if (HasAuthority() == false)
+		Server_registerInventoQuick(__from, __to);
+}
+
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_registerInventoQuick_Implementation(int32 __from, FKey __to)
+{
+	registerInventoQuick(__from, __to);
 }
 
 /// <summary>
@@ -522,6 +578,8 @@ void AController_Player::registerInventoQuick_Implementation(int32 __from, FKey 
 /// <param name="__key"></param>
 void AController_Player::refreshQuickSlot(FKey __key)
 {
+	if (IsLocalController() == false)
+		return;
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	/* 게임인스턴스로 부터 __key에 해당하는 퀵슬롯의 위젯 레퍼런스를 받아옴 */
 	UWidget_ItemSlot* prev_quick_slot = gameinstance->quickslot_references[__key];
@@ -608,6 +666,17 @@ void AController_Player::removeQuickSlot_Implementation(FKey __key)
 	reverse_quickslot_list.Remove(quickslot_list[__key]);
 	quickslot_list.Remove(__key);
 	refreshQuickSlot(__key);
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행 */
+	if (HasAuthority() == false)
+		Server_removeQuickSlot(__key);
+}
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__key"></param>
+void AController_Player::Server_removeQuickSlot_Implementation(FKey __key)
+{
+	removeQuickSlot(__key);
 }
 
 /// <summary>
@@ -623,14 +692,12 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	FInventoryData fromdata = inventory_list[__from];
 	if (equipment_list.Contains(__to)) {
+		/* multicast로 실행하기 위해 컨트롤 중인 액터에서 해제될 아이템의 모든 아이템 이펙트의 onRemoveRegistration() 를 실행시킴 */
 		FName previtemid = equipment_list[__to].item_id;
-		FItemData previtemdata = gameinstance->findItemData(previtemid);
-		/* 해제될 아이템의 모든 아이템 이펙트의 onRemoveRegistration() 를 실행시킴 */
-		for (FItemEffect i : previtemdata.item_effect_list) {
-			auto item_effect_obj = i.item_effect.GetDefaultObject();
-			item_effect_obj->value = i.value;
-			item_effect_obj->item_id = previtemid;
-			IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __from);
+		if (HasAuthority()) {
+			if (GetCharacter()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+				IInterface_BaseCharacter::Execute_ItemEffect_onRemoveRegistration(GetCharacter(), previtemid, __from);
+			}
 		}
 		inventory_list[__from] = equipment_list[__to];
 		equipment_list[__to] = fromdata;
@@ -639,17 +706,35 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 		equipment_list.Add(TTuple<EEquipmentType, FInventoryData>(__to, fromdata));
 		inventory_list.Remove(__from);;
 	}
-	/* 새로 장착한 아이템의 모든 아이템 이펙트의 onRegistration() 를 실행시킴 */
+	/* multicast로 실행하기 위해 컨트롤 중인 액터에서 새로 장착한 아이템의 모든 아이템 이펙트의 onRegistration() 실행 */
 	FName equiped_item_id = equipment_list[__to].item_id;
-	FItemData equipeditemdata = gameinstance->findItemData(equiped_item_id);
-	for (FItemEffect i : equipeditemdata.item_effect_list) {
-		auto item_effect_obj = i.item_effect.GetDefaultObject();
-		item_effect_obj->value = i.value;
-		item_effect_obj->item_id = equiped_item_id;
-		IInterface_ItemEffect::Execute_onRegistration(item_effect_obj, GetCharacter(), __from);
+	if (HasAuthority()) {
+		if (GetCharacter()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			IInterface_BaseCharacter::Execute_ItemEffect_onRegistration(GetCharacter(), equiped_item_id, __from);
+		}
 	}
-	gameinstance->inventory_slot_reference[__from]->initSlot();
+	if (IsLocalController()) {
+		UWidget_ItemSlot* slot_ref = gameinstance->inventory_slot_reference.FindRef(__from);
+		if (slot_ref)
+			slot_ref->initSlot();
+	}
 	refreshEquipmentSlot(__to);
+	UKismetSystemLibrary::PrintString(this, TEXT("장착"));
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
+	if (HasAuthority() == false) {
+		Server_equipItem(__from, __to);
+		if(gameinstance->detail_widget_reference->IsValidLowLevel())
+			gameinstance->detail_widget_reference->RemoveFromParent();
+	}
+}
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_equipItem_Implementation(int32 __from, EEquipmentType __to)
+{
+	equipItem(__from, __to);
 }
 
 /// <summary>
@@ -667,16 +752,14 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 	if (__to < 0)
 		__to = findInventoryEmptyIndex();
 	FName previtemid = equipment_list[__from].item_id;
-	FItemData previtemdata = gameinstance->findItemData(previtemid);
-	for (FItemEffect i : previtemdata.item_effect_list) {
-		auto item_effect_obj = i.item_effect.GetDefaultObject();
-		item_effect_obj->value = i.value;
-		item_effect_obj->item_id = previtemid;
-		IInterface_ItemEffect::Execute_onRemoveRegistration(item_effect_obj, GetCharacter(), __to);
+	if (HasAuthority()) {
+		if (GetCharacter()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			IInterface_BaseCharacter::Execute_ItemEffect_onRemoveRegistration(GetCharacter(), previtemid, __to);
+		}
 	}
 	FInventoryData fromdata = equipment_list[__from];
 	if (inventory_list.Contains(__to)) {
-		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 실제로 절대 실행되지 않음 */
+		/* __to 위치에 다른 아이템이 있을 경우인데 이 부분은 현재는 절대 실행되지 않음 */
 		/* __to 위치에 다른 아이템이 있다면 위젯에서 unequipItem 함수가 아니라 equipItem 함수를 대신 실행함 */
 		equipment_list[__from] = inventory_list[__to];
 		inventory_list[__to] = fromdata;
@@ -686,9 +769,28 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 		equipment_list.Remove(__from);
 	}
 	refreshEquipmentSlot(__from);
-	gameinstance->inventory_slot_reference[__to]->initSlot();
+	if (IsLocalController()) {
+		UWidget_ItemSlot* slot_ref = gameinstance->inventory_slot_reference.FindRef(__to);
+		if (slot_ref)
+			slot_ref->initSlot();
+	}
+	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
+	if (HasAuthority() == false) {
+		Server_unequipItem(__from, __to);
+		if (gameinstance->detail_widget_reference->IsValidLowLevel())
+			gameinstance->detail_widget_reference->RemoveFromParent();
+	}
 }
 
+/// <summary>
+/// 서버에서도 클라이언트와 동일한 작업을 수행해서 인벤토리 동기화
+/// </summary>
+/// <param name="__from"></param>
+/// <param name="__to"></param>
+void AController_Player::Server_unequipItem_Implementation(EEquipmentType __from, int32 __to)
+{
+	unequipItem(__from, __to);
+}
 
 FInventoryData AController_Player::getInventoryData_Implementation(int32 __index)
 {
@@ -732,7 +834,8 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 {
 	if (inventory_list.Contains(__index) == false)
 		return;
-	if (inventory_list[__index].count - __decrease_num <= 0) {
+	int32 after_decreased = inventory_list[__index].count - __decrease_num;
+	if (after_decreased <= 0) {
 		/* 아이템 감소 결과 수가 0개 이하가 되었을 경우 */
 		/* inventory_list에서 제거 */
 		inventory_list.Remove(__index);
@@ -751,10 +854,15 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 			refreshQuickSlot(reverse_quickslot_list[__index]);
 		}
 	}
-	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-	/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
-	if (gameinstance->inventory_slot_reference.Contains(__index))
-		gameinstance->inventory_slot_reference[__index]->initSlot();
+	if (IsLocalController()) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		/* 인벤토리 슬롯의 레퍼런스가 gameinstance에 존재하는 경우 ( 인벤토리 창이 열려있는 경우 ) 인벤토리 슬롯 UI 업데이트 */
+		if (gameinstance->inventory_slot_reference.Contains(__index))
+			gameinstance->inventory_slot_reference[__index]->initSlot();
+		/* 아이템이 삭제되었을 때 디테일 위젯 열려있으면 삭제 */
+		if (after_decreased > 0 && gameinstance->detail_widget_reference->IsValidLowLevel())
+			gameinstance->detail_widget_reference->RemoveFromParent();
+	}
 }
 
 /// <summary>
@@ -763,6 +871,8 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 /// <param name="__type"></param>
 void AController_Player::refreshEquipmentSlot_Implementation(EEquipmentType __type)
 {
+	if (IsLocalController() == false)
+		return;
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	UWidget_ItemSlot* equipment_slot = gameinstance->equipment_slot_reference[__type];
 	FInventoryData invendata;

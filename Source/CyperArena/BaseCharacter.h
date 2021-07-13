@@ -310,6 +310,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void changeWeaponMesh(FName __item_id);
 		virtual void changeWeaponMesh_Implementation(FName __item_id);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Base-Interface")
+		void ItemEffect_onRegistration(FName __item_id, int32 __inven_index);
+		virtual void ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Base-Interface")
+		void ItemEffect_onRemoveRegistration(FName __item_id, int32 __inven_index);
+		virtual void ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Base-Interface")
+		void ItemEffect_onActivate(FName __item_id, int32 __inven_index);
+		virtual void ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index);
 // --> 클래스 멤버 함수선언
 
 
@@ -409,4 +418,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
 		void endKnock_Back();
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "ItemEffect")
+		void Multicast_ItemEffect_onRegistration(FName __item_id, int32 __inven_index);
+		virtual void Multicast_ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "ItemEffect")
+		void Multicast_ItemEffect_onRemoveRegistration(FName __item_id, int32 __inven_index);
+		virtual void Multicast_ItemEffect_onRemoveRegistration_Implementation(FName __item_id, int32 __inven_index);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "ItemEffect")
+		void Multicast_ItemEffect_onActivate(FName __item_id, int32 __inven_index);
+		virtual void Multicast_ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index);
 };

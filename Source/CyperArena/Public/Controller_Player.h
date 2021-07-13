@@ -132,11 +132,29 @@ public :
 		void refreshQuickSlot(FKey __key);
 	UFUNCTION(BlueprintCallable)
 		void updateQuickSlotData(int32 __from, int32 __to);
-	UFUNCTION(BlueprintCallable, Client, Reliable, Category = "Inventory")
-		void Client_getItem(FName __item_id, int32 __num);
-		virtual void Client_getItem_Implementation(FName __item_id, int32 __num);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		void Server_ApplyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
 		virtual void Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
+	UFUNCTION(BlueprintCallable, Client, Reliable, Category = "Inventory")
+		void Client_getItem(FName __item_id, int32 __num);
+		virtual void Client_getItem_Implementation(FName __item_id, int32 __num);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_swapInvenSlot(int32 __from, int32 __to);
+		virtual void Server_swapInvenSlot_Implementation(int32 __from, int32 __to);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_swapQuickSlot(FKey __from, FKey __to);
+		virtual void Server_swapQuickSlot_Implementation(FKey __from, FKey __to);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_registerInventoQuick(int32 __from, FKey __to);
+		virtual void Server_registerInventoQuick_Implementation(int32 __from, FKey __to);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_removeQuickSlot(FKey __key);
+		virtual void Server_removeQuickSlot_Implementation(FKey __key);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_equipItem(int32 __from, EEquipmentType __to);
+		virtual void Server_equipItem_Implementation(int32 __from, EEquipmentType __to);
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Inventory")
+		void Server_unequipItem(EEquipmentType __from, int32 __to);
+		virtual void Server_unequipItem_Implementation(EEquipmentType __from, int32 __to);
 };

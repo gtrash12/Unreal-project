@@ -102,6 +102,12 @@ public:
 		float getStat_Stamina();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void changeWeaponMesh(FName __item_id);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void ItemEffect_onRegistration(FName __item_id, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void ItemEffect_onRemoveRegistration(FName __item_id, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void ItemEffect_onActivate(FName __item_id, int32 __inven_index);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);
