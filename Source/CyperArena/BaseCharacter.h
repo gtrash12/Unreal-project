@@ -61,6 +61,8 @@ public:
 		float additive_dex;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
 		float additive_speed;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = "Base-CharacterState")
+		float durability_level = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (DisplayName = "Is On Sprint", Category = "Base-CharacterState"))
 		bool is_on_sprint;
@@ -140,8 +142,6 @@ public:
 		FVector prev_attack_sock_end_loc;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
 		TMap<FName, UPrimitiveComponent*> attack_collisions;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Combat")
-		float durability_level = 1;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		bool is_dodge = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
