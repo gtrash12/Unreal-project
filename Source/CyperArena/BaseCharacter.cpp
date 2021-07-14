@@ -52,7 +52,6 @@ ABaseCharacter::ABaseCharacter()
 	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_Hit(TEXT("SoundCue'/Game/SFX/SQ_Hit.SQ_Hit'"));
 	if (SQ_Hit.Succeeded())
 		sq_hit = SQ_Hit.Object;
-
 }
 
 // 컴포넌트 초기화 후 함수 바인딩 등

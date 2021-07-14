@@ -102,8 +102,10 @@ void ABaseEnemy::applyDamage_Multicast_Exec_Implementation(FName __target_damage
 {
 	Super::applyDamage_Multicast_Exec_Implementation(__target_damage_id, damage_causer, __hit_bone_name);
 	target_actor = damage_causer;
-	if (GetController()->GetClass()->ImplementsInterface(UInterface_EnemyController::StaticClass())) {
-		IInterface_EnemyController::Execute_changeTarget(GetController(), damage_causer);
+	if (GetController()->IsValidLowLevel()) {
+		if (GetController()->GetClass()->ImplementsInterface(UInterface_EnemyController::StaticClass())) {
+			IInterface_EnemyController::Execute_changeTarget(GetController(), damage_causer);
+		}
 	}
 	if (state_bar->IsValidLowLevel()) {
 		if (hp > 0) {
