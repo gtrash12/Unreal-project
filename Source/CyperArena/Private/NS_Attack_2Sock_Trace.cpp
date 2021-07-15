@@ -20,7 +20,7 @@ void UNS_Attack_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
-		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+		trace_channel = IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor);
 	}
 	prev_sock_start_loc = MeshComp->GetSocketLocation(socket_start_name);
 	prev_sock_end_loc = MeshComp->GetSocketLocation(socket_end_name);
@@ -55,7 +55,7 @@ void UNS_Attack_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 		UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_mid, cur_mid, halfsize * actor->GetActorScale().X, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
 			}
 		}
 		prev_sock_start_loc = cur_sock_start_loc;

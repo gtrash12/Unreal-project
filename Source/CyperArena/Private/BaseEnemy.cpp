@@ -126,9 +126,9 @@ void ABaseEnemy::getTargetRotation_Implementation(FRotator& __target_rotation)
 	__target_rotation = res;
 }
 
-void ABaseEnemy::getAttackTraceChannel_Implementation(TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel)
+ETraceTypeQuery ABaseEnemy::getAttackTraceChannel_Implementation()
 {
-	__attack_trace_channel = ETraceTypeQuery::TraceTypeQuery5;
+	return ETraceTypeQuery::TraceTypeQuery5;
 }
 
 

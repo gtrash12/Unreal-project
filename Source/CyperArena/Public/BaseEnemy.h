@@ -48,7 +48,7 @@ public:
 
 	virtual void applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) override;
 	virtual void getTargetRotation_Implementation(FRotator& __target_rotation) override;
-	virtual void getAttackTraceChannel_Implementation(TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) override;
+	virtual ETraceTypeQuery getAttackTraceChannel_Implementation() override;
 	virtual void setCharacterState_Implementation(ECharacterState target_character_state)override;
 
 	// 인터페이스 메소드 선언

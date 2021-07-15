@@ -185,8 +185,8 @@ public:
 		virtual void resetHitActorList_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void attackEvent(AActor* __hit_actor, FName __hit_bone_name);
-		virtual void attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) override;
+		void attackEvent(AActor* __hit_actor, FHitResult __hit_result);
+		virtual void attackEvent_Implementation(AActor* __hit_actor, FHitResult __hit_result) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void resetNextAttack(bool __is_on_action__toggle);
@@ -213,8 +213,8 @@ public:
 		virtual void getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*out*/ FVector& __end) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
-		void getAttackTraceChannel(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel);
-		virtual void getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) override;
+		ETraceTypeQuery getAttackTraceChannel();
+		virtual ETraceTypeQuery getAttackTraceChannel_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void rotateActorInterp(FRotator __target_rotation, float __delta_time, float __speed);

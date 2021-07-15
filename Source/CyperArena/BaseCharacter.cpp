@@ -14,7 +14,6 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
-#include "NiagaraComponentPool.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -221,14 +220,13 @@ void ABaseCharacter::setDamageID_Implementation(FName __target_damage_id) {
 /// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
 /// </summary>
 /// <param name="hit_actor">피격 액터</param>
-void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) {
-
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult __hit_result) {
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
 	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
 		return;
 	}
-		
+	FName __hit_bone_name = __hit_result.BoneName;
 	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
 	if (HasAuthority()) {
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
@@ -256,9 +254,9 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 			}
 		}
 	}
+	bool hit_actor_is_dodge;
 	if (flag && damage_data.attack_type != EAttackType::Earthquake) {
 		if (__hit_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-			bool hit_actor_is_dodge;
 			IInterface_BaseCharacter::Execute_getIsDodge(__hit_actor, hit_actor_is_dodge);
 			if (hit_actor_is_dodge) {
 				flag = false;
@@ -270,7 +268,11 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
 		flag = false;
 	}
-
+	/* 피 이펙트 스폰 */
+	if (hit_actor_is_dodge == false) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+	}
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
@@ -350,8 +352,8 @@ void ABaseCharacter::getPrevSockLoc_Implementation(/*out*/ FVector& __start, /*o
 /// 어택 트레이스에 사용할 트레이스 채널을 반환
 /// </summary>
 /// <param name="__attack_trace_channel">출력 어택 트레이스 채널</param>
-void ABaseCharacter::getAttackTraceChannel_Implementation(/*out*/ TEnumAsByte<ETraceTypeQuery>& __attack_trace_channel) {
-	__attack_trace_channel = ETraceTypeQuery::TraceTypeQuery4;
+ETraceTypeQuery ABaseCharacter::getAttackTraceChannel_Implementation() {
+	return ETraceTypeQuery::TraceTypeQuery4;
 }
 
 /// <summary>
@@ -615,7 +617,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	/* 피 나이아가라 이펙트 스폰 */
 	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
 	if (blood_effect) {
-		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용 */
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
 		blood_effect->SetUsingAbsoluteRotation(true);
 		FRotator blood_rot = rotated_vector.Rotation();
 		blood_rot.Pitch *= -1;
@@ -1160,7 +1162,7 @@ void ABaseCharacter::onWeaponBeginOverlap_Implementation(UPrimitiveComponent* Ov
 	//else {
 	//	return;
 	//}
-	attackEvent(OtherActor, "spine_01");
+	//attackEvent(OtherActor, "spine_01");
 }
 
 

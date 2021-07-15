@@ -21,7 +21,7 @@ void UNS_Attack_1Sock_Trace_Sphere::NotifyBegin(USkeletalMeshComponent* MeshComp
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
-		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+		trace_channel = IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor);
 	}
 }
 
@@ -32,11 +32,14 @@ void UNS_Attack_1Sock_Trace_Sphere::NotifyTick(USkeletalMeshComponent* MeshComp,
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		FVector cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
 		TArray<FHitResult> hit_results;
-		const TArray<AActor*> ignore_actors;
+		TArray<AActor*> ignore_actors;
+		TSet<AActor*> ign;
 		UKismetSystemLibrary::SphereTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, radius * actor->GetActorScale().X, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+				if(ign.Contains(i.GetActor()) == false)
+					IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
+				ign.Add(i.GetActor());
 			}
 		}
 	}

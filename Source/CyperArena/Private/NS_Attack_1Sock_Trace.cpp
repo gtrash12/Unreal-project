@@ -30,7 +30,7 @@ void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
-		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+		trace_channel = IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor);
 	}
 }
 
@@ -57,9 +57,12 @@ void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
 		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
 		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume * actor->GetActorScale().X, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		TSet<AActor*> ign;
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+				if (ign.Contains(i.GetActor()) == false)
+					IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
+				ign.Add(i.GetActor());
 			}
 		}
 		prev_sock_loc = cur_sock_loc;
