@@ -11,6 +11,7 @@
 #include "EngineUtils.h"
 #include "Public/Interface_PlayerController.h"
 #include "Public/PWOGameInstance.h"
+#include "NiagaraFunctionLibrary.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -583,6 +584,31 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
 	FdamageData target_damage_data;
 	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, target_damage_data);
+	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+	FVector rotated_vector;
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
+	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+	}
+	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
+		rotate_quat.Pitch = 0;
+		rotate_quat.Roll = 0;
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
+		rotated_vector.X *= distance;
+		rotated_vector.Y *= distance;
+	}
+	else {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+	}
+	
 	if (durability_level >= target_damage_data.durability_level) {
 		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
 		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
@@ -600,30 +626,6 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		//끝
 		animation_Sound_Multicast(nullptr, sq_hit);
 		return;
-	}
-	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
-	FVector rotated_vector;
-	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
-	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
-	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
-	else if(target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
-		rotate_quat.Pitch = 0;
-		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
-	}
-	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
-		rotate_quat.Pitch = 0;
-		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
-		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
-		rotated_vector.X *= distance;
-		rotated_vector.Y *= distance;
-	}
-	else {
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
 	UAnimMontage* hit_anim = nullptr;
 	selectHitAnimation(rotated_vector, hit_anim);

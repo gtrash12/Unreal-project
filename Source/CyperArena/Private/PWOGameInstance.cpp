@@ -24,6 +24,11 @@ UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDataTable.ItemMeshDataTable'"));
 	if (ItemMeshDataTable.Succeeded())
 		item_mesh_data_table = ItemMeshDataTable.Object;
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystem(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
+	if (NiagaraSystem.Succeeded())
+		blood_effect = NiagaraSystem.Object;
+	blood_effect->
 }
 
 

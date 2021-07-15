@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "Widget_Detail.h"
 #include "Widget_ItemSlot.h"
+#include "Engine/NiagaraSystem.h"
 
 #include "PWOGameInstance.generated.h"
 
@@ -41,7 +42,8 @@ public:
 		TMap<int32, UWidget_ItemSlot*> inventory_slot_reference;
 	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
 		TMap<EEquipmentType, UWidget_ItemSlot*> equipment_slot_reference;
-
+	UPROPERTY()
+		UNiagaraSystem* blood_effect;
 
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-DataTableAccess")
