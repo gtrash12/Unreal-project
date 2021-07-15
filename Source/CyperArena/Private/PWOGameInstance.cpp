@@ -3,6 +3,7 @@
 
 #include "PWOGameInstance.h"
 #include "../Public//Interface_General.h"
+#include "NiagaraSystem.h"
 
 UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UDataTable> damage_data_table_cst(TEXT("DataTable'/Game/DataTable/DamageDataTable.DamageDataTable'"));
@@ -28,7 +29,7 @@ UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystem(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
 	if (NiagaraSystem.Succeeded())
 		blood_effect = NiagaraSystem.Object;
-	blood_effect->
+	
 }
 
 

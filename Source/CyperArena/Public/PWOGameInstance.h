@@ -9,7 +9,7 @@
 #include "Engine/DataTable.h"
 #include "Widget_Detail.h"
 #include "Widget_ItemSlot.h"
-#include "Engine/NiagaraSystem.h"
+#include "NiagaraSystem.h"
 
 #include "PWOGameInstance.generated.h"
 
