@@ -1785,6 +1785,41 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	return result;
 }
 ```
+## 머테리얼 & 이펙트
+### 피 이펙트
+- 피 이펙트
+![피 이펙트3](https://user-images.githubusercontent.com/12960463/125785880-745c0461-15d9-4f1e-92dd-996829edc9c2.gif)
+- 피 머테리얼
+![image](https://user-images.githubusercontent.com/12960463/125786272-1b6c2167-8976-4759-95af-3c3d16e9c8b7.png)
+
+#### 코드 : 피 이펙트 스폰 ( attackEvent 에서 충돌하는 매 프레임 스폰 )
+```c++
+/* 피 이펙트 스폰 */
+...
+if (hit_actor_is_dodge == false) {
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+}
+...
+```
+#### 코드 : 피 이펙트 스폰 ( applyDamage 에서 넉백벡터의 역방향으로 스폰 )
+```c++
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
+...
+/* 피 나이아가라 이펙트 스폰 */
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	if (blood_effect) {
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
+		blood_effect->SetUsingAbsoluteRotation(true);
+		FRotator blood_rot = rotated_vector.Rotation();
+		blood_rot.Pitch *= -1;
+		blood_rot.Yaw += 180;
+		blood_effect->SetWorldRotation(blood_rot);
+	}
+...	
+}
+```
+
 ## 디렉셔널 로코모션 & 기울이기 & 블렌딩
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
