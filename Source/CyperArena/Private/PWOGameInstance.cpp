@@ -29,7 +29,6 @@ UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystem(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
 	if (NiagaraSystem.Succeeded())
 		blood_effect = NiagaraSystem.Object;
-	
 }
 
 

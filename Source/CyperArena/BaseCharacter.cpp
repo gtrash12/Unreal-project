@@ -12,6 +12,9 @@
 #include "Public/Interface_PlayerController.h"
 #include "Public/PWOGameInstance.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraComponentPool.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -583,7 +586,8 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// <param name="__hit_bone_name">피격된 본</param>
 void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
 	FdamageData target_damage_data;
-	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, target_damage_data);
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	gameinstance->findDamageData(__target_damage_id, target_damage_data);
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector;
 	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
@@ -608,7 +612,16 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	else {
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
-	
+	/* 피 나이아가라 이펙트 스폰 */
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	if (blood_effect) {
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용 */
+		blood_effect->SetUsingAbsoluteRotation(true);
+		FRotator blood_rot = rotated_vector.Rotation();
+		blood_rot.Pitch *= -1;
+		blood_rot.Yaw += 180;
+		blood_effect->SetWorldRotation(blood_rot);
+	}
 	if (durability_level >= target_damage_data.durability_level) {
 		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
 		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
