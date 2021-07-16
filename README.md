@@ -1771,6 +1771,7 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 - 피 이펙트
 
 ![피 이펙트5](https://user-images.githubusercontent.com/12960463/125896956-c1326a5e-e1e3-4b71-a365-386f516fa637.gif)
+![피 이펙트6](https://user-images.githubusercontent.com/12960463/125898091-85bbceac-67fa-4425-a673-f9902c593faa.gif)
 - 피 머테리얼
 
 ![image](https://user-images.githubusercontent.com/12960463/125896969-22835adc-985c-4fc2-971a-990a39f619cc.png)
