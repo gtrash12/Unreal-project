@@ -1770,10 +1770,10 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 ### 피 이펙트
 - 피 이펙트
 
-![피 이펙트3](https://user-images.githubusercontent.com/12960463/125785880-745c0461-15d9-4f1e-92dd-996829edc9c2.gif)
+![피 이펙트5](https://user-images.githubusercontent.com/12960463/125896956-c1326a5e-e1e3-4b71-a365-386f516fa637.gif)
 - 피 머테리얼
 
-![image](https://user-images.githubusercontent.com/12960463/125786272-1b6c2167-8976-4759-95af-3c3d16e9c8b7.png)
+![image](https://user-images.githubusercontent.com/12960463/125896969-22835adc-985c-4fc2-971a-990a39f619cc.png)
 
 #### 코드 : 피 이펙트 스폰 ( attackEvent 에서 충돌하는 매 프레임 스폰 )
 ```c++
