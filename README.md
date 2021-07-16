@@ -400,7 +400,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NS_Attack_1Sock_Trace.h"
+#include "NS_Attack_Weapon_2Sock_Trace.h"
 #include "../Public/Interface_BaseCharacter.h"
 #include "../Public/Interface_PlayerController.h"
 #include "../CustomData.h"
@@ -408,17 +408,8 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 #include "Kismet/KismetSystemLibrary.h"
 #include "../Public/PWOGameInstance.h"
 
-/// <summary>
-/// 노티파이 시작시 damage_id 로 부터 damage_data를 얻어서 저장하고
-/// 시전자의 hit_actor_list를 초기화
-/// 시전자의 attack_trace_channel을 얻어서 트레이스할 대상을 설정
-/// 메쉬의 VisibilityBasedAnimTickOption 을 AlwaysTickPoseAndRefreshBones 으로 전환해서 실행 캐릭터가 플레이어의 화면에 안보여도 본 트랜스폼을 매 틱 갱신해서 충돌 판정이 정확하게 일어나도록 설정
-/// </summary>
-/// <param name="MeshComp"></param>
-/// <param name="Animation"></param>
-/// <param name="TotalDuration"></param>
-void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
-
+void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
+	
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
 	AActor* actor = MeshComp->GetOwner();
@@ -426,53 +417,40 @@ void UNS_Attack_1Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnim
 	Cast<UPWOGameInstance>(actor->GetGameInstance())->findDamageData(damage_id, damage_data);
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 		MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		IInterface_BaseCharacter::Execute_getWeapon(actor, weapon_key, weapon);
 		IInterface_BaseCharacter::Execute_resetHitActorList(actor);
 		IInterface_BaseCharacter::Execute_setDamageData(actor, damage_data);
 		IInterface_BaseCharacter::Execute_setDamageID(actor, damage_id);
-		IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor, trace_channel);
+		trace_channel = IInterface_BaseCharacter::Execute_getAttackTraceChannel(actor);
 	}
 }
 
-/// <summary>
-/// notify 실행 기간 동안 매 틱 BoxTraceMulti 를 실행해서 탐지된 모든 액터에 대해 attackEvent를 실행시킴 
-/// </summary>
-/// <param name="MeshComp"></param>
-/// <param name="Animation"></param>
-/// <param name="FrameDeltaTime"></param>
-void UNS_Attack_1Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
+void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime) {
 	AActor* actor = MeshComp->GetOwner();
-	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
+	if(MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
 	if (actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		FVector cur_sock_loc;
-		FRotator trace_rotation;
+		FdamageData damage_data;
+		FVector cur_sock_start = weapon->GetSocketLocation(socket_start);
+		FVector cur_sock_end = weapon->GetSocketLocation(socket_end);
+		FRotator trace_rotation = UKismetMathLibrary::FindLookAtRotation(cur_sock_start, cur_sock_end);;
 		TArray<FHitResult> hit_results;
 		const TArray<AActor*> ignore_actors;
-		cur_sock_loc = MeshComp->GetSocketLocation(socket_name);
-
-		if (cur_sock_loc == prev_sock_loc)
-			return;
-		else
-			trace_rotation = UKismetMathLibrary::FindLookAtRotation(prev_sock_loc, cur_sock_loc);
-		//UKismetSystemLibrary::BoxTraceMulti(MeshComp, prev_sock_loc, cur_sock_loc, volume, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::ForOneFrame, hit_results, true);
-		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_loc, cur_sock_loc, volume * actor->GetActorScale().X, FRotator::ZeroRotator, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_start, cur_sock_end, volume * actor->GetActorScale().X, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
+		TSet<AActor*> ign;
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i.BoneName);
+				if (ign.Contains(i.GetActor()) == false)
+					IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
+				ign.Add(i.GetActor());
 			}
 		}
-		prev_sock_loc = cur_sock_loc;
 	}
 }
-/// <summary>
-/// 노티파이 종료시 실행 메쉬의 VisibilityBasedAnimTickOption 을 OnlyTickMontagesWhenNotRendered 으로 전환해서 비렌더링시 본 트랜스폼을 갱신하지 않고 Tick 이벤트만 수행하도록 변경
-/// </summary>
-/// <param name="MeshComp"></param>
-/// <param name="Animation"></param>
-void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
+
+void UNS_Attack_Weapon_2Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) {
 	if (MeshComp->GetWorld()->GetFirstPlayerController() == NULL)
 		return;
-
 	MeshComp->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickMontagesWhenNotRendered;
 }
 ```
@@ -491,14 +469,13 @@ void UNS_Attack_1Sock_Trace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSe
 /// owned 액터에서만 실행되도록 구현하여 네트워크 상황에서 한 번만 실행되도록 보장
 /// </summary>
 /// <param name="hit_actor">피격 액터</param>
-void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit_bone_name) {
-
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult __hit_result) {
 	bool flag = false;
 	getNetworkOwnerType(network_owner_type);
 	if (damage_data.attack_type == EAttackType::Earthquake && Cast<APawn>(__hit_actor)->GetMovementComponent()->IsFalling() == true) {
 		return;
 	}
-		
+	FName __hit_bone_name = __hit_result.BoneName;
 	//UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("[%i] ownedaoi : %i, remoteai : %i, ownedplayer : %i, remoteplayer : %i"), network_owner_type, ENetworkOwnerType::OwnedAI, ENetworkOwnerType::RemoteAI, ENetworkOwnerType::OwnedPlayer, ENetworkOwnerType::RemotePlayer));
 	if (HasAuthority()) {
 		if (network_owner_type == ENetworkOwnerType::OwnedPlayer) {
@@ -526,9 +503,9 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 			}
 		}
 	}
+	bool hit_actor_is_dodge;
 	if (flag && damage_data.attack_type != EAttackType::Earthquake) {
 		if (__hit_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-			bool hit_actor_is_dodge;
 			IInterface_BaseCharacter::Execute_getIsDodge(__hit_actor, hit_actor_is_dodge);
 			if (hit_actor_is_dodge) {
 				flag = false;
@@ -540,7 +517,11 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FName __hit
 	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
 		flag = false;
 	}
-
+	/* 피 이펙트 스폰 */
+	if (hit_actor_is_dodge == false) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+	}
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
@@ -1785,6 +1766,51 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	return result;
 }
 ```
+## 머테리얼 & 이펙트
+### 피 이펙트
+- 피 이펙트
+
+![피 이펙트5](https://user-images.githubusercontent.com/12960463/125896956-c1326a5e-e1e3-4b71-a365-386f516fa637.gif)
+![피 이펙트6](https://user-images.githubusercontent.com/12960463/125898091-85bbceac-67fa-4425-a673-f9902c593faa.gif)
+- 피 머테리얼
+
+![image](https://user-images.githubusercontent.com/12960463/125896969-22835adc-985c-4fc2-971a-990a39f619cc.png)
+
+#### 코드 : 피 이펙트 스폰 ( attackEvent 에서 충돌하는 매 프레임 스폰 )
+```c++
+void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult __hit_result) {
+/* 피 이펙트 스폰 */
+...
+	if (hit_actor_is_dodge == false) {
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+	}
+...
+}
+```
+#### 코드 : 피 이펙트 스폰 ( applyDamage 에서 넉백벡터의 역방향으로 스폰 )
+```c++
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
+...
+/* 피 나이아가라 이펙트 스폰 */
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	if (blood_effect) {
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
+		blood_effect->SetUsingAbsoluteRotation(true);
+		FRotator blood_rot = rotated_vector.Rotation();
+		blood_rot.Pitch *= -1;
+		blood_rot.Yaw += 180;
+		blood_effect->SetWorldRotation(blood_rot);
+	}
+...	
+}
+```
+### 에너지 필드
+![에너지필드 머테리얼](https://user-images.githubusercontent.com/12960463/125792608-6694d8de-08fd-46ac-bb9a-940621f531e0.gif)
+- 머테리얼 노드
+
+![image](https://user-images.githubusercontent.com/12960463/125792690-92a1cd7f-1f99-4d54-be14-33860c850f84.png)
+
 ## 디렉셔널 로코모션 & 기울이기 & 블렌딩
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
