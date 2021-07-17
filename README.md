@@ -1806,6 +1806,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 }
 ```
 ### 히트 궤적 이펙트
+![히트 부위 데칼 이펙트5](https://user-images.githubusercontent.com/12960463/126039652-78323ee8-2668-4d8b-b8ad-08b254bdae6c.gif)
 ![히트 부위 데칼 이펙트6](https://user-images.githubusercontent.com/12960463/126039553-13eb8083-539c-45ee-9fc0-b78421bf91c8.gif)
 ![히트 부위 데칼 이펙트7](https://user-images.githubusercontent.com/12960463/126039555-adfaf58d-3b76-4c93-b365-567b838a076f.gif)
 
