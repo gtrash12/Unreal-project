@@ -8,6 +8,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "../Public/PWOGameInstance.h"
+#include "Engine/DecalActor.h"
 
 void UNS_Attack_Weapon_2Sock_Trace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration) {
 	
@@ -39,10 +40,21 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 		const TArray<AActor*> ignore_actors;
 		UKismetSystemLibrary::BoxTraceMulti(MeshComp, cur_sock_start, cur_sock_end, volume * actor->GetActorScale().X, trace_rotation, trace_channel, false, ignore_actors, EDrawDebugTrace::Type::None, hit_results, true);
 		TSet<AActor*> ign;
+		FTransform __trace_transform;
+		__trace_transform.SetLocation((cur_sock_end + cur_sock_start) / 2);
+		__trace_transform.SetRotation(trace_rotation.Quaternion());
+		__trace_transform.SetScale3D(cur_sock_end - cur_sock_start + volume);
+		bool spawn_decal = true;
 		for (auto i : hit_results) {
 			if (i.GetActor()->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-				if (ign.Contains(i.GetActor()) == false)
+				if (ign.Contains(i.GetActor()) == false) {
 					IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
+					if (spawn_decal) {
+						IInterface_BaseCharacter::Execute_spawnAttackDecal(actor, i, __trace_transform);
+						spawn_decal = false;
+					}
+					
+				}
 				ign.Add(i.GetActor());
 			}
 		}

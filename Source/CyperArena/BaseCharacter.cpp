@@ -553,6 +553,11 @@ void ABaseCharacter::changeWeaponMesh_Implementation(FName __item_id)
 
 }
 
+//void ABaseCharacter::spawnAttackDecal(FTransform __decal_transform)
+//{
+//
+//}
+
 // <-- 인터페이스 함수 정의 끝
 
 

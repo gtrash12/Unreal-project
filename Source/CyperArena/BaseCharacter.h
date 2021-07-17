@@ -319,6 +319,10 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Base-Interface")
 		void ItemEffect_onActivate(FName __item_id, int32 __inven_index);
 		virtual void ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index);
+	/*UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void spawnAttackDecal(FTransform __decal_transform);
+		virtual void spawnAttackDecal_Implementation(FTransform __decal_transform);*/
+
 // --> 클래스 멤버 함수선언
 
 

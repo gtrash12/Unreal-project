@@ -44,6 +44,8 @@ public:
 		TMap<EEquipmentType, UWidget_ItemSlot*> equipment_slot_reference;
 	UPROPERTY()
 		UNiagaraSystem* blood_effect;
+	UPROPERTY()
+		AActor* hit_decal_actor;
 
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-DataTableAccess")

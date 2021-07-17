@@ -108,6 +108,8 @@ public:
 		void ItemEffect_onRemoveRegistration(FName __item_id, int32 __inven_index);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void ItemEffect_onActivate(FName __item_id, int32 __inven_index);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+		void spawnAttackDecal(FHitResult __target, FTransform __decal_transform);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void getWeapon(FName __key, /*out*/ UPrimitiveComponent*& __weapon);
