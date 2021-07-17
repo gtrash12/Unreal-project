@@ -1805,6 +1805,16 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 ...	
 }
 ```
+### 히트 궤적 이펙트
+![히트 부위 데칼 이펙트6](https://user-images.githubusercontent.com/12960463/126039553-13eb8083-539c-45ee-9fc0-b78421bf91c8.gif)
+![히트 부위 데칼 이펙트7](https://user-images.githubusercontent.com/12960463/126039555-adfaf58d-3b76-4c93-b365-567b838a076f.gif)
+
+- 번쩍이는 데칼을 히트 부위에 히트 노말의 역방향으로 생성하고 Roll 을 트레이스 궤적의 방향과 일치시킴
+#### 데칼 머테리얼 노드
+![image](https://user-images.githubusercontent.com/12960463/126039604-444c0b6b-cace-47e7-85d3-b30ad89cbcbe.png)
+
+
+
 ### 에너지 필드
 ![에너지필드 머테리얼](https://user-images.githubusercontent.com/12960463/125792608-6694d8de-08fd-46ac-bb9a-940621f531e0.gif)
 - 머테리얼 노드
