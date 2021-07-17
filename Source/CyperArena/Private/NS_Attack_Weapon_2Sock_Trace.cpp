@@ -51,7 +51,7 @@ void UNS_Attack_Weapon_2Sock_Trace::NotifyTick(USkeletalMeshComponent* MeshComp,
 					IInterface_BaseCharacter::Execute_attackEvent(actor, i.GetActor(), i);
 					if (spawn_decal) {
 						IInterface_BaseCharacter::Execute_spawnAttackDecal(actor, i, __trace_transform);
-						spawn_decal = false;
+						//spawn_decal = false;
 					}
 					
 				}
