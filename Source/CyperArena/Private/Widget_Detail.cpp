@@ -68,11 +68,14 @@ void UWidget_Detail::onViewPortCheck()
 	FVector2D viewport_size;
 	GetWorld()->GetGameViewport()->GetViewportSize(viewport_size);
 	FGeometry geometry = GetTickSpaceGeometry();
-	FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();
-	FVector2D target_position = geometry.Position * abs_to_local_vector;
+	FVector2D abs_to_local_vector = geometry.GetAbsoluteSize() / geometry.GetLocalSize();	// 절대 크기와 local 크기를 나눠서 현재 screen 크기와 desire 크기의 비율을 알아냄
+	FVector2D target_position = geometry.Position * abs_to_local_vector;	// 위에서 구한 화면비를 위젯 지오메트리 position 에 곱해서 절대 위치를 local 위치로 변환
 	bool flag = false;
+	/* x축과 y축에 대해서 위젯이 화면을 벗어났는지 체크하고 그에따라 위치변환 */
+	/* 디폴트로 디테일 위젯은 아이템 슬롯의 우측 하단에 위치하게 되며 x축에서 화면을 벗어나면 슬롯 좌측으로 이동시키도록 target_position 조절.
+	y축을 벗어나면 동일한 방식으로 슬롯 상단으로 이동시킴 */
 	if (geometry.GetAbsoluteSize().X + target_position.X > viewport_size.X) {
-		target_position.X -= 85 * abs_to_local_vector.X + geometry.GetAbsoluteSize().X;
+		target_position.X -= 85 * abs_to_local_vector.X + geometry.GetAbsoluteSize().X;		// 85는 아이템 슬롯의 절대 사이즈
 		flag = true;
 	}
 	if (geometry.GetAbsoluteSize().Y + target_position.Y > viewport_size.Y) {

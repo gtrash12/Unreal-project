@@ -600,14 +600,17 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
 	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
 	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+		/* 넉백 타입이 Directinal 일때 공격 시전자 방향 기준으로 넉백 벡터 회전 */
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		/* RadialXY 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 */
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
 	}
 	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+		/* RadialXYDistanceReverse 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 한 후 시전자와의 거리를 곱해줌  */
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
@@ -617,6 +620,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		rotated_vector.Y *= distance;
 	}
 	else {
+		/* 이외의 타입에서는 directional 을 디폴트로 적용 ( 나머지는 아직 쓸 일이 없어서 미구현 ) */
 		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
 	}
 	/* 피 나이아가라 이펙트 스폰 */
@@ -658,14 +662,12 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 	FVector hitnormal;
 	if (airbone_HitChk(rotated_vector, hitnormal)) {
-		/*rotated_vector *= -1;
-		if (rotated_vector.Z < 0) {
-			rotated_vector.Z *= -1;
-		}*/
+		/* 에어본 직후 벽과 충돌시 에어본 넉백 방향을 히트 표면의 노말방향으로 전환 */
 		float rotated_std = rotated_vector.Size();
 		rotated_vector = hitnormal * rotated_std;
 	}
 	if (target_damage_data.target_control == ETargetControlType::None) {
+		/* 타겟 컨트롤이 None이면 에어본 중이 아니면 넉백을 실행하고 아닐시 LaunchCharacter로 캐릭터를 날림 */
 		if (character_state == ECharacterState::Walk_and_Jump) {
 			applyKnock_Back(rotated_vector);
 		}
@@ -674,10 +676,13 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		}
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
+		/* 타겟 컨트롤이 Ragdoll 일시 캐릭터를 날림 */
+		/* 넉백 벡터 초기화 및 해제 */
 		knock_back_unit_vector = FVector::ZeroVector;
 		if (network_owner_type == ENetworkOwnerType::RemoteAI)
 			current_velocty = FVector::ZeroVector;
 		knock_back_speed = 0;
+		/* 스프린트 해제 */
 		if (is_on_sprint)
 			GetCharacterMovement()->MaxWalkSpeed = sprint_speed;
 		else
@@ -685,15 +690,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		GetCharacterMovement()->MaxAcceleration = 2048.0f;
 		ConsumeMovementInputVector();
 		LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
-		//FTimerHandle timer_handle;
-		/*GetWorld()->GetTimerManager().SetTimer(timer_handle, FTimerDelegate::CreateLambda([&]() {
-			setCharacterState(ECharacterState::Airbone);
-			}), 0.1f, false);*/
+		/* 한 프레임 뒤에 에어본 시작 */
 		GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, rotated_vector]() {
-			//UKismetSystemLibrary::PrintString(this, rotated_vector.ToString());
 			airboneStart(rotated_vector);
 			}));
-		//setCharacterState(ECharacterState::Airbone);
 	}
 }
 
@@ -1181,8 +1181,9 @@ void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation)
 
 
 /// <summary>
-/// 에어본 벽이나 바닥면과 충돌했는지 체크
+/// 에어본 상태에서 다음 프레임에 벽이나 바닥면과 충돌할지 체크
 /// 충돌하면 래그돌로 전환
+/// 충돌은 라인 트레이스로 캐릭터의 하단과 에어본 운동 방향을 예측 검사해서 다음 프레임에 충돌이 일어날 지 예측 검사
 /// </summary>
 /// <param name="__velocity"> 예측에 쓰일 벨로시티</param>
 /// <returns></returns>
@@ -1193,11 +1194,13 @@ bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
 	FVector trace_start = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z + capsule_half_height + 10);
 	FVector trace_end = UKismetMathLibrary::MakeVector(location.X, location.Y, location.Z - capsule_half_height + 20);
 	TArray<AActor*> tmp;
+	/* 캐릭터 하단을 라인 트레이스로 검사해 지면과의 충돌 검사 */
 	bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool) {
 		__hitnormal = trace_result.ImpactNormal;
 		return true;
 	}
+	/* 캐릭터의 운동 방향을 검사해 다음 프레임에 지면 or 벽면과의 충돌이 있는지 검사 */
 	bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetMesh()->GetSocketLocation(TEXT("pelvis")), GetActorLocation() + __velocity * (d_time * 2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool2) {
 		__hitnormal = trace_result.ImpactNormal;
