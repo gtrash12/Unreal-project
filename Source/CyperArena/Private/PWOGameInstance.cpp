@@ -22,7 +22,7 @@ UPWOGameInstance::UPWOGameInstance() {
 		if (Icon_EmptySlot.Succeeded())
 			empty_slot_image = Icon_EmptySlot.Object;
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDataTable.ItemMeshDataTable'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDatasTable.ItemMeshDatasTable'"));
 	if (ItemMeshDataTable.Succeeded())
 		item_mesh_data_table = ItemMeshDataTable.Object;
 

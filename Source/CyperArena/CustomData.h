@@ -92,9 +92,8 @@ public:
 		TArray<FItemEffect> item_effect_list;
 };
 
-
 USTRUCT(Atomic, BlueprintType)
-struct FItemMeshData : public FTableRowBase
+struct FItemMeshData
 {
 	GENERATED_BODY()
 public:
@@ -104,6 +103,15 @@ public:
 		USkeletalMesh* mesh;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FTransform transform;
+};
+
+USTRUCT(Atomic, BlueprintType)
+struct FItemMeshTableData : public FTableRowBase
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		TArray<FItemMeshData> item_mesh_data;
 };
 
 USTRUCT(Atomic, BlueprintType)
