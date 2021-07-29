@@ -99,6 +99,8 @@ struct FItemMeshData : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FName component_id;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		USkeletalMesh* mesh;
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FTransform transform;

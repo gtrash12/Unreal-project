@@ -307,9 +307,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		float getStat_Stamina();
 		virtual float getStat_Stamina_Implementation();
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
+	/*UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Interface")
 		void changeWeaponMesh(FName __item_id);
-		virtual void changeWeaponMesh_Implementation(FName __item_id);
+		virtual void changeWeaponMesh_Implementation(FName __item_id);*/
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Base-Interface")
 		void ItemEffect_onRegistration(FName __item_id, int32 __inven_index);
 		virtual void ItemEffect_onRegistration_Implementation(FName __item_id, int32 __inven_index);
