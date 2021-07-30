@@ -60,6 +60,10 @@ public:
 	/* 액션 시 회전 방향 결정 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EActionRotateType action_rotate_type;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		EActionMovableType action_movable_type = EActionMovableType::None;
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FName release_action = "None";
 };
 
 USTRUCT(Atomic, BlueprintType)

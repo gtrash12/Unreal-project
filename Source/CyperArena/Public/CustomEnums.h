@@ -124,3 +124,12 @@ enum class EActionRotateType : uint8
 	Input UMETA(DisplayName = "Input"),
 	Static UMETA(DisplayName = "Static")
 };
+
+UENUM(BlueprintType)
+enum class EActionMovableType : uint8
+{
+	None,
+	Walkable,
+	Sprintable,
+	Jumpable
+};
