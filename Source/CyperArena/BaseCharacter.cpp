@@ -596,18 +596,20 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	gameinstance->findDamageData(__target_damage_id, target_damage_data);
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
-	/* 피 나이아가라 이펙트 스폰 */
-	spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
 	if (checkBlock(target_damage_data, damage_causer)) {
 		setupTargetControl(target_damage_data, rotated_vector/5);
 		blockProcess(target_damage_data, rotated_vector, damage_causer);
 	}else if (durability_level >= target_damage_data.durability_level) {
 		// 강인도가 데미지의 강인도 수치보다 높을시 히트 부위 덜렁거리는 피지컬 애니메이션 실행
+		/* 피 나이아가라 이펙트 스폰 */
+		spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
 		playPhysicalHitAnimation(__hit_bone_name, damage_causer);
 		return;
 	}
 	else {
 		// 그 외의 노말 히트인 경우 에어본, 넉백 등을 적용
+		/* 피 나이아가라 이펙트 스폰 */
+		spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
 		/* 히트 애니메이션 사운드 재생 */
 		UAnimMontage* hit_anim = nullptr;
 		selectHitAnimation(rotated_vector, hit_anim);
@@ -686,9 +688,6 @@ bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_c
 			/* 적과의 각의 코사인이 0.2 보다 크면 가드로 인정*/
 			return true;
 		}
-	}
-	else {
-		UKismetSystemLibrary::PrintString(this, TEXT("ASDAF"));
 	}
 	return false;
 }
