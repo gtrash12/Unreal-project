@@ -687,6 +687,9 @@ bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_c
 			return true;
 		}
 	}
+	else {
+		UKismetSystemLibrary::PrintString(this, TEXT("ASDAF"));
+	}
 	return false;
 }
 
