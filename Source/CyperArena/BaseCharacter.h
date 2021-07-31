@@ -146,6 +146,8 @@ public:
 		bool is_dodge = 0;
 	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
 		TMap<FName, float> hit_bone_physics_weight_map;
+	UPROPERTY(BlueprintReadWrite, Category = "Base-Combat")
+		bool is_block = 0;
 	
 protected:
 	UPROPERTY()
@@ -434,4 +436,11 @@ public:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "ItemEffect")
 		void Multicast_ItemEffect_onActivate(FName __item_id, int32 __inven_index);
 		virtual void Multicast_ItemEffect_onActivate_Implementation(FName __item_id, int32 __inven_index);
+
+	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
+		FVector rotateKnockBackVector(EKnockBackType __knock_back_type, FVector __knock_back, FVector __knock_back_offset, AActor* damage_causer);
+	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
+		void playPhysicalHitAnimation(FName __hit_bone_name, AActor* damage_causer);
+	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
+		void setupTargetControl(FdamageData target_damage_data, FVector rotated_vector);
 };
