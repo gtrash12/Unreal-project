@@ -252,9 +252,9 @@ bool AController_Player::isStackable(EItemType __item_type)
 /// <param name="__damage_id"></param>
 /// <param name="__damage_causer"></param>
 /// <param name="__hit_bone_name"></param>
-void AController_Player::CtoS_applyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name)
+void AController_Player::CtoS_applyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location)
 {
-	Server_ApplyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name);
+	Server_ApplyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name, __hit_location);
 }
 
 /// <summary>
@@ -264,10 +264,10 @@ void AController_Player::CtoS_applyDamage_Implementation(AActor* __damaged_actor
 /// <param name="__damage_id"></param>
 /// <param name="__damage_causer"></param>
 /// <param name="__hit_bone_name"></param>
-void AController_Player::Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name)
+void AController_Player::Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location)
 {
 	if (__damaged_actor->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_applyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name);
+		IInterface_BaseCharacter::Execute_applyDamage(__damaged_actor, __damage_id, __damage_causer, __hit_bone_name, __hit_location);
 	}
 }
 

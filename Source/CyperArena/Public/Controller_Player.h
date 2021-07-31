@@ -52,8 +52,8 @@ public :
 		void releaseLock_ON();
 		virtual void releaseLock_ON_Implementation();
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
-		void CtoS_applyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
-		virtual void CtoS_applyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
+		void CtoS_applyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location);
+		virtual void CtoS_applyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location);
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface-Controller")
 		void isLock_On_Target(AActor* actor, bool& result);
 		virtual void isLock_On_Target_Implementation(AActor* actor, bool& result);
@@ -134,8 +134,8 @@ public :
 		void updateQuickSlotData(int32 __from, int32 __to);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-		void Server_ApplyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
-		virtual void Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name);
+		void Server_ApplyDamage(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location);
+		virtual void Server_ApplyDamage_Implementation(AActor* __damaged_actor, FName __damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location);
 	UFUNCTION(BlueprintCallable, Client, Reliable, Category = "Inventory")
 		void Client_getItem(FName __item_id, int32 __num);
 		virtual void Client_getItem_Implementation(FName __item_id, int32 __num);

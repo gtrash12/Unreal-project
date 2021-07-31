@@ -98,9 +98,9 @@ void ABaseEnemy::attack_Implementation()
 	}
 }
 
-void ABaseEnemy::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) 
+void ABaseEnemy::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name, FVector __hit_location)
 {
-	Super::applyDamage_Multicast_Exec_Implementation(__target_damage_id, damage_causer, __hit_bone_name);
+	Super::applyDamage_Multicast_Exec_Implementation(__target_damage_id, damage_causer, __hit_bone_name, __hit_location);
 	target_actor = damage_causer;
 	if (GetController()->IsValidLowLevel()) {
 		if (GetController()->GetClass()->ImplementsInterface(UInterface_EnemyController::StaticClass())) {

@@ -178,16 +178,20 @@ void ABaseCharacter::setLookRotation_Implementation()
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causer">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causer, FName __hit_bone_name)
+void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor* __damage_causer, FName __hit_bone_name, FVector __hit_location)
 {
 	FdamageData __target_damage_data;
 	float causer_power;
 	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, __target_damage_data);
-	if (__damage_causer->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
-		IInterface_BaseCharacter::Execute_getBasePower(__damage_causer, causer_power);
-		hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causer_power;
-		hp = UKismetMathLibrary::Max(0, hp);
-		applyDamage_Multicast(__target_damage_id, __damage_causer, __hit_bone_name);
+	if (checkBlock(__target_damage_data, __damage_causer)) {
+
+	}else{
+		if (__damage_causer->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
+			IInterface_BaseCharacter::Execute_getBasePower(__damage_causer, causer_power);
+			hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causer_power;
+			hp = UKismetMathLibrary::Max(0, hp);
+		}
+		applyDamage_Multicast(__target_damage_id, __damage_causer, __hit_bone_name, __hit_location);
 	}
 }
 
@@ -268,17 +272,19 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
 	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
 		flag = false;
 	}
-	/* 피 이펙트 스폰 */
-	if (hit_actor_is_dodge == false) {
-		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-	}
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
-				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name);
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name, __hit_result.ImpactPoint);
 			}
 			hit_actors_list.Add(__hit_actor);
+		}
+		else {
+			/* 피 이펙트 스폰 */
+			/*if (hit_actor_is_dodge == false && Cast<ABaseCharacter>(__hit_actor)->checkBlock(damage_data, this) == false) {
+				UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+				UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+			}*/
 		}
 	}
 }
@@ -570,18 +576,11 @@ float ABaseCharacter::getStat_Stamina_Implementation()
 /// </summary>
 /// <param name="target_damage_data">전달할 데미지 데이터</param>
 /// <param name="damage_causer">데미지를 입힌 액터</param>
-void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name)
+void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name, FVector __hit_location)
 {
 	getNetworkOwnerType(network_owner_type);
-	applyDamage_Multicast_Exec(__target_damage_id, damage_causer, __hit_bone_name);
+	applyDamage_Multicast_Exec(__target_damage_id, damage_causer, __hit_bone_name, __hit_location);
 }
-
-/// <summary>
-/// 어플라이 데미지 멀티캐스트의 실제 구현
-/// 블루프린트에서 오버라이딩 할 수 있게 하기 위함
-/// </summary>
-/// <param name="target_damage_data"></param>
-/// <param name="damage_causer"></param>
 
 /// <summary>
 /// applyDamage_Multicast의 실제 구현 (블루프린트에서 오버라이딩 할 수 있게 하기 위함)
@@ -591,7 +590,7 @@ void ABaseCharacter::applyDamage_Multicast_Implementation(FName __target_damage_
 /// <param name="__target_damage_id">데미지 id</param>
 /// <param name="damage_causer">공격한 액터</param>
 /// <param name="__hit_bone_name">피격된 본</param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name, FVector __hit_location) {
 	FdamageData target_damage_data;
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	gameinstance->findDamageData(__target_damage_id, target_damage_data);
@@ -599,9 +598,11 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
 	/* 피 나이아가라 이펙트 스폰 */
 	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	//UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_location, blood_rot, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
 	if (blood_effect) {
 		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
 		blood_effect->SetUsingAbsoluteRotation(true);
+		blood_effect->SetWorldLocation(__hit_location);
 		FRotator blood_rot = rotated_vector.Rotation();
 		blood_rot.Pitch *= -1;
 		blood_rot.Yaw += 180;
@@ -620,6 +621,14 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 }
 
+/// <summary>
+/// 넉백 벡터를 knock_back_type 과 damage_causer 의 위치와 방향에 맞게 회전한 결과를 반환
+/// </summary>
+/// <param name="__knock_back_type"></param>
+/// <param name="__knock_back"></param>
+/// <param name="__knock_back_offset"></param>
+/// <param name="damage_causer"></param>
+/// <returns></returns>
 FVector ABaseCharacter::rotateKnockBackVector(EKnockBackType __knock_back_type, FVector __knock_back, FVector __knock_back_offset, AActor* damage_causer)
 {
 	FVector rotated_vector;
@@ -662,6 +671,24 @@ void ABaseCharacter::animation_Sound_Multicast_Implementation(UAnimMontage* anim
 	if(anim != nullptr)
 		PlayAnimMontage(anim);
 	UGameplayStatics::SpawnSoundAtLocation(this, sound, GetActorLocation());
+}
+
+/// <summary>
+/// 공격을 방어했는지 판단
+/// </summary>
+/// <param name="target_damage_data"></param>
+/// <param name="damage_causer"></param>
+/// <returns></returns>
+bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_causer)
+{
+	if (is_block) {
+		float angle = GetActorForwardVector().CosineAngle2D(damage_causer->GetActorLocation() - GetActorLocation());
+		if (angle > 0.5f) {
+			/* 적과의 코사인 각이 30도 보다 작다면 가드로 인정*/
+			return true;
+		}
+	}
+	return false;
 }
 
 /// <summary>
