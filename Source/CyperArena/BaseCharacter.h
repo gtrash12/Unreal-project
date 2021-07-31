@@ -445,4 +445,9 @@ public:
 		void setupTargetControl(FdamageData target_damage_data, FVector rotated_vector);
 	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
 		bool checkBlock(FdamageData target_damage_data, AActor* damage_causer);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Base-Combat")
+		void blockProcess(FdamageData target_damage_data, FVector knock_back_vector,AActor* damage_causer);
+		virtual void blockProcess_Implementation(FdamageData target_damage_data, FVector knock_back_vector, AActor* damage_causer);
+	UFUNCTION(BlueprintCallable, Category = "Base-Combat")
+		void spawnBloodEffect(FVector __location, FVector __rot_vector, FName __bone_name);
 };

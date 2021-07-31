@@ -184,15 +184,15 @@ void ABaseCharacter::applyDamage_Implementation(FName __target_damage_id, AActor
 	float causer_power;
 	Cast<UPWOGameInstance>(GetGameInstance())->findDamageData(__target_damage_id, __target_damage_data);
 	if (checkBlock(__target_damage_data, __damage_causer)) {
-
+		stamina = UKismetMathLibrary::Max(0, stamina-10);
 	}else{
 		if (__damage_causer->GetClass()->ImplementsInterface(UInterface_BaseCharacter::StaticClass())) {
 			IInterface_BaseCharacter::Execute_getBasePower(__damage_causer, causer_power);
 			hp -= __target_damage_data.base_damage + __target_damage_data.base_damage_percent * causer_power;
 			hp = UKismetMathLibrary::Max(0, hp);
 		}
-		applyDamage_Multicast(__target_damage_id, __damage_causer, __hit_bone_name, __hit_location);
 	}
+	applyDamage_Multicast(__target_damage_id, __damage_causer, __hit_bone_name, __hit_location);
 }
 
 /// <summary>
@@ -597,19 +597,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
 	/* 피 나이아가라 이펙트 스폰 */
-	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
-	//UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_location, blood_rot, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-	if (blood_effect) {
-		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
-		blood_effect->SetUsingAbsoluteRotation(true);
-		blood_effect->SetWorldLocation(__hit_location);
-		FRotator blood_rot = rotated_vector.Rotation();
-		blood_rot.Pitch *= -1;
-		blood_rot.Yaw += 180;
-		blood_effect->SetWorldRotation(blood_rot);
-	}
-	if (is_block) {
-
+	spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
+	if (checkBlock(target_damage_data, damage_causer)) {
+		setupTargetControl(target_damage_data, rotated_vector/5);
+		blockProcess(target_damage_data, rotated_vector, damage_causer);
 	}else if (durability_level >= target_damage_data.durability_level) {
 		// 강인도가 데미지의 강인도 수치보다 높을시 히트 부위 덜렁거리는 피지컬 애니메이션 실행
 		playPhysicalHitAnimation(__hit_bone_name, damage_causer);
@@ -617,6 +608,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 	else {
 		// 그 외의 노말 히트인 경우 에어본, 넉백 등을 적용
+		/* 히트 애니메이션 사운드 재생 */
+		UAnimMontage* hit_anim = nullptr;
+		selectHitAnimation(rotated_vector, hit_anim);
+		animation_Sound_Multicast(hit_anim, sq_hit);
 		setupTargetControl(target_damage_data, rotated_vector);
 	}
 }
@@ -682,13 +677,38 @@ void ABaseCharacter::animation_Sound_Multicast_Implementation(UAnimMontage* anim
 bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_causer)
 {
 	if (is_block) {
-		float angle = GetActorForwardVector().CosineAngle2D(damage_causer->GetActorLocation() - GetActorLocation());
-		if (angle > 0.5f) {
-			/* 적과의 코사인 각이 30도 보다 작다면 가드로 인정*/
+		FVector loc1 = GetActorForwardVector();
+		loc1.Z = 0;
+		FVector loc2 = damage_causer->GetActorLocation() - GetActorLocation();
+		loc2.Z = 0;
+		float angle = UKismetMathLibrary::Dot_VectorVector(loc1.GetSafeNormal(), loc2.GetSafeNormal());
+		if (angle > 0.2f) {
+			/* 적과의 각의 코사인이 0.2 보다 크면 가드로 인정*/
 			return true;
 		}
 	}
 	return false;
+}
+
+void ABaseCharacter::blockProcess_Implementation(FdamageData target_damage_data, FVector knock_back_vector, AActor* damage_causer)
+{
+
+}
+
+void ABaseCharacter::spawnBloodEffect(FVector __location, FVector __rot_vector, FName __bone_name)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	//UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_location, blood_rot, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+	if (blood_effect) {
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
+		blood_effect->SetUsingAbsoluteRotation(true);
+		blood_effect->SetWorldLocation(__location);
+		FRotator blood_rot = __rot_vector.Rotation();
+		blood_rot.Pitch *= -1;
+		blood_rot.Yaw += 180;
+		blood_effect->SetWorldRotation(blood_rot);
+	}
 }
 
 /// <summary>
@@ -721,11 +741,6 @@ void ABaseCharacter::playPhysicalHitAnimation(FName __hit_bone_name, AActor* dam
 /// <param name="rotated_vector"></param>
 void ABaseCharacter::setupTargetControl(FdamageData target_damage_data, FVector rotated_vector)
 {
-	/* 히트 애니메이션 사운드 재생 */
-	UAnimMontage* hit_anim = nullptr;
-	selectHitAnimation(rotated_vector, hit_anim);
-	animation_Sound_Multicast(hit_anim, sq_hit);
-
 	rotate_interp_time = 0;
 	if (character_state == ECharacterState::Ragdoll) {
 		/* 래그돌 상태(다운 상태)에서 맞았을 때 airbone 으로 전환 */

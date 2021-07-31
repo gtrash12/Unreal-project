@@ -719,7 +719,6 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 			slot_ref->initSlot();
 	}
 	refreshEquipmentSlot(__to);
-	UKismetSystemLibrary::PrintString(this, TEXT("장착"));
 	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
 	if (HasAuthority() == false) {
 		Server_equipItem(__from, __to);
