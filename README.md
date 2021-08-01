@@ -1932,6 +1932,43 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 #### 데칼 머테리얼 노드
 ![image](https://user-images.githubusercontent.com/12960463/126039604-444c0b6b-cace-47e7-85d3-b30ad89cbcbe.png)
 
+### 화면 흔들림
+![흔들림](https://user-images.githubusercontent.com/12960463/127766828-d40ed212-e275-42df-9210-380d8f3b1ac1.gif)
+![흔들림3](https://user-images.githubusercontent.com/12960463/127766871-815480dd-e57a-414c-8c2b-e9e082863633.gif)
+
+- 타격, 피격, 방어, 지면과 충돌시 화면 흔들림 효과 재생
+
+#### 코드 : camera shake 클래스 코드 (헤더)
+``` c++
+#include "CoreMinimal.h"
+#include "Camera/CameraShake.h"
+#include "CameraShake_Hit.generated.h"
+UCLASS()
+class CYPERARENA_API UCameraShake_Hit : public UMatineeCameraShake
+{
+	GENERATED_BODY()
+	
+public:
+	UCameraShake_Hit();
+};
+```
+#### 코드 : camera shake 클래스 코드 (cpp)
+``` c++
+#include "CameraShake_Hit.h"
+UCameraShake_Hit::UCameraShake_Hit()
+{
+    OscillationDuration = 0.25f;
+    OscillationBlendInTime = 0.0f;
+    OscillationBlendOutTime = 0.05f;
+
+    RotOscillation.Pitch.Amplitude = FMath::RandRange(2, 4);
+    RotOscillation.Pitch.Frequency = FMath::RandRange(10, 15);
+
+    RotOscillation.Pitch.Amplitude = FMath::RandRange(2, 4);
+    RotOscillation.Pitch.Frequency = FMath::RandRange(10, 15);
+}
+```
+
 
 
 ### 에너지 필드
