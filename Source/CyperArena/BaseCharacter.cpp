@@ -100,7 +100,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 		FVector hit_normal;
 		FVector hit_location;
 		if (airbone_HitChk(GetVelocity(), hit_normal, hit_location)) {
-			setCharacterState(ECharacterState::Ragdoll);
 			/* 충돌이 감지되었으면 이펙트 실행 */
 			if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 				/* 카메라 쉐이크 */
@@ -112,8 +111,10 @@ void ABaseCharacter::Tick(float DeltaTime)
 				FRotator effect_rotator = hit_normal.ToOrientationRotator();
 				effect_rotator.Pitch -= 90;
 				UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, hit_location, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-				UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
+				UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation(), FRotator::ZeroRotator, GetVelocity().Size() / 1500);
 			}
+			/* ragdoll 상태로 전환 */
+			setCharacterState(ECharacterState::Ragdoll);
 		}
 	}
 	//래그돌 위치 동기화 시스템
@@ -1280,13 +1281,14 @@ void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation)
 	SetActorRotation(__target_rotation.Quaternion(), ETeleportType::TeleportPhysics);
 }
 
-
 /// <summary>
 /// 에어본 상태에서 다음 프레임에 벽이나 바닥면과 충돌할지 체크
 /// 충돌하면 래그돌로 전환
 /// 충돌은 라인 트레이스로 캐릭터의 하단과 에어본 운동 방향을 예측 검사해서 다음 프레임에 충돌이 일어날 지 예측 검사
 /// </summary>
 /// <param name="__velocity"> 예측에 쓰일 벨로시티</param>
+/// <param name="__hitnormal"></param>
+/// <param name="__hit_location"></param>
 /// <returns></returns>
 bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal, FVector& __hit_location) {
 	FHitResult trace_result(ForceInit);
