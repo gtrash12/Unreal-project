@@ -390,39 +390,46 @@ public:
   - knock_back_offset : knock_back 적용시 기준이 될 위치 ( damage_causer 의 위치에서 상대적인 위치로 계산 )
   - durability_level : 적을 경직시키는 레벨
     - 데미지 데이터의 durability_level 이 피격 캐릭터의 durability_level 보다 높으면 적은 경직과 넉백이 
-#### 코드 : 넉백 벡터 계산 코드 ( 코드 일부 )
+#### 코드 : 넉백 벡터 계산 코드
 ```c++
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
-	...
-	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
+/// <summary>
+/// 넉백 벡터를 knock_back_type 과 damage_causer 의 위치와 방향에 맞게 회전한 결과를 반환
+/// </summary>
+/// <param name="__knock_back_type"></param>
+/// <param name="__knock_back"></param>
+/// <param name="__knock_back_offset"></param>
+/// <param name="damage_causer"></param>
+/// <returns></returns>
+FVector ABaseCharacter::rotateKnockBackVector(EKnockBackType __knock_back_type, FVector __knock_back, FVector __knock_back_offset, AActor* damage_causer)
+{
 	FVector rotated_vector;
-	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
+	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), __knock_back_offset);
 	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
-	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
+	if (__knock_back_type == EKnockBackType::Directional)
 		/* 넉백 타입이 Directinal 일때 공격 시전자 방향 기준으로 넉백 벡터 회전 */
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
-	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), __knock_back);
+	else if (__knock_back_type == EKnockBackType::RadialXY) {
 		/* RadialXY 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 */
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), __knock_back);
 	}
-	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
+	else if (__knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
 		/* RadialXYDistanceReverse 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 한 후 시전자와의 거리를 곱해줌  */
 		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
 		rotate_quat.Pitch = 0;
 		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), __knock_back);
 		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
 		rotated_vector.X *= distance;
 		rotated_vector.Y *= distance;
 	}
 	else {
 		/* 이외의 타입에서는 directional 을 디폴트로 적용 ( 나머지는 아직 쓸 일이 없어서 미구현 ) */
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
+		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), __knock_back);
 	}
-	...
+	return rotated_vector;
 }
 ```
 
@@ -549,15 +556,10 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
 	if (flag && (GetMesh()->GetBoneIndex(__hit_bone_name) < 9 )) {
 		flag = false;
 	}
-	/* 피 이펙트 스폰 */
-	if (hit_actor_is_dodge == false) {
-		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->blood_effect, __hit_result.ImpactPoint, __hit_result.ImpactNormal.ToOrientationRotator(), FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-	}
 	if (flag) {
 		if (hit_actors_list.Contains(__hit_actor) == false) {
 			if (GetWorld()->GetFirstPlayerController()->GetClass()->ImplementsInterface(UInterface_PlayerController::StaticClass())) {
-				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name);
+				IInterface_PlayerController::Execute_CtoS_applyDamage(GetWorld()->GetFirstPlayerController(), __hit_actor, damage_id, this, __hit_bone_name, __hit_result.ImpactPoint);
 			}
 			hit_actors_list.Add(__hit_actor);
 		}
@@ -595,72 +597,50 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
 /// <param name="__target_damage_id">데미지 id</param>
 /// <param name="damage_causer">공격한 액터</param>
 /// <param name="__hit_bone_name">피격된 본</param>
-void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name) {
+void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_damage_id, AActor* damage_causer, FName __hit_bone_name, FVector __hit_location) {
 	FdamageData target_damage_data;
 	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
 	gameinstance->findDamageData(__target_damage_id, target_damage_data);
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
-	FVector rotated_vector;
-	FVector rotated_offset = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back_offset);
-	FVector knock_back_point_vector = damage_causer->GetActorLocation() + rotated_offset;
-	if (target_damage_data.knock_back_type == EKnockBackType::Directional)
-		/* 넉백 타입이 Directinal 일때 공격 시전자 방향 기준으로 넉백 벡터 회전 */
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
-	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXY) {
-		/* RadialXY 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 */
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
-		rotate_quat.Pitch = 0;
-		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
-	}
-	else if (target_damage_data.knock_back_type == EKnockBackType::RadialXYDistanceReverse) {
-		/* RadialXYDistanceReverse 일 때 공격 시전자와의 look at 방향으로 넉백 벡터 회전 시키고 pitch 와 roll 0으로 초기화 한 후 시전자와의 거리를 곱해줌  */
-		FRotator rotate_quat = UKismetMathLibrary::FindLookAtRotation(knock_back_point_vector, GetActorLocation());
-		rotate_quat.Pitch = 0;
-		rotate_quat.Roll = 0;
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(rotate_quat.Quaternion(), target_damage_data.knock_back);
-		float distance = UKismetMathLibrary::Vector_Distance(knock_back_point_vector, GetActorLocation());
-		rotated_vector.X *= distance;
-		rotated_vector.Y *= distance;
-	}
-	else {
-		/* 이외의 타입에서는 directional 을 디폴트로 적용 ( 나머지는 아직 쓸 일이 없어서 미구현 ) */
-		rotated_vector = UKismetMathLibrary::Quat_RotateVector(damage_causer->GetActorRotation().Quaternion(), target_damage_data.knock_back);
-	}
-	/* 피 나이아가라 이펙트 스폰 */
-	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __hit_bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
-	if (blood_effect) {
-		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
-		blood_effect->SetUsingAbsoluteRotation(true);
-		FRotator blood_rot = rotated_vector.Rotation();
-		blood_rot.Pitch *= -1;
-		blood_rot.Yaw += 180;
-		blood_effect->SetWorldRotation(blood_rot);
-	}
-	if (durability_level >= target_damage_data.durability_level) {
-		// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
-		if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
-			GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
-			if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
-				hit_bone_physics_weight_map[__hit_bone_name] =0.8f;
-			}
-			else {
-				if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(__hit_bone_name)) == false) {
-					hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.8f));
-				}
-			}
-			GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 300, __hit_bone_name, true);
-		}
-		//끝
-		animation_Sound_Multicast(nullptr, sq_hit);
+	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
+	if (checkBlock(target_damage_data, damage_causer)) {
+		/* target_control 을 None 으로 변환해 에어본 되지 않도록 함 */
+		target_damage_data.target_control = ETargetControlType::None;
+		setupTargetControl(target_damage_data, rotated_vector/2);
+		/* target_control 에 따라 넉백 진행 */
+		blockProcess(target_damage_data, rotated_vector, damage_causer);
+	}else if (durability_level >= target_damage_data.durability_level) {
+		// 강인도가 데미지의 강인도 수치보다 높을시 히트 부위 덜렁거리는 피지컬 애니메이션 실행
+		/* 피 나이아가라 이펙트 스폰 */
+		spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
+		playPhysicalHitAnimation(__hit_bone_name, damage_causer);
 		return;
 	}
-	UAnimMontage* hit_anim = nullptr;
-	selectHitAnimation(rotated_vector, hit_anim);
-	animation_Sound_Multicast(hit_anim, sq_hit);
-
+	else {
+		// 그 외의 노말 히트인 경우 에어본, 넉백 등을 적용
+		/* 피 나이아가라 이펙트 스폰 */
+		spawnBloodEffect(__hit_location, rotated_vector, __hit_bone_name);
+		/* 히트 애니메이션 사운드 재생 */
+		UAnimMontage* hit_anim = nullptr;
+		selectHitAnimation(rotated_vector, hit_anim);
+		animation_Sound_Multicast(hit_anim, sq_hit);
+		/* target_control 에 따라 넉백 적용 */
+		setupTargetControl(target_damage_data, rotated_vector);
+	}
+}
+```
+#### 코드 : 실제 넉백&에어본 적용 함수
+``` c++
+/// <summary>
+/// 일반적인 히트시 damage_date 의 target_control 에 따라 넉백, 에어본을 적용
+/// </summary>
+/// <param name="target_damage_data"></param>
+/// <param name="rotated_vector"></param>
+void ABaseCharacter::setupTargetControl(FdamageData target_damage_data, FVector rotated_vector)
+{
 	rotate_interp_time = 0;
 	if (character_state == ECharacterState::Ragdoll) {
+		/* 래그돌 상태(다운 상태)에서 맞았을 때 airbone 으로 전환 */
 		ragdollGetUp();
 		setCharacterState(ECharacterState::Airbone);
 	}
@@ -676,7 +656,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 			applyKnock_Back(rotated_vector);
 		}
 		else {
-			LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2 , rotated_vector.Y * 2, rotated_vector.Z), true, true);
+			LaunchCharacter(UKismetMathLibrary::MakeVector(rotated_vector.X * 2, rotated_vector.Y * 2, rotated_vector.Z), true, true);
 		}
 	}
 	else if (target_damage_data.target_control == ETargetControlType::Ragdoll) {
@@ -701,6 +681,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	}
 }
 ```
+
 #### 코드 : 피격 방향에 따른 피격 애니메이션 반환 함수
 ``` c++
 /// <summary>
@@ -719,6 +700,71 @@ void ABaseCharacter::selectHitAnimation_Implementation(FVector velocity, UAnimMo
 		hit_anim = hit_l_anim;
 	else
 		hit_anim = hit_r_anim;
+}
+```
+#### 코드 : 공격을 방어했는지 여부를 반환
+``` c++
+/// <summary>
+/// 공격을 방어했는지 판단
+/// </summary>
+/// <param name="target_damage_data"></param>
+/// <param name="damage_causer"></param>
+/// <returns></returns>
+bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_causer)
+{
+	if (is_block) {
+		FVector loc1 = GetActorForwardVector();
+		loc1.Z = 0;
+		FVector loc2 = damage_causer->GetActorLocation() - GetActorLocation();
+		loc2.Z = 0;
+		float angle = UKismetMathLibrary::Dot_VectorVector(loc1.GetSafeNormal(), loc2.GetSafeNormal());
+		if (angle > 0.2f) {
+			/* 적과의 각의 코사인이 0.2 보다 크면 가드로 인정*/
+			return true;
+		}
+	}
+	return false;
+}
+```
+#### 코드 : 피 이펙트 스폰 함수
+``` c++
+void ABaseCharacter::spawnBloodEffect(FVector __location, FVector __rot_vector, FName __bone_name)
+{
+	UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+	UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAttached(gameinstance->blood_effect, GetMesh(), __bone_name, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::Type::SnapToTarget, true, true, ENCPoolMethod::AutoRelease, true);
+	if (blood_effect) {
+		/* 피 이펙트를 rotation을 absolute 로 바꾸고 회전이 적용된 넉백 벡터의 반대 방향으로 world rotation 적용, location은 표면 트레스한 위치로 옮김 */
+		blood_effect->SetUsingAbsoluteRotation(true);
+		blood_effect->SetWorldLocation(__location);
+		FRotator blood_rot = __rot_vector.Rotation();
+		blood_rot.Pitch *= -1;
+		blood_rot.Yaw += 180;
+		blood_effect->SetWorldRotation(blood_rot);
+	}
+}
+```
+#### 코드 : 무경직 히트시 피격 부위에 피지컬 애니메이션 실행 함수
+``` c++
+/// <summary>
+/// 슈퍼아머 상태에서 히트시 히트 부위 덜렁거리는 피지컬 애니메이션
+/// 히트본을 hit_bone_physics_weight_map 에 등록시켜 tick 함수에서 피직스 블렌딩 수행
+/// </summary>
+/// <param name="__hit_bone_name"></param>
+void ABaseCharacter::playPhysicalHitAnimation(FName __hit_bone_name, AActor* damage_causer)
+{
+	if (character_state == ECharacterState::Walk_and_Jump && UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+		GetMesh()->SetAllBodiesBelowSimulatePhysics(__hit_bone_name, true);
+		if (hit_bone_physics_weight_map.Contains(__hit_bone_name)) {
+			hit_bone_physics_weight_map[__hit_bone_name] = 0.8f;
+		}
+		else {
+			if (GetMesh()->IsSimulatingPhysics(GetMesh()->GetParentBone(__hit_bone_name)) == false) {
+				hit_bone_physics_weight_map.Add(TTuple<FName, float>(__hit_bone_name, 0.8f));
+			}
+		}
+		GetMesh()->AddImpulse(damage_causer->GetActorForwardVector() * 300, __hit_bone_name, true);
+	}
+	animation_Sound_Multicast(nullptr, sq_hit);
 }
 ```
 
