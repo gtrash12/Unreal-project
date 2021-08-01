@@ -46,6 +46,10 @@ public:
 		UNiagaraSystem* blood_effect;
 	UPROPERTY()
 		AActor* hit_decal_actor;
+	UPROPERTY()
+		UNiagaraSystem* ground_dust_effect;
+	UPROPERTY()
+		USoundBase* sq_ground_hit;
 
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "GameInstance-DataTableAccess")

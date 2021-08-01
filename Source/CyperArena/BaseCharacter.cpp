@@ -14,6 +14,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "../public/CameraShake_Hit.h"
+#include "Camera/CameraShake.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -597,7 +599,8 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
 	if (checkBlock(target_damage_data, damage_causer)) {
-		setupTargetControl(target_damage_data, rotated_vector/5);
+		target_damage_data.target_control = ETargetControlType::None;
+		setupTargetControl(target_damage_data, rotated_vector/2);
 		blockProcess(target_damage_data, rotated_vector, damage_causer);
 	}else if (durability_level >= target_damage_data.durability_level) {
 		// 강인도가 데미지의 강인도 수치보다 높을시 히트 부위 덜렁거리는 피지컬 애니메이션 실행
@@ -683,6 +686,8 @@ bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_c
 		loc1.Z = 0;
 		FVector loc2 = damage_causer->GetActorLocation() - GetActorLocation();
 		loc2.Z = 0;
+		UKismetSystemLibrary::PrintString(this, loc1.GetSafeNormal().ToString());
+		UKismetSystemLibrary::PrintString(this, loc2.GetSafeNormal().ToString());
 		float angle = UKismetMathLibrary::Dot_VectorVector(loc1.GetSafeNormal(), loc2.GetSafeNormal());
 		if (angle > 0.2f) {
 			/* 적과의 각의 코사인이 0.2 보다 크면 가드로 인정*/
@@ -1276,12 +1281,34 @@ bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
 	bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool) {
 		__hitnormal = trace_result.ImpactNormal;
+		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+			/* 카메라 쉐이크 */
+			if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
+				Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
+			}
+			/* 먼지 이펙트 & 사운드 */
+			UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+			FRotator effect_rotator = trace_result.ImpactNormal.ToOrientationRotator();
+			effect_rotator.Pitch -= 90;
+			UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, trace_result.ImpactPoint, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+			UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
+		}
 		return true;
 	}
 	/* 캐릭터의 운동 방향을 검사해 다음 프레임에 지면 or 벽면과의 충돌이 있는지 검사 */
 	bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetMesh()->GetSocketLocation(TEXT("pelvis")), GetActorLocation() + __velocity * (d_time * 2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool2) {
 		__hitnormal = trace_result.ImpactNormal;
+		/* 카메라 쉐이크 */
+		if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
+			Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
+		}
+		/* 먼지 이펙트 & 사운드 */
+		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+		FRotator effect_rotator = trace_result.ImpactNormal.ToOrientationRotator();
+		effect_rotator.Pitch -= 90;
+		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, trace_result.ImpactPoint, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+		UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
 		return true;
 	}
 	return false;

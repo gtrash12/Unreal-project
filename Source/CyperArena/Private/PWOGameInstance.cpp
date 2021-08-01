@@ -29,6 +29,14 @@ UPWOGameInstance::UPWOGameInstance() {
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> Blood(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
 	if (Blood.Succeeded())
 		blood_effect = Blood.Object;
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> GroundDust(TEXT("NiagaraSystem'/Game/CustomEffect/GroundDust.GroundDust'"));
+	if (GroundDust.Succeeded())
+		ground_dust_effect = GroundDust.Object;
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_GroundHit(TEXT("SoundCue'/Game/SFX/SFX/SQ_GroundHit.SQ_GroundHit'"));
+	if (SQ_GroundHit.Succeeded())
+		sq_ground_hit = SQ_GroundHit.Object;
 }
 
 
