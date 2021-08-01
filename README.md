@@ -130,8 +130,10 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 /// 충돌은 라인 트레이스로 캐릭터의 하단과 에어본 운동 방향을 예측 검사해서 다음 프레임에 충돌이 일어날 지 예측 검사
 /// </summary>
 /// <param name="__velocity"> 예측에 쓰일 벨로시티</param>
+/// <param name="__hitnormal"></param>
+/// <param name="__hit_location"></param>
 /// <returns></returns>
-bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
+bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal, FVector& __hit_location) {
 	FHitResult trace_result(ForceInit);
 	FVector location = GetActorLocation();
 	float capsule_half_height = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -142,12 +144,14 @@ bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
 	bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool) {
 		__hitnormal = trace_result.ImpactNormal;
+		__hit_location = trace_result.ImpactPoint;
 		return true;
 	}
 	/* 캐릭터의 운동 방향을 검사해 다음 프레임에 지면 or 벽면과의 충돌이 있는지 검사 */
 	bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetMesh()->GetSocketLocation(TEXT("pelvis")), GetActorLocation() + __velocity * (d_time * 2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool2) {
 		__hitnormal = trace_result.ImpactNormal;
+		__hit_location = trace_result.ImpactPoint;
 		return true;
 	}
 	return false;
@@ -2007,6 +2011,35 @@ UCameraShake_Hit::UCameraShake_Hit()
 
     RotOscillation.Pitch.Amplitude = FMath::RandRange(2, 4);
     RotOscillation.Pitch.Frequency = FMath::RandRange(10, 15);
+}
+```
+#### 코드 : 에어본 상태에서 지면과 충돌시 먼지이펙트와 사운드 이펙트, 카메라 쉐이크 이펙트를 실행하는 코드 ( tick 함수 코드 일부 )
+``` c++
+void ABaseCharacter::Tick(float DeltaTime){
+...
+ 	//에어본시 피지컬 애니메이션의 관절 각 운동량 조절
+	// 중력 트레이스와 예측 트레이스를 투 개를 이용해 매 틱 충돌판정
+	if (character_state == ECharacterState::Airbone) {
+		FVector hit_normal;
+		FVector hit_location;
+		if (airbone_HitChk(GetVelocity(), hit_normal, hit_location)) {
+			setCharacterState(ECharacterState::Ragdoll);
+			/* 충돌이 감지되었으면 이펙트 실행 */
+			if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+				/* 카메라 쉐이크 */
+				if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
+					Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
+				}
+				/* 먼지 이펙트 & 사운드 */
+				UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+				FRotator effect_rotator = hit_normal.ToOrientationRotator();
+				effect_rotator.Pitch -= 90;
+				UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, hit_location, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+				UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
+			}
+		}
+	}
+	...
 }
 ```
 
