@@ -328,6 +328,9 @@ public:
 	/* 액션 시 회전 방향 결정 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EActionRotateType action_rotate_type;
+	/* 액션 키를 release 했을 때 실행될 액션(차지, 홀드 기술일시). "None" 이면 없음 */
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
+		FName release_action = "None";
 };
 ```
 - 액션 데이터 구조체의 각 프로퍼티 상세
@@ -340,6 +343,8 @@ public:
     - Target : 액션 실행시 타게팅 중인 적을 향해 회전
     - Input : 액션 실행시 last input vector 로 회전
     - Static : 액션 실행시 회전하지 않음
+  - release_action : 키를 release 했을 때 실행될 액션
+    - 차지기술이나 홀드 기술일 시 release에 반응할 액션 
 - 액션은 BaseCharacter 의 상위 클래스인 BP_PlayerCharacter_cpp 블루프린트에서 구현되어 있음
 
 ### 데미지 시스템
@@ -843,6 +848,42 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 	}
 }
 ```
+
+### 방어 시스템
+![가드3](https://user-images.githubusercontent.com/12960463/127767069-876b15aa-17cc-41a8-a581-80c642ab4e84.gif)
+
+- 가드 중일시 대략 전방 140도 범위의 공격 방어
+- 가드시 에어본을 무시하고 넉백을 1/2 만 적용
+- 가드시 불똥 이펙트와 하면 흔들림, 사운드 이펙트 실행
+- 가드 중 걷기만 가능하며 기존 스프린트 상태와, 걷기 상태들과 별개로 항상 걷기 유지
+  - 가드 중에도 스프린트 키를 누르면 is_sprint 변수는 true로 변하지만 캐릭터는 걷고있음
+- 가드 해제시 is_sprint 에 따라 스프린트 전환
+
+#### 코드 : 공격을 방어했는지 여부를 반환
+``` c++
+/// <summary>
+/// 공격을 방어했는지 판단
+/// </summary>
+/// <param name="target_damage_data"></param>
+/// <param name="damage_causer"></param>
+/// <returns></returns>
+bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_causer)
+{
+	if (is_block) {
+		FVector loc1 = GetActorForwardVector();
+		loc1.Z = 0;
+		FVector loc2 = damage_causer->GetActorLocation() - GetActorLocation();
+		loc2.Z = 0;
+		float angle = UKismetMathLibrary::Dot_VectorVector(loc1.GetSafeNormal(), loc2.GetSafeNormal());
+		if (angle > 0.2f) {
+			/* 적과의 각의 코사인이 0.2 보다 크면 가드로 인정*/
+			return true;
+		}
+	}
+	return false;
+}
+```
+
 ## 아이템 데이터 구조와 작동 방식
 - 보급형 롱소드 데이터
 ![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
