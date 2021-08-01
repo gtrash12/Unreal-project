@@ -97,9 +97,23 @@ void ABaseCharacter::Tick(float DeltaTime)
 	if (character_state == ECharacterState::Airbone) {
 		//UMeshComponent* mesh = GetMesh();
 		//mesh->SetAllPhysicsAngularVelocityInRadians(GetVelocity());
-		FVector dummy;
-		if (airbone_HitChk(GetVelocity(), dummy)) {
+		FVector hit_normal;
+		FVector hit_location;
+		if (airbone_HitChk(GetVelocity(), hit_normal, hit_location)) {
 			setCharacterState(ECharacterState::Ragdoll);
+			/* 충돌이 감지되었으면 이펙트 실행 */
+			if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
+				/* 카메라 쉐이크 */
+				if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
+					Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
+				}
+				/* 먼지 이펙트 & 사운드 */
+				UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
+				FRotator effect_rotator = hit_normal.ToOrientationRotator();
+				effect_rotator.Pitch -= 90;
+				UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, hit_location, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
+				UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
+			}
 		}
 	}
 	//래그돌 위치 동기화 시스템
@@ -599,8 +613,10 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 	// 넉백 벡터를 넉백타입과 방향에 맞게 회전
 	FVector rotated_vector = rotateKnockBackVector(target_damage_data.knock_back_type, target_damage_data.knock_back, target_damage_data.knock_back_offset, damage_causer);
 	if (checkBlock(target_damage_data, damage_causer)) {
+		/* target_control 을 None 으로 변환해 에어본 되지 않도록 함 */
 		target_damage_data.target_control = ETargetControlType::None;
 		setupTargetControl(target_damage_data, rotated_vector/2);
+		/* target_control 에 따라 넉백 진행 */
 		blockProcess(target_damage_data, rotated_vector, damage_causer);
 	}else if (durability_level >= target_damage_data.durability_level) {
 		// 강인도가 데미지의 강인도 수치보다 높을시 히트 부위 덜렁거리는 피지컬 애니메이션 실행
@@ -617,6 +633,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 		UAnimMontage* hit_anim = nullptr;
 		selectHitAnimation(rotated_vector, hit_anim);
 		animation_Sound_Multicast(hit_anim, sq_hit);
+		/* target_control 에 따라 넉백 적용 */
 		setupTargetControl(target_damage_data, rotated_vector);
 	}
 }
@@ -755,7 +772,8 @@ void ABaseCharacter::setupTargetControl(FdamageData target_damage_data, FVector 
 		setCharacterState(ECharacterState::Airbone);
 	}
 	FVector hitnormal;
-	if (airbone_HitChk(rotated_vector, hitnormal)) {
+	FVector hit_location;
+	if (airbone_HitChk(rotated_vector, hitnormal, hit_location)) {
 		/* 에어본 직후 벽과 충돌시 에어본 넉백 방향을 히트 표면의 노말방향으로 전환 */
 		float rotated_std = rotated_vector.Size();
 		rotated_vector = hitnormal * rotated_std;
@@ -1270,7 +1288,7 @@ void ABaseCharacter::CtoS_setRotation_Implementation(FRotator __target_rotation)
 /// </summary>
 /// <param name="__velocity"> 예측에 쓰일 벨로시티</param>
 /// <returns></returns>
-bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
+bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal, FVector& __hit_location) {
 	FHitResult trace_result(ForceInit);
 	FVector location = GetActorLocation();
 	float capsule_half_height = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -1281,34 +1299,14 @@ bool ABaseCharacter::airbone_HitChk(FVector __velocity, FVector& __hitnormal) {
 	bool tracebool = UKismetSystemLibrary::LineTraceSingle(GetWorld(), trace_start, trace_end, ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool) {
 		__hitnormal = trace_result.ImpactNormal;
-		if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
-			/* 카메라 쉐이크 */
-			if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
-				Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
-			}
-			/* 먼지 이펙트 & 사운드 */
-			UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-			FRotator effect_rotator = trace_result.ImpactNormal.ToOrientationRotator();
-			effect_rotator.Pitch -= 90;
-			UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, trace_result.ImpactPoint, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-			UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
-		}
+		__hit_location = trace_result.ImpactPoint;
 		return true;
 	}
 	/* 캐릭터의 운동 방향을 검사해 다음 프레임에 지면 or 벽면과의 충돌이 있는지 검사 */
 	bool tracebool2 = UKismetSystemLibrary::LineTraceSingle(GetWorld(), GetMesh()->GetSocketLocation(TEXT("pelvis")), GetActorLocation() + __velocity * (d_time * 2), ETraceTypeQuery::TraceTypeQuery2, false, tmp, EDrawDebugTrace::Type::None, trace_result, true);
 	if (tracebool2) {
 		__hitnormal = trace_result.ImpactNormal;
-		/* 카메라 쉐이크 */
-		if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
-			Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
-		}
-		/* 먼지 이펙트 & 사운드 */
-		UPWOGameInstance* gameinstance = Cast<UPWOGameInstance>(GetGameInstance());
-		FRotator effect_rotator = trace_result.ImpactNormal.ToOrientationRotator();
-		effect_rotator.Pitch -= 90;
-		UNiagaraComponent* blood_effect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), gameinstance->ground_dust_effect, trace_result.ImpactPoint, effect_rotator, FVector::OneVector, true, true, ENCPoolMethod::AutoRelease, true);
-		UGameplayStatics::SpawnSoundAtLocation(this, gameinstance->sq_ground_hit, GetActorLocation());
+		__hit_location = trace_result.ImpactPoint;
 		return true;
 	}
 	return false;

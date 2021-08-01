@@ -60,6 +60,7 @@ public:
 	/* 액션 시 회전 방향 결정 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		EActionRotateType action_rotate_type;
+	/* 액션 키를 release 했을 때 실행될 액션(차지, 홀드 기술일시). "None" 이면 없음 */
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 		FName release_action = "None";
 };
