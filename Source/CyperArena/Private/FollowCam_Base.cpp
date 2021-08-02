@@ -14,11 +14,11 @@ AFollowCam_Base::AFollowCam_Base()
     spring_arm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
     spring_arm->SetupAttachment(RootComponent);
     spring_arm->SetRelativeLocationAndRotation(FVector(0.0f, 20.0f, 0.0f), FRotator(0.0f, 0.0f, 0.0f));
-    spring_arm->TargetArmLength = 250;
+    spring_arm->TargetArmLength = 350;
     spring_arm->SocketOffset = FVector(0, 20, -30);
     spring_arm->TargetOffset = FVector(0, 0, 80);
     spring_arm->ProbeSize = 20;
-    spring_arm->bEnableCameraLag = true;
+    //spring_arm->bEnableCameraLag = true;
     spring_arm->bEnableCameraRotationLag = true;
     spring_arm->CameraLagMaxDistance = 100;
     camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
