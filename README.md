@@ -2058,13 +2058,6 @@ void ABaseCharacter::Tick(float DeltaTime){
 - 180도 와 180도 에서의 블렌딩을 자연스럽게 하기 위해 백워드 디렉션을 함께 구해서 사용
 - 90 ~ -180, 90 ~ 180도 구간에서는 백워드 디렉션을 구해 -90 ~ 90도로 변환한 뒤 lean 계산
 
-### 이동 방향 기반 캐릭터 rotation 회전 시스템
-![스프린트 모션](https://user-images.githubusercontent.com/12960463/127928662-dfbde943-3adf-4a7c-a3b1-9318dd3c6796.gif)( 언리얼의 character movement 의 orient rotation to movement 기능을 사용할 경우의 애니메이션 )
-- 캐릭터가 항상 이동방향으로 향해있기 때문에 lean 이 제대로 적용되지 않음
-
-![스프린트 모션2](https://user-images.githubusercontent.com/12960463/127929096-5fb82acd-9b81-433b-adee-3431583152ca.gif) ( 이동 방향으로 캐릭터를 보간하며 회전한 경우의 애니메이션  )
-- 상대적인 이동 방향을 구할 수 있어 올바른 lean 각도가 계산되기 때문에 훨씬 자연스러운 모션 생성
-
 ![디렉셔널 로코모션 블렌딩2](https://user-images.githubusercontent.com/12960463/117235046-0b534780-ae61-11eb-93de-7e2f9104c2bb.gif)
 
 걷기도 자연스럽게
@@ -2073,6 +2066,17 @@ void ABaseCharacter::Tick(float DeltaTime){
 ![디렉셔널 로코모션 블렌딩3(린)](https://user-images.githubusercontent.com/12960463/117235254-59684b00-ae61-11eb-85f1-f7707509fbd7.gif)
 
 착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
+
+### 이동 방향 기반 캐릭터 rotation 회전 시스템
+![스프린트 모션](https://user-images.githubusercontent.com/12960463/127928662-dfbde943-3adf-4a7c-a3b1-9318dd3c6796.gif)
+
+( 언리얼의 character movement 의 orient rotation to movement 기능을 사용할 경우의 애니메이션 )
+- 캐릭터가 항상 이동방향으로 향해있기 때문에 lean 이 제대로 적용되지 않음
+
+![스프린트 모션2](https://user-images.githubusercontent.com/12960463/127929096-5fb82acd-9b81-433b-adee-3431583152ca.gif)
+
+( 이동 방향으로 캐릭터를 보간하며 회전한 경우의 애니메이션  )
+- 상대적인 이동 방향을 구할 수 있어 올바른 lean 각도가 계산되기 때문에 훨씬 자연스러운 모션 생성
 
 ## 카메라 위치 조정
 
