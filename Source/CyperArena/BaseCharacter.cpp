@@ -103,7 +103,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 			/* 충돌이 감지되었으면 이펙트 실행 */
 			if (UKismetSystemLibrary::IsDedicatedServer(this) == false) {
 				/* 카메라 쉐이크 */
-				if (GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
+				if (GetController() && GetController()->IsValidLowLevel() && GetController()->IsA<APlayerController>()) {
 					Cast<APlayerController>(GetController())->ClientPlayCameraShake(UCameraShake_Hit::StaticClass(), GetVelocity().Size() / 1000);
 				}
 				/* 먼지 이펙트 & 사운드 */
@@ -1046,7 +1046,7 @@ void ABaseCharacter::airboneStart_Implementation(FVector __velocity) {
 void ABaseCharacter::ragdollGetUp_Implementation() {
 	// 무브먼트 리플리케이션 재 실행 후 현재 래그돌 포즈 스냅샷으로 저장
 	SetReplicateMovement(true);
-	if (main_anim_instance->IsValidLowLevel()) {
+	if (main_anim_instance && main_anim_instance->IsValidLowLevel()) {
 		main_anim_instance->SavePoseSnapshot(TEXT("RagdollPose"));
 	}
 	// 무브먼트 모드를 walking 으로 변경 후 엉덩이 방향에 따라 일어서는 애니메이션 몽타주 재생
@@ -1065,7 +1065,7 @@ void ABaseCharacter::ragdollGetUp_Implementation() {
 	//mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	mesh->SetSimulatePhysics(false);
 	is_on_action = false;
-	if(ragdoll_physics_handle->IsValidLowLevel())
+	if(ragdoll_physics_handle && ragdoll_physics_handle->IsValidLowLevel())
 		ragdoll_physics_handle->ReleaseComponent();
 }
 

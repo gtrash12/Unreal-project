@@ -45,7 +45,7 @@ void AController_Player::Tick(float DeltaTime)
 	lock_on_cooltime -= DeltaTime;
 
 	/* 라인트레이스로 인터랙션 가능 물체 탐색 */
-	if (IsLocalPlayerController() && follow_cam->IsValidLowLevel()) {
+	if (IsLocalPlayerController() && follow_cam && follow_cam->IsValidLowLevel()) {
 		FHitResult hit_result;
 		FVector trace_start = GetPawn()->GetActorLocation();
 		FVector trace_end = trace_start + follow_cam->camera->GetForwardVector()*(100);
@@ -93,7 +93,7 @@ void AController_Player::SetupInputComponent()
 /// </summary>
 void AController_Player::lockOnEvent()
 {
-	if (follow_cam->IsValidLowLevel() == false)
+	if (follow_cam == nullptr || follow_cam->IsValidLowLevel() == false)
 		return;
 	if (follow_cam->is_lock_on) {
 		releaseLock_ON();
@@ -119,7 +119,7 @@ void AController_Player::lockOnEvent()
 /// <param name="__axis_value"></param>
 void AController_Player::changeLockOnAxisEvent(float __axis_value)
 {
-	if (__axis_value == 0 || lock_on_cooltime > 0 || follow_cam->IsValidLowLevel() == false || is_lock_on == false)
+	if (__axis_value == 0 || lock_on_cooltime > 0 || (follow_cam && follow_cam->IsValidLowLevel() == false) || is_lock_on == false)
 		return;
 	AActor* target = changeLockOnTarget(__axis_value);
 	if (target != nullptr && target->IsValidLowLevel()) {
@@ -140,7 +140,7 @@ void AController_Player::changeLockOnAxisEvent(float __axis_value)
 /// </summary>
 void AController_Player::releaseLock_ON_Implementation()
 {
-	if (follow_cam->IsValidLowLevel() == false)
+	if (follow_cam && follow_cam->IsValidLowLevel() == false)
 		return;
 	follow_cam->is_lock_on = false;
 	is_lock_on = false;
@@ -279,7 +279,7 @@ void AController_Player::Server_ApplyDamage_Implementation(AActor* __damaged_act
 void AController_Player::isLock_On_Target_Implementation(AActor* actor, bool& result)
 {
 	result = false;
-	if (follow_cam->IsValidLowLevel())
+	if (follow_cam && follow_cam->IsValidLowLevel())
 		if (actor == follow_cam->look_target)
 			result = true;
 }
@@ -291,7 +291,7 @@ void AController_Player::isLock_On_Target_Implementation(AActor* actor, bool& re
 /// <returns></returns>
 AActor* AController_Player::getLockOnTargetActor_Implementation()
 {
-	if (follow_cam->IsValidLowLevel())
+	if (follow_cam && follow_cam->IsValidLowLevel())
 		return follow_cam->look_target;
 	else
 		return nullptr;
@@ -722,7 +722,7 @@ void AController_Player::equipItem_Implementation(int32 __from, EEquipmentType _
 	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
 	if (HasAuthority() == false) {
 		Server_equipItem(__from, __to);
-		if(gameinstance->detail_widget_reference->IsValidLowLevel())
+		if(gameinstance && gameinstance->detail_widget_reference->IsValidLowLevel())
 			gameinstance->detail_widget_reference->RemoveFromParent();
 	}
 }
@@ -776,7 +776,7 @@ void AController_Player::unequipItem_Implementation(EEquipmentType __from, int32
 	/* 현재 컨트롤러가 클라이언트에 있으면 서버에서도 동일한 작업을 수행하기 위해 서버함수 실행, 디테일 위젯 열려있으면 삭제 */
 	if (HasAuthority() == false) {
 		Server_unequipItem(__from, __to);
-		if (gameinstance->detail_widget_reference->IsValidLowLevel())
+		if (gameinstance && gameinstance->detail_widget_reference->IsValidLowLevel())
 			gameinstance->detail_widget_reference->RemoveFromParent();
 	}
 }
@@ -859,7 +859,7 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 		if (gameinstance->inventory_slot_reference.Contains(__index))
 			gameinstance->inventory_slot_reference[__index]->initSlot();
 		/* 아이템이 삭제되었을 때 디테일 위젯 열려있으면 삭제 */
-		if (after_decreased > 0 && gameinstance->detail_widget_reference->IsValidLowLevel())
+		if (after_decreased > 0 && gameinstance && gameinstance->detail_widget_reference->IsValidLowLevel())
 			gameinstance->detail_widget_reference->RemoveFromParent();
 	}
 }

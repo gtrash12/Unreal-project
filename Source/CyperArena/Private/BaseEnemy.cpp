@@ -76,7 +76,7 @@ void ABaseEnemy::setLockOnMarker_Implementation(bool __is_lock_on)
 
 void ABaseEnemy::setStateBarVisibility_Implementation(bool __visibility)
 {
-	if (state_bar->IsValidLowLevel()) {
+	if (state_bar && state_bar->IsValidLowLevel()) {
 		state_bar->SetVisibility(__visibility);
 	}
 }
@@ -102,12 +102,12 @@ void ABaseEnemy::applyDamage_Multicast_Exec_Implementation(FName __target_damage
 {
 	Super::applyDamage_Multicast_Exec_Implementation(__target_damage_id, damage_causer, __hit_bone_name, __hit_location);
 	target_actor = damage_causer;
-	if (GetController()->IsValidLowLevel()) {
+	if (GetController() && GetController()->IsValidLowLevel()) {
 		if (GetController()->GetClass()->ImplementsInterface(UInterface_EnemyController::StaticClass())) {
 			IInterface_EnemyController::Execute_changeTarget(GetController(), damage_causer);
 		}
 	}
-	if (state_bar->IsValidLowLevel()) {
+	if (state_bar && state_bar->IsValidLowLevel()) {
 		if (hp > 0) {
 			if (state_bar->IsVisible() == false)
 				setStateBarVisibility(true);
@@ -165,7 +165,7 @@ void ABaseEnemy::death_Implementation() {
 		if(__is_target)
 			IInterface_PlayerController::Execute_releaseLock_ON(playercontroller);
 	}
-	if (state_bar->IsValidLowLevel()) {
+	if (state_bar && state_bar->IsValidLowLevel()) {
 		state_bar->ConditionalBeginDestroy();
 	}
 
@@ -189,7 +189,7 @@ UBehaviorTree* ABaseEnemy::getBehaviorTree_Implementation()
 
 void ABaseEnemy::setLookRotation_Implementation()
 {
-	if (target_actor != nullptr && target_actor->IsValidLowLevel()) {
+	if (target_actor && target_actor->IsValidLowLevel()) {
 		look_location = target_actor->GetActorLocation();
 	}
 	FRotator target_look_rotation = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), look_location), GetActorRotation());
