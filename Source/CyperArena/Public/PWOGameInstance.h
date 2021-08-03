@@ -24,17 +24,17 @@ class CYPERARENA_API UPWOGameInstance : public UGameInstance
 public:
 	UPWOGameInstance();
 
-	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DataTable")
 		UDataTable* damage_data_table;
-	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DataTable")
 		UDataTable* action_data_table;
-	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DataTable")
 		UDataTable* item_data_table;
-	UPROPERTY(BlueprintReadOnly, Category = "DataTable")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DataTable")
 		UDataTable* item_mesh_data_table;
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		UTexture2D* empty_slot_image;
-	UPROPERTY(BlueprintReadWrite, Category = "Base-Look")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Base-Look")
 		UWidget_Detail* detail_widget_reference;
 	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
 		TMap<FKey, UWidget_ItemSlot*> quickslot_references;
@@ -42,13 +42,11 @@ public:
 		TMap<int32, UWidget_ItemSlot*> inventory_slot_reference;
 	UPROPERTY(BlueprintReadWrite, BlueprintReadWrite)
 		TMap<EEquipmentType, UWidget_ItemSlot*> equipment_slot_reference;
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		UNiagaraSystem* blood_effect;
-	UPROPERTY()
-		AActor* hit_decal_actor;
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		UNiagaraSystem* ground_dust_effect;
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		USoundBase* sq_ground_hit;
 
 

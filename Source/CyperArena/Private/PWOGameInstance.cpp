@@ -6,37 +6,37 @@
 #include "NiagaraSystem.h"
 
 UPWOGameInstance::UPWOGameInstance() {
-	static ConstructorHelpers::FObjectFinder<UDataTable> damage_data_table_cst(TEXT("DataTable'/Game/DataTable/DamageDataTable.DamageDataTable'"));
-	if (damage_data_table_cst.Succeeded())
-		damage_data_table = damage_data_table_cst.Object;
+	//static ConstructorHelpers::FObjectFinder<UDataTable> damage_data_table_cst(TEXT("DataTable'/Game/DataTable/DamageDataTable.DamageDataTable'"));
+	//if (damage_data_table_cst.Succeeded())
+	//	damage_data_table = damage_data_table_cst.Object;
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> action_data_table_cst(TEXT("DataTable'/Game/DataTable/ActionDataTable.ActionDataTable'"));
-	if (action_data_table_cst.Succeeded())
-		action_data_table = action_data_table_cst.Object;
+	//static ConstructorHelpers::FObjectFinder<UDataTable> action_data_table_cst(TEXT("DataTable'/Game/DataTable/ActionDataTable.ActionDataTable'"));
+	//if (action_data_table_cst.Succeeded())
+	//	action_data_table = action_data_table_cst.Object;
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> item_data_table_cst(TEXT("DataTable'/Game/DataTable/ItemDataTable.ItemDataTable'"));
-	if (item_data_table_cst.Succeeded())
-		item_data_table = item_data_table_cst.Object;
+	//static ConstructorHelpers::FObjectFinder<UDataTable> item_data_table_cst(TEXT("DataTable'/Game/DataTable/ItemDataTable.ItemDataTable'"));
+	//if (item_data_table_cst.Succeeded())
+	//	item_data_table = item_data_table_cst.Object;
 
-	static ConstructorHelpers::FObjectFinder<UTexture2D> Icon_EmptySlot(TEXT("Texture2D'/Game/Image/Icon/Icon_EmptySlot.Icon_EmptySlot'"));
-		if (Icon_EmptySlot.Succeeded())
-			empty_slot_image = Icon_EmptySlot.Object;
+	//static ConstructorHelpers::FObjectFinder<UTexture2D> Icon_EmptySlot(TEXT("Texture2D'/Game/Image/Icon/Icon_EmptySlot.Icon_EmptySlot'"));
+	//	if (Icon_EmptySlot.Succeeded())
+	//		empty_slot_image = Icon_EmptySlot.Object;
 
-	static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDatasTable.ItemMeshDatasTable'"));
-	if (ItemMeshDataTable.Succeeded())
-		item_mesh_data_table = ItemMeshDataTable.Object;
+	//static ConstructorHelpers::FObjectFinder<UDataTable> ItemMeshDataTable(TEXT("DataTable'/Game/DataTable/ItemMeshDatasTable.ItemMeshDatasTable'"));
+	//if (ItemMeshDataTable.Succeeded())
+	//	item_mesh_data_table = ItemMeshDataTable.Object;
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> Blood(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
-	if (Blood.Succeeded())
-		blood_effect = Blood.Object;
+	//static ConstructorHelpers::FObjectFinder<UNiagaraSystem> Blood(TEXT("NiagaraSystem'/Game/CustomEffect/Blood.Blood'"));
+	//if (Blood.Succeeded())
+	//	blood_effect = Blood.Object;
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> GroundDust(TEXT("NiagaraSystem'/Game/CustomEffect/GroundDust.GroundDust'"));
-	if (GroundDust.Succeeded())
-		ground_dust_effect = GroundDust.Object;
-	
-	static ConstructorHelpers::FObjectFinder<USoundBase> SQ_GroundHit(TEXT("SoundCue'/Game/SFX/SFX/SQ_GroundHit.SQ_GroundHit'"));
-	if (SQ_GroundHit.Succeeded())
-		sq_ground_hit = SQ_GroundHit.Object;
+	//static ConstructorHelpers::FObjectFinder<UNiagaraSystem> GroundDust(TEXT("NiagaraSystem'/Game/CustomEffect/GroundDust.GroundDust'"));
+	//if (GroundDust.Succeeded())
+	//	ground_dust_effect = GroundDust.Object;
+	//
+	//static ConstructorHelpers::FObjectFinder<USoundBase> SQ_GroundHit(TEXT("SoundCue'/Game/SFX/SFX/SQ_GroundHit.SQ_GroundHit'"));
+	//if (SQ_GroundHit.Succeeded())
+	//	sq_ground_hit = SQ_GroundHit.Object;
 }
 
 
