@@ -7,7 +7,7 @@
 - [전투시스템](#전투-시스템)
   - [액션 시스템](#액션-시스템)
   - [데미지 시스템](#데미지-시스템)
-  - [넉백 & 피격 애니메이션 & 피지컬 애니메이션](#넉백-\&-피격-애니메이션-\&-피지컬-애니메이션)
+  - [넉백 애니메이션, 피격 애니메이션, 피지컬 애니메이션](#넉백-애니메이션,-피격-애니메이션,-피지컬-애니메이션)
   - [방어 시스템](#방어-시스템)
 - [아이템 데이터 구조와 작동 방식](#아이템-데이터-구조와-작동-방식)
   - [ItemEffect (아이템 효과) 시스템](#ItemEffect-\(아이템 효과\))
@@ -597,7 +597,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
   - damage_id 를 전달하는 경우 DamageDataTable을 다시 검색해야함
   - 하지만 DamageData 는 크기가 damage_id 보다 훨씬 크므로 네트워크에 부하가 더 큼
 
-### 넉백 & 피격 애니메이션 & 피지컬 애니메이션
+### 넉백 애니메이션, 피격 애니메이션, 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
@@ -944,7 +944,7 @@ public:
     - Common, Rare, Precious, Unique, Legendary
   - item_info_text : 아이템의 기본 설명
   - item_effect_list : 아이템의 효과들
-### ItemEffect (아이템 효과)
+### ItemEffect \(아이템 효과\)
 - 아이템의 실제 정체성과 효과를 정의
 - ItemEffect 위치
 ![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
