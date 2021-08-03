@@ -5,12 +5,13 @@
 - [영상](#영상)
 - 래그돌 시스템
   - [네트워크 래그돌 위치 동기화 시스템](#네트워크-래그돌-위치-동기화-시스템)
-- [전투시스템](#전투-시스템)
+- [전투 시스템](#전투-시스템)
   - [액션 시스템](#액션-시스템)
   - [데미지 시스템](#데미지-시스템)
   - [넉백 애니메이션 and 피격 애니메이션 and 피지컬 애니메이션](#넉백-애니메이션-and-피격-애니메이션-and-피지컬-애니메이션)
   - [방어 시스템](#방어-시스템)
 - [아이템 데이터 구조와 작동 방식](#아이템-데이터-구조와-작동-방식)
+  - [아이템 효과 시스템](#아이템-효과-시스템)
 - [인벤토리 시스템](#인벤토리-시스템)
 - [락온 타게팅 시스템](#락온타게팅-시스템)
 - [머테리얼 and 이펙트](#머테리얼-and-이펙트)
@@ -31,7 +32,7 @@
 [![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
 
 # 핵심 기능
-## 네트워크 래그돌 위치 동기화 시스템
+# 네트워크 래그돌 위치 동기화 시스템
 ![마영전 래그돌 위치 동기화 안됨](https://user-images.githubusercontent.com/12960463/117229348-d2fa3c00-ae55-11eb-8c94-daab355dfa7a.gif)
 
 마비노기 영웅전에서는 래그돌 위치 동기화가 정확히 이루어지지 않아 위와같이 래그돌 상태에서 부활을 통해 캐릭터가 살아날 시 서버의 위치로 클라이언트의 위치가 조정되는 움직임을 보입니다.
@@ -264,8 +265,8 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 }
 ```
 
-## 전투 시스템
-### 액션 시스템
+# 전투 시스템
+## 액션 시스템
 - 액션 데이터
 
 ![image](https://user-images.githubusercontent.com/12960463/124944008-f2753700-e047-11eb-8f99-97194d782d9d.png)
@@ -309,7 +310,7 @@ public:
     - 차지기술이나 홀드 기술일 시 release에 반응할 액션 
 - 액션은 BaseCharacter 의 상위 클래스인 BP_PlayerCharacter_cpp 블루프린트에서 구현되어 있음
 
-### 데미지 시스템
+## 데미지 시스템
 - 데미지 데이터
 
 ![image](https://user-images.githubusercontent.com/12960463/124945527-33218000-e049-11eb-83a8-168392876127.png)
@@ -400,7 +401,7 @@ FVector ABaseCharacter::rotateKnockBackVector(EKnockBackType __knock_back_type, 
 }
 ```
 
-#### 충돌 판정
+### 충돌 판정
 #### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
 ```c++
 // Fill out your copyright notice in the Description page of Project Settings.
@@ -540,7 +541,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
   - damage_id 를 전달하는 경우 DamageDataTable을 다시 검색해야함
   - 하지만 DamageData 는 크기가 damage_id 보다 훨씬 크므로 네트워크에 부하가 더 큼
 
-### 넉백 애니메이션 and 피격 애니메이션 and 피지컬 애니메이션
+## 넉백 애니메이션 and 피격 애니메이션 and 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
@@ -811,7 +812,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 }
 ```
 
-### 방어 시스템
+## 방어 시스템
 ![가드3](https://user-images.githubusercontent.com/12960463/127767069-876b15aa-17cc-41a8-a581-80c642ab4e84.gif)
 
 - 가드 중일시 대략 전방 140도 범위의 공격 방어
@@ -846,7 +847,7 @@ bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_c
 }
 ```
 
-## 아이템 데이터 구조와 작동 방식
+# 아이템 데이터 구조와 작동 방식
 - 보급형 롱소드 데이터
 ![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
 - 보급형 체력 포션 데이터
@@ -887,7 +888,7 @@ public:
     - Common, Rare, Precious, Unique, Legendary
   - item_info_text : 아이템의 기본 설명
   - item_effect_list : 아이템의 효과들
-### ItemEffect (아이템 효과)
+## 아이템 효과 시스템
 - 아이템의 실제 정체성과 효과를 정의
 - ItemEffect 위치
 ![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
@@ -1151,7 +1152,7 @@ void UWidget_Detail::onViewPortCheck()
 		SetPositionInViewport(target_position);
 }
 ```
-## 인벤토리 시스템
+# 인벤토리 시스템
 - 아이템 등록
 
 ![아이템 등록50%](https://user-images.githubusercontent.com/12960463/124921237-25f99680-e033-11eb-9bea-b26386210702.gif)
@@ -1799,7 +1800,7 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 }
 ```
 
-## 락온타게팅 시스템
+# 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
 
@@ -1887,8 +1888,8 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	return result;
 }
 ```
-## 머테리얼 and 이펙트
-### 피 이펙트
+# 머테리얼 and 이펙트
+## 피 이펙트
 - 피 이펙트
 
 ![피 이펙트5](https://user-images.githubusercontent.com/12960463/125896956-c1326a5e-e1e3-4b71-a365-386f516fa637.gif)
@@ -1926,7 +1927,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 ...	
 }
 ```
-### 히트 궤적 이펙트
+## 히트 궤적 이펙트
 ![히트 부위 데칼 이펙트5](https://user-images.githubusercontent.com/12960463/126039652-78323ee8-2668-4d8b-b8ad-08b254bdae6c.gif)
 ![히트 부위 데칼 이펙트6](https://user-images.githubusercontent.com/12960463/126039553-13eb8083-539c-45ee-9fc0-b78421bf91c8.gif)
 ![히트 부위 데칼 이펙트7](https://user-images.githubusercontent.com/12960463/126039555-adfaf58d-3b76-4c93-b365-567b838a076f.gif)
@@ -1935,7 +1936,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 #### 데칼 머테리얼 노드
 ![image](https://user-images.githubusercontent.com/12960463/126039604-444c0b6b-cace-47e7-85d3-b30ad89cbcbe.png)
 
-### 화면 흔들림
+## 화면 흔들림
 ![흔들림](https://user-images.githubusercontent.com/12960463/127766828-d40ed212-e275-42df-9210-380d8f3b1ac1.gif)
 ![흔들림3](https://user-images.githubusercontent.com/12960463/127766871-815480dd-e57a-414c-8c2b-e9e082863633.gif)
 
@@ -2003,13 +2004,13 @@ void ABaseCharacter::Tick(float DeltaTime){
 
 
 
-### 에너지 필드
+## 에너지 필드
 ![에너지필드 머테리얼](https://user-images.githubusercontent.com/12960463/125792608-6694d8de-08fd-46ac-bb9a-940621f531e0.gif)
 - 머테리얼 노드
 
 ![image](https://user-images.githubusercontent.com/12960463/125792690-92a1cd7f-1f99-4d54-be14-33860c850f84.png)
 
-## 애니메이션 시스템
+# 애니메이션 시스템
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
 - 기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
@@ -2025,7 +2026,7 @@ void ABaseCharacter::Tick(float DeltaTime){
 
 착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
 
-### 이동 방향 기반 캐릭터 rotation 회전 시스템
+## 이동 방향 기반 캐릭터 rotation 회전 시스템
 ![스프린트 모션](https://user-images.githubusercontent.com/12960463/127928662-dfbde943-3adf-4a7c-a3b1-9318dd3c6796.gif)
 
 ( 언리얼의 character movement 의 orient rotation to movement 기능을 사용할 경우의 애니메이션 )
@@ -2036,7 +2037,7 @@ void ABaseCharacter::Tick(float DeltaTime){
 ( 이동 방향으로 캐릭터를 보간하며 회전한 경우의 애니메이션  )
 - 상대적인 이동 방향을 구할 수 있어 올바른 lean 각도가 계산되기 때문에 훨씬 자연스러운 모션 생성
 
-## 카메라 위치 조정
+# 카메라 위치 조정
 
 ![카메라 위치 조정](https://user-images.githubusercontent.com/12960463/117242789-e8c92a80-ae70-11eb-9c74-ab0ccb0a2107.gif)
 
@@ -2078,7 +2079,7 @@ void AFollowCam_Base::Tick(float DeltaTime)
 }
 ```
 
-## 데모 레벨
+# 데모 레벨
 
 일반 몬스터와 보스 몬스터가 있는 매우 짧은 데모 레벨 구현 완료
 
