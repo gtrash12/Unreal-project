@@ -1,6 +1,9 @@
 # Unreal-project
 언리얼엔진4로 개발한 3D 액션 MMORPG
 
+# 목차
+[네트워크 래그돌 동기화 시스템](#네트워크-래그돌-동기화-시스템)
+
 # 영상
 - 아래 이미지 클릭시 유튜브 영상 링크
 
@@ -51,12 +54,6 @@
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_ItemSlot.cpp
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_Detail.h
   - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_Detail.cpp
-
-- 그외 접두사에 따라
-  - AN : 애님 노티파이
-  - NS : 애님 노티파이 스테이트
-  - EQS : 환경 쿼리 시스템
-  - Task : 비헤이비어 트리의 태스크
 
 # 조작법
 - 이동 : WASD
@@ -2131,3 +2128,4 @@ void AFollowCam_Base::Tick(float DeltaTime)
 ![보스 공격 패턴2](https://user-images.githubusercontent.com/12960463/118811397-ec849480-b8e7-11eb-90a1-5224a5e2004c.gif)
 ![보스 공격 패턴1-2(sm)](https://user-images.githubusercontent.com/12960463/118811404-ee4e5800-b8e7-11eb-9220-d93b082b2527.gif)
 
+#end
