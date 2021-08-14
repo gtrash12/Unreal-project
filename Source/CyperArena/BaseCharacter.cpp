@@ -943,13 +943,15 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	ragdoll_server_location = sock_location;
 	stickToTheGround(sock_location);
 	if (!ragdoll_is_initial && FVector::DotProduct( GetMesh()->GetPhysicsLinearVelocity("pelvis").GetSafeNormal(), (ragdoll_server_location - prev_ragdoll_server_location).GetSafeNormal()) < 0.0f) {
-		// 래그돌의 velocity 의 방향과 래그돌 이전 동기화 위치에서 래그돌 현재 위치로의 방향 벡터 사이의 각이 90도 이상이면 동기화 주기를 무시하고 강제로 동기화 RPC 실행
-		Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
-		prev_ragdoll_server_location = ragdoll_server_location;
-		replication_delay_count += d_time;
-		replication_delay_count -= last_replication_delay;
-		last_replication_delay = 0.2f;
-		return;
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
+			// 래그돌의 velocity 의 방향과 래그돌 이전 동기화 위치에서 래그돌 현재 위치로의 방향 벡터 사이의 각이 90도 이상이면 동기화 주기를 무시하고 강제로 동기화 RPC 실행
+			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+			prev_ragdoll_server_location = ragdoll_server_location;
+			replication_delay_count += d_time;
+			replication_delay_count -= last_replication_delay;
+			last_replication_delay = 0.2f;
+			return;
+		}
 	}
 	if (replication_delay_count >= last_replication_delay) {
 		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
