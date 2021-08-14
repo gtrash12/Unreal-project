@@ -61,7 +61,7 @@ spacebar를 누르면 래그돌 상태에서 일어서며 래그돌이 해제되
 서버는 해당 위치로 액터를 옮기고 위치 변수를 리플리케이트
 - step 4 :
 타 클라이언트에서는 피직스 핸들로 리모트 플레이어의 액터를 서버에서 리플리케이트된 타겟 래그돌 위치로 옮김
-- step 5 :
+- step 5 (v1):
 타겟 위치가 리플리케이트 되는 주기가 클라이언트의 틱 주기보다 느리기 때문에 다음 리플리케이트 까지 액터의 위치를 보간이동
 
 
@@ -102,6 +102,9 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 - 래그돌 전환 순간에 딜레이가 없음
   - 서버의 위치 갱신 전 까지 클라이언트에서 자체적으로 래그돌 시뮬레이션 실행
   - 서버의 위치 갱신 타이밍에 래그돌의 위치가 서버 위치에서 20 이상 차이나면 그 때 physics handle로 래그돌을 서버 위치로 옮김
+- 위의 6 step의 래그돌 동기화 과정에서 마지막 과정에 변화
+- step 6 (v2):
+래그돌을 서버 위치로 옮기되 클라이언트의 래그돌 위치와 서버의 위치가 20 이상 차이가 나면 physics handle 로 래그돌을 잡아서 서버 위치로 옮김 ( 20보다 작다면 physics handle 을 release 하여 해당 클라이언트에서 래그돌 시뮬레이션 )
 
 
 #### 코드 : 에어본 상태에서 래그돌로 전환 여부를 결정하는 충돌 검사 함수
@@ -228,13 +231,23 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
 	stickToTheGround(sock_location);
-	if (replication_delay_count >= last_replication_delay) {
+	if (!ragdoll_is_initial && FVector::DotProduct( GetMesh()->GetPhysicsLinearVelocity("pelvis").GetSafeNormal(), (ragdoll_server_location - prev_ragdoll_server_location).GetSafeNormal()) < 0.0f) {
+		// 래그돌의 velocity 의 방향과 래그돌 이전 동기화 위치에서 래그돌 현재 위치로의 방향 벡터 사이의 각이 90도 이상이면 동기화 주기를 무시하고 강제로 동기화 RPC 실행
+		Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+		prev_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count += d_time;
 		replication_delay_count -= last_replication_delay;
 		last_replication_delay = 0.2f;
+		return;
+	}
+	if (replication_delay_count >= last_replication_delay) {
 		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
 		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
 			// 래그돌이 이전 동기화 위치에서 10 이상 이동했으면 RPC를 통해 서버로 동기화 될 위치를 보냄
+			replication_delay_count += d_time;
+			replication_delay_count -= last_replication_delay;
+			last_replication_delay = 0.2f;
+			ragdoll_is_initial = false;
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 			prev_ragdoll_server_location = ragdoll_server_location;
 		}
