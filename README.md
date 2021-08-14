@@ -1,79 +1,38 @@
 # Unreal-project
-언리얼엔진4로 개발한 3D 액션 MMORPG
+언리얼엔진4로 개발한 3D 온라인 액션 RPG
+
+# 목차
+- [영상](#영상)
+- 래그돌 시스템
+  - [네트워크 래그돌 위치 동기화 시스템](#네트워크-래그돌-위치-동기화-시스템)
+- [전투 시스템](#전투-시스템)
+  - [액션 시스템](#액션-시스템)
+  - [데미지 시스템](#데미지-시스템)
+  - [넉백 애니메이션 and 피격 애니메이션 and 피지컬 애니메이션](#넉백-애니메이션-and-피격-애니메이션-and-피지컬-애니메이션)
+  - [방어 시스템](#방어-시스템)
+- [아이템 데이터 구조와 작동 방식](#아이템-데이터-구조와-작동-방식)
+  - [아이템 효과 시스템](#아이템-효과-시스템)
+- [인벤토리 시스템](#인벤토리-시스템)
+- [락온 타게팅 시스템](#락온타게팅-시스템)
+- [머테리얼 and 이펙트](#머테리얼-and-이펙트)
+  - [피 이펙트](#피-이펙트)
+  - [히트 궤적 이펙트](#히트-궤적-이펙트)
+  - [화면 흔들림](#화면-흔들림)
+  - [에너지 필드](#에너지-필드)
+- [애니메이션 시스템](#애니메이션-시스템)
+  - [이동 방향 기반 캐릭터 rotation 회전 시스템](#이동-방향-기반-캐릭터-rotation-회전-시스템)
+- [카메라 위치 조정 시스템](#카메라-위치-조정)
+- [데모 레벨 캡처](#데모-레벨)
+- [주요 cpp 파일 링크](#주요-파일)
+- [조작법](#조작법)
 
 # 영상
 - 아래 이미지 클릭시 유튜브 영상 링크
 
-[![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://youtube.com/playlist?list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT)
-
-# 주요 파일
-## c++ 파일
-- 최상위 베이스 캐릭터 클래스 파일
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
-- 베이스 캐릭터를 상속받는 최상위 BaseEnemy 클래스 파일
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/BaseEnemy.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/BaseEnemy.cpp
-- 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/CustomData.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomEnums.h
-- 플레이어 컨트롤러
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Controller_Player.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Controller_Player.cpp
-- 카메라
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/FollowCam_Base.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/FollowCam_Base.cpp
-- c++ 인터페이스 파일
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_AI.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_ItemEffect.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_General.h
-- anim notify state ( 충돌 판정, 회피 판정 )
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_Collision_Bind.h 
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_2Sock_Trace.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_2Sock_Trace.cpp
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_1Sock_Trace.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Dodge.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Dodge.cpp
-- 커스텀 함수 라이브러리
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomBPFunctionLibrary.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/CustomBPFunctionLibrary.cpp
-- 게임 인스턴스 ( 위젯, 데이터 테이블 관리 )
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/PWOGameInstance.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/PWOGameInstance.cpp
-- 위젯
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_ItemSlot.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_ItemSlot.cpp
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_Detail.h
-  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_Detail.cpp
-
-- 그외 접두사에 따라
-  - AN : 애님 노티파이
-  - NS : 애님 노티파이 스테이트
-  - EQS : 환경 쿼리 시스템
-  - Task : 비헤이비어 트리의 태스크
-
-# 조작법
-- 이동 : WASD
-- 공격 : 좌클릭
-- 콤보공격 : 좌클릭 연타
-- 찌르기 : 우클릭
-- 대쉬공격 : 달리는 중 좌클릭 or 구르기 중 좌클릭
-- 달리기 : Shift
-- 구르기, 일어서기 : Spacebar
-- 점프 : Shift + Spacebar
-- 걷기 : ctrl
-- 타게팅 : 마우스 휠 버튼
-- 락온 타게팅 타겟 전환 : 마우스 휠 회전
-
+[![썸네일](https://user-images.githubusercontent.com/12960463/121377323-34de2200-c97d-11eb-9992-825a908c26d4.jpg)](https://www.youtube.com/watch?v=25rv31yKPcY&list=PLAGMcKKJuvziGTJumbg1EP94LcSFXKdgT&index=1)
 
 # 핵심 기능
-## 네트워크 래그돌 동기화 시스템
+# 네트워크 래그돌 위치 동기화 시스템
 ![마영전 래그돌 위치 동기화 안됨](https://user-images.githubusercontent.com/12960463/117229348-d2fa3c00-ae55-11eb-8c94-daab355dfa7a.gif)
 
 마비노기 영웅전에서는 래그돌 위치 동기화가 정확히 이루어지지 않아 위와같이 래그돌 상태에서 부활을 통해 캐릭터가 살아날 시 서버의 위치로 클라이언트의 위치가 조정되는 움직임을 보입니다.
@@ -306,8 +265,8 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 }
 ```
 
-## 전투 시스템
-### 액션 시스템
+# 전투 시스템
+## 액션 시스템
 - 액션 데이터
 
 ![image](https://user-images.githubusercontent.com/12960463/124944008-f2753700-e047-11eb-8f99-97194d782d9d.png)
@@ -351,7 +310,7 @@ public:
     - 차지기술이나 홀드 기술일 시 release에 반응할 액션 
 - 액션은 BaseCharacter 의 상위 클래스인 BP_PlayerCharacter_cpp 블루프린트에서 구현되어 있음
 
-### 데미지 시스템
+## 데미지 시스템
 - 데미지 데이터
 
 ![image](https://user-images.githubusercontent.com/12960463/124945527-33218000-e049-11eb-83a8-168392876127.png)
@@ -442,7 +401,7 @@ FVector ABaseCharacter::rotateKnockBackVector(EKnockBackType __knock_back_type, 
 }
 ```
 
-#### 충돌 판정
+### 충돌 판정
 #### 코드 : 무기 메쉬에 위치한 소켓을 기준으로 trace 하여 충돌 판정하는 Anim Notify State
 ```c++
 // Fill out your copyright notice in the Description page of Project Settings.
@@ -582,7 +541,7 @@ void ABaseCharacter::attackEvent_Implementation(AActor* __hit_actor, FHitResult 
   - damage_id 를 전달하는 경우 DamageDataTable을 다시 검색해야함
   - 하지만 DamageData 는 크기가 damage_id 보다 훨씬 크므로 네트워크에 부하가 더 큼
 
-### 넉백 & 피격 애니메이션 & 피지컬 애니메이션
+## 넉백 애니메이션 and 피격 애니메이션 and 피지컬 애니메이션
 
 ![전방향피격모션(sm)](https://user-images.githubusercontent.com/12960463/117236043-dea02f80-ae62-11eb-9aad-c63582fff7f7.gif)
 
@@ -853,7 +812,7 @@ void ABaseCharacter::hitBonePhysicalReactionProcess_Implementation() {
 }
 ```
 
-### 방어 시스템
+## 방어 시스템
 ![가드3](https://user-images.githubusercontent.com/12960463/127767069-876b15aa-17cc-41a8-a581-80c642ab4e84.gif)
 
 - 가드 중일시 대략 전방 140도 범위의 공격 방어
@@ -888,7 +847,7 @@ bool ABaseCharacter::checkBlock(FdamageData target_damage_data, AActor* damage_c
 }
 ```
 
-## 아이템 데이터 구조와 작동 방식
+# 아이템 데이터 구조와 작동 방식
 - 보급형 롱소드 데이터
 ![image](https://user-images.githubusercontent.com/12960463/124911020-3e63b400-e027-11eb-915b-f160dcfa49bf.png)
 - 보급형 체력 포션 데이터
@@ -929,7 +888,7 @@ public:
     - Common, Rare, Precious, Unique, Legendary
   - item_info_text : 아이템의 기본 설명
   - item_effect_list : 아이템의 효과들
-### ItemEffect (아이템 효과)
+## 아이템 효과 시스템
 - 아이템의 실제 정체성과 효과를 정의
 - ItemEffect 위치
 ![image](https://user-images.githubusercontent.com/12960463/124912056-76b7c200-e028-11eb-8c10-804f21fe429d.png)
@@ -1193,7 +1152,7 @@ void UWidget_Detail::onViewPortCheck()
 		SetPositionInViewport(target_position);
 }
 ```
-## 인벤토리 시스템
+# 인벤토리 시스템
 - 아이템 등록
 
 ![아이템 등록50%](https://user-images.githubusercontent.com/12960463/124921237-25f99680-e033-11eb-9bea-b26386210702.gif)
@@ -1841,7 +1800,7 @@ void AController_Player::decreseItem_Implementation(int32 __index, int32 __decre
 }
 ```
 
-## 락온타게팅 시스템
+# 락온타게팅 시스템
 
 ![락온시스템(sm)](https://user-images.githubusercontent.com/12960463/117236527-d09ede80-ae63-11eb-9b9f-d41ccebae083.gif)
 
@@ -1929,8 +1888,8 @@ AActor* AController_Player::changeLockOnTarget(float __direction)
 	return result;
 }
 ```
-## 머테리얼 & 이펙트
-### 피 이펙트
+# 머테리얼 and 이펙트
+## 피 이펙트
 - 피 이펙트
 
 ![피 이펙트5](https://user-images.githubusercontent.com/12960463/125896956-c1326a5e-e1e3-4b71-a365-386f516fa637.gif)
@@ -1968,7 +1927,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 ...	
 }
 ```
-### 히트 궤적 이펙트
+## 히트 궤적 이펙트
 ![히트 부위 데칼 이펙트5](https://user-images.githubusercontent.com/12960463/126039652-78323ee8-2668-4d8b-b8ad-08b254bdae6c.gif)
 ![히트 부위 데칼 이펙트6](https://user-images.githubusercontent.com/12960463/126039553-13eb8083-539c-45ee-9fc0-b78421bf91c8.gif)
 ![히트 부위 데칼 이펙트7](https://user-images.githubusercontent.com/12960463/126039555-adfaf58d-3b76-4c93-b365-567b838a076f.gif)
@@ -1977,7 +1936,7 @@ void ABaseCharacter::applyDamage_Multicast_Exec_Implementation(FName __target_da
 #### 데칼 머테리얼 노드
 ![image](https://user-images.githubusercontent.com/12960463/126039604-444c0b6b-cace-47e7-85d3-b30ad89cbcbe.png)
 
-### 화면 흔들림
+## 화면 흔들림
 ![흔들림](https://user-images.githubusercontent.com/12960463/127766828-d40ed212-e275-42df-9210-380d8f3b1ac1.gif)
 ![흔들림3](https://user-images.githubusercontent.com/12960463/127766871-815480dd-e57a-414c-8c2b-e9e082863633.gif)
 
@@ -2045,13 +2004,13 @@ void ABaseCharacter::Tick(float DeltaTime){
 
 
 
-### 에너지 필드
+## 에너지 필드
 ![에너지필드 머테리얼](https://user-images.githubusercontent.com/12960463/125792608-6694d8de-08fd-46ac-bb9a-940621f531e0.gif)
 - 머테리얼 노드
 
 ![image](https://user-images.githubusercontent.com/12960463/125792690-92a1cd7f-1f99-4d54-be14-33860c850f84.png)
 
-## 디렉셔널 로코모션 & 기울이기 & 블렌딩
+# 애니메이션 시스템
 ![디렉셔널 로코모션 블렌딩](https://user-images.githubusercontent.com/12960463/117234762-908a2c80-ae60-11eb-87a2-aad9e5d3ae29.gif)
 
 - 기울이는 모션도 더 자연스러운 모션을 위해 애니메이션을 블렌딩 한 결과
@@ -2067,7 +2026,7 @@ void ABaseCharacter::Tick(float DeltaTime){
 
 착지모션과 로코모션을 블렌딩 해서 착지의 불안정한 모션을 구현하면서, 걸리적거리지 않는 시원시원한 조작감 구현
 
-### 이동 방향 기반 캐릭터 rotation 회전 시스템
+## 이동 방향 기반 캐릭터 rotation 회전 시스템
 ![스프린트 모션](https://user-images.githubusercontent.com/12960463/127928662-dfbde943-3adf-4a7c-a3b1-9318dd3c6796.gif)
 
 ( 언리얼의 character movement 의 orient rotation to movement 기능을 사용할 경우의 애니메이션 )
@@ -2078,7 +2037,7 @@ void ABaseCharacter::Tick(float DeltaTime){
 ( 이동 방향으로 캐릭터를 보간하며 회전한 경우의 애니메이션  )
 - 상대적인 이동 방향을 구할 수 있어 올바른 lean 각도가 계산되기 때문에 훨씬 자연스러운 모션 생성
 
-## 카메라 위치 조정
+# 카메라 위치 조정
 
 ![카메라 위치 조정](https://user-images.githubusercontent.com/12960463/117242789-e8c92a80-ae70-11eb-9c74-ab0ccb0a2107.gif)
 
@@ -2120,7 +2079,7 @@ void AFollowCam_Base::Tick(float DeltaTime)
 }
 ```
 
-## 데모 레벨
+# 데모 레벨
 
 일반 몬스터와 보스 몬스터가 있는 매우 짧은 데모 레벨 구현 완료
 
@@ -2131,3 +2090,61 @@ void AFollowCam_Base::Tick(float DeltaTime)
 ![보스 공격 패턴2](https://user-images.githubusercontent.com/12960463/118811397-ec849480-b8e7-11eb-90a1-5224a5e2004c.gif)
 ![보스 공격 패턴1-2(sm)](https://user-images.githubusercontent.com/12960463/118811404-ee4e5800-b8e7-11eb-9220-d93b082b2527.gif)
 
+# 주요 파일
+## c++ 파일
+- 최상위 베이스 캐릭터 클래스 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/BaseCharacter.cpp
+- 베이스 캐릭터를 상속받는 최상위 BaseEnemy 클래스 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/BaseEnemy.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/BaseEnemy.cpp
+- 블루프린트와 c++ 모두에서 사용하는 데이터 타입 선언 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/CustomData.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomEnums.h
+- 플레이어 컨트롤러
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Controller_Player.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Controller_Player.cpp
+- 카메라
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/FollowCam_Base.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/FollowCam_Base.cpp
+- c++ 인터페이스 파일
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_BaseCharacter.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_PlayerController.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_AI.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_ItemEffect.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Interface_General.h
+- anim notify state ( 충돌 판정, 회피 판정 )
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_Collision_Bind.h 
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_Collision_Bind.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_Weapon_2Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_Weapon_2Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_1Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_1Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Attack_2Sock_Trace.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Attack_2Sock_Trace.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/NS_Dodge.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/NS_Dodge.cpp
+- 커스텀 함수 라이브러리
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/CustomBPFunctionLibrary.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/CustomBPFunctionLibrary.cpp
+- 게임 인스턴스 ( 위젯, 데이터 테이블 관리 )
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/PWOGameInstance.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/PWOGameInstance.cpp
+- 위젯
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_ItemSlot.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_ItemSlot.cpp
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Public/Widget_Detail.h
+  - https://github.com/gtrash12/Unreal-project/blob/main/Source/CyperArena/Private/Widget_Detail.cpp
+
+# 조작법
+- 이동 : WASD
+- 공격 : 좌클릭
+- 콤보공격 : 좌클릭 연타
+- 찌르기 : 우클릭
+- 대쉬공격 : 달리는 중 좌클릭 or 구르기 중 좌클릭
+- 달리기 : Shift
+- 구르기, 일어서기 : Spacebar
+- 점프 : Shift + Spacebar
+- 걷기 : ctrl
+- 타게팅 : 마우스 휠 버튼
+- 락온 타게팅 타겟 전환 : 마우스 휠 회전
