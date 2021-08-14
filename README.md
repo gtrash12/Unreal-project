@@ -81,6 +81,29 @@ AI 캐릭터는 서버 소유의 액터이기 때문에 래그돌 전환 시 가
 - 피직스 연산중인 클라이언트가 도중에 나가게되면 피직스 연산을 대신 이어나갈 클라이언트를 찾아야 함 ( 아직 미구현 )
 - 피직스 연산을 수행해야할 클라이언트가 피직스 연산의 대상이되는 액터를 한 번도 보지 못했다면 피직스 연산 버그 발생 ( 피직스 연산을 온전히 수행 가능한 클라이언트만 선별 검색 하도록 구현할 예정 )
 
+# 래그돌 위치 동기화 시스템 v2
+
+### 래그돌 위치 동기화 Off
+![래그돌 위치 동기화 off 1](https://user-images.githubusercontent.com/12960463/129445940-ea19b014-3ecb-408d-835a-785add5872c9.gif)
+- 래그돌 상태에서 일어설 때 위치가 조정되는 것을 확인 가능
+
+### 래그돌 위치 동기화 v.1 On
+![래그돌 위치 동기화 개선전1](https://user-images.githubusercontent.com/12960463/129445995-f6a5713d-8f0b-4c9a-b0e0-a52788fbd908.gif)
+![래그돌 위치 동기화 개선전2](https://user-images.githubusercontent.com/12960463/129445998-3e005c9c-8147-4b26-9a27-73bccd60c4ca.gif)
+![래그돌 위치 동기화 개선전3](https://user-images.githubusercontent.com/12960463/129446000-c83380a9-6b66-4270-9511-fe738c980cfb.gif)
+- 위치는 동기화되나 래그돌 전환 순간 0.2초간의 멈춤현상이 있음
+  - 서버의 이전 시간에서 현재 시간까지 보간 이동 하기 때문에 서버의 다음 위치가 갱신되어야 래그돌 위치 동기화가 됨
+  - 하지만 서버 위치의 갱신 주기가 0.2초이므로 그 사이 위치가 고정되어 버림
+### 래그돌 위치 동기화 v2. On
+![래그돌 위치 동기화 개선후1](https://user-images.githubusercontent.com/12960463/129446033-411df90e-1c54-4767-9c7b-34c628ca67fd.gif)
+![래그돌 위치 동기화 개선후2](https://user-images.githubusercontent.com/12960463/129446036-620dc14d-6bcf-47b0-9d64-739ff62bc09c.gif)
+![래그돌 위치 동기화 개선후3](https://user-images.githubusercontent.com/12960463/129446037-a7a4b52f-e809-4a01-bf6d-cf2018300ca5.gif)
+![래그돌 위치 동기화 개선후4](https://user-images.githubusercontent.com/12960463/129446040-2271078b-2f6d-4bdd-be52-b0326f533c85.gif)
+- 래그돌 전환 순간에 딜레이가 없음
+  - 서버의 위치 갱신 전 까지 클라이언트에서 자체적으로 래그돌 시뮬레이션 실행
+  - 서버의 위치 갱신 타이밍에 래그돌의 위치가 서버 위치에서 20 이상 차이나면 그 때 physics handle로 래그돌을 서버 위치로 옮김
+
+
 #### 코드 : 에어본 상태에서 래그돌로 전환 여부를 결정하는 충돌 검사 함수
 ``` c++
 /// <summary>
@@ -141,7 +164,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		prev_ragdoll_server_location = ragdoll_server_location;
 		last_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count = 0.0f;
-		last_replication_delay = 0.1f;
+		last_replication_delay = 0.35f;
 		is_ragdoll_on_the_ground = false;
 		FVector tmpvec = GetVelocity();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -210,7 +233,8 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 		replication_delay_count -= last_replication_delay;
 		last_replication_delay = 0.2f;
 		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
-		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 1) {
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
+			// 래그돌이 이전 동기화 위치에서 10 이상 이동했으면 RPC를 통해 서버로 동기화 될 위치를 보냄
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 			prev_ragdoll_server_location = ragdoll_server_location;
 		}
@@ -219,7 +243,6 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 		replication_delay_count += d_time;
 	}
 }
-
 ```
 
 #### 코드 : 동기화 함수 ( 스탠드얼론 or 데디케이티드 서버일 때 )
@@ -241,8 +264,6 @@ void ABaseCharacter::ragdoll_ServerOnwer_Implementation() {
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
-
-	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
 		// 위치 갱신 안되었을 때
@@ -250,18 +271,23 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	}
 	else {
 		// 위치 갱신 되었을 때
+		// 이전 위치 갱신 시간과 현재 위치 갱신 시간의 텀을 계산해 갱신
 		float tmp = replication_delay_count - last_replication_delay;
 		last_replication_delay = replication_delay_count;
 		replication_delay_count = tmp + d_time;
 		prev_ragdoll_server_location = last_ragdoll_server_location;
+		if (FVector::Dist(ragdoll_server_location, GetMesh()->GetSocketLocation("pelvis")) > 20) {
+			// 현재 클라이언트에서 대상 래그돌이 서버의 위치와 20보다 차이난다면 physics handle 로 메쉬의 pelvis 를 잡아 서버 위치로 옮김
+			ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+			ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
+			stickToTheGround(ragdoll_server_location);
+			last_ragdoll_server_location = ragdoll_server_location;
+		}
+		else {
+			// 갱신된 서버의 위치와의 거리가 20이하라면 자유롭게 래그돌 시뮬레이션이 작동하도록 physics handle을 release
+			ragdoll_physics_handle->ReleaseComponent();
+		}
 	}
-
-	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
-	float ease_alpha = replication_delay_count / last_replication_delay;
-	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
-	ragdoll_physics_handle->SetTargetLocation(predicted_location);
-	stickToTheGround(ragdoll_server_location);
-	last_ragdoll_server_location = ragdoll_server_location;
 }
 ```
 
