@@ -1134,7 +1134,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		prev_ragdoll_server_location = ragdoll_server_location;
 		last_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count = 0.0f;
-		last_replication_delay = 0.4f;
+		last_replication_delay = 0.35f;
 		is_ragdoll_on_the_ground = false;
 		FVector tmpvec = GetVelocity();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
