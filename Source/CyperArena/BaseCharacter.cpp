@@ -942,14 +942,15 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
 	stickToTheGround(sock_location);
-	if (!ragdoll_is_initial && FVector::DotProduct( GetMesh()->GetPhysicsLinearVelocity("pelvis").GetSafeNormal(), (ragdoll_server_location - prev_ragdoll_server_location).GetSafeNormal()) < 0.0f) {
+	if (!ragdoll_is_initial &&  FVector::DotProduct( GetMesh()->GetPhysicsLinearVelocity("pelvis").GetSafeNormal(), (ragdoll_server_location - prev_ragdoll_server_location).GetSafeNormal()) < 0.4f) {
 		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
-			// 래그돌의 velocity 의 방향과 래그돌 이전 동기화 위치에서 래그돌 현재 위치로의 방향 벡터 사이의 각이 90도 이상이면 동기화 주기를 무시하고 강제로 동기화 RPC 실행
+			// 래그돌의 velocity 의 방향과 래그돌 이전 동기화 위치에서 래그돌 현재 위치로의 방향 벡터 사이의 코사인각이 0.4 보다 작다면 동기화 주기를 무시하고 강제로 동기화 RPC 실행
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 			prev_ragdoll_server_location = ragdoll_server_location;
 			replication_delay_count += d_time;
 			replication_delay_count -= last_replication_delay;
 			last_replication_delay = 0.2f;
+			//UKismetSystemLibrary::PrintString(this, TEXT("ASDFG"));
 			return;
 		}
 	}
@@ -999,23 +1000,31 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	// 래그돌 위치 갱신 여부 확인
-	if (ragdoll_server_location == last_ragdoll_server_location) {
+	if (ragdoll_server_location == last_ragdoll_server_location && replication_delay_count < 1) {
 		// 위치 갱신 안되었을 때
 		replication_delay_count += d_time;
+		if (FVector::Dist(ragdoll_server_location, GetMesh()->GetSocketLocation("pelvis")) < 15) {
+			ragdoll_physics_handle->ReleaseComponent();
+		}
 	}
 	else {
 		// 위치 갱신 되었을 때
-		// 이전 위치 갱신 시간과 현재 위치 갱신 시간의 텀을 계산해 갱신
-		float tmp = replication_delay_count - last_replication_delay;
-		last_replication_delay = replication_delay_count;
-		replication_delay_count = tmp + d_time;
-		prev_ragdoll_server_location = last_ragdoll_server_location;
 		if (FVector::Dist(ragdoll_server_location, GetMesh()->GetSocketLocation("pelvis")) > 20) {
+			// 이전 위치 갱신 시간과 현재 위치 갱신 시간의 텀을 계산해 갱신
+			float tmp = replication_delay_count - last_replication_delay;
+			last_replication_delay = replication_delay_count;
+			replication_delay_count = tmp + d_time;
+			prev_ragdoll_server_location = last_ragdoll_server_location;
 			// 현재 클라이언트에서 대상 래그돌이 서버의 위치와 20보다 차이난다면 physics handle 로 메쉬의 pelvis 를 잡아 서버 위치로 옮김
 			ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 			ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 			stickToTheGround(ragdoll_server_location);
+			//GetMesh()->AddImpulse(ragdoll_server_location - GetActorLocation(), "pelvis");
 			last_ragdoll_server_location = ragdoll_server_location;
+			///* 한 프레임 뒤에 ragdoll_physics_handle 를 release */
+			//GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]() {
+			//	ragdoll_physics_handle->ReleaseComponent();
+			//	}));
 		}
 		else {
 			// 갱신된 서버의 위치와의 거리가 20이하라면 자유롭게 래그돌 시뮬레이션이 작동하도록 physics handle을 release
