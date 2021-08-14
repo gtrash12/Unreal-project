@@ -986,7 +986,7 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 
-	ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+	
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
 		// 위치 갱신 안되었을 때
@@ -998,6 +998,15 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 		last_replication_delay = replication_delay_count;
 		replication_delay_count = tmp + d_time;
 		prev_ragdoll_server_location = last_ragdoll_server_location;
+		if (FVector::Dist(ragdoll_server_location, GetMesh()->GetSocketLocation("pelvis")) > 20) {
+			ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
+			ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
+			stickToTheGround(ragdoll_server_location);
+			last_ragdoll_server_location = ragdoll_server_location;
+		}
+		else {
+			ragdoll_physics_handle->ReleaseComponent();
+		}
 	}
 
 	// 피직스 핸들로 서버 갱신 주기 사이마다 래그돌을 서버 위치로 움직임 예측 보간 하며 옮김
@@ -1011,11 +1020,11 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	//	/*UKismetSystemLibrary::PrintString(this, TEXT("ASDAF"));
 	//	GetRootComponent()->SetWorldLocationAndRotationNoPhysics(ragdoll_server_location, FRotator::ZeroRotator);*/
 	//}
-	float ease_alpha = replication_delay_count / last_replication_delay;
+	/*float ease_alpha = replication_delay_count / last_replication_delay;
 	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
 	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 	stickToTheGround(ragdoll_server_location);
-	last_ragdoll_server_location = ragdoll_server_location;
+	last_ragdoll_server_location = ragdoll_server_location;*/
 }
 
 /// <summary>
@@ -1125,7 +1134,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		prev_ragdoll_server_location = ragdoll_server_location;
 		last_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count = 0.0f;
-		last_replication_delay = 0.1f;
+		last_replication_delay = 0.4f;
 		is_ragdoll_on_the_ground = false;
 		FVector tmpvec = GetVelocity();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
