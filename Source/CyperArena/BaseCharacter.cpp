@@ -947,7 +947,8 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 		replication_delay_count -= last_replication_delay;
 		last_replication_delay = 0.2f;
 		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
-		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 1) {
+		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
+			// 래그돌이 이전 동기화 위치에서 10 이상 이동했으면 RPC를 통해 서버로 동기화 될 위치를 보냄
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 			prev_ragdoll_server_location = ragdoll_server_location;
 		}
@@ -985,8 +986,6 @@ void ABaseCharacter::CtoS_targetLocation_Implementation(ABaseCharacter* target_a
 /// 피직스 핸들을 이용해 서버의 타겟 위치로 래그돌을 옮기는 역할 수행
 /// </summary>
 void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
-
-	
 	// 래그돌 위치 갱신 여부 확인
 	if (ragdoll_server_location == last_ragdoll_server_location) {
 		// 위치 갱신 안되었을 때
@@ -994,17 +993,20 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	}
 	else {
 		// 위치 갱신 되었을 때
+		// 이전 위치 갱신 시간과 현재 위치 갱신 시간의 텀을 계산해 갱신
 		float tmp = replication_delay_count - last_replication_delay;
 		last_replication_delay = replication_delay_count;
 		replication_delay_count = tmp + d_time;
 		prev_ragdoll_server_location = last_ragdoll_server_location;
 		if (FVector::Dist(ragdoll_server_location, GetMesh()->GetSocketLocation("pelvis")) > 20) {
+			// 현재 클라이언트에서 대상 래그돌이 서버의 위치와 20보다 차이난다면 physics handle 로 메쉬의 pelvis 를 잡아 서버 위치로 옮김
 			ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 			ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 			stickToTheGround(ragdoll_server_location);
 			last_ragdoll_server_location = ragdoll_server_location;
 		}
 		else {
+			// 갱신된 서버의 위치와의 거리가 20이하라면 자유롭게 래그돌 시뮬레이션이 작동하도록 physics handle을 release
 			ragdoll_physics_handle->ReleaseComponent();
 		}
 	}
@@ -1020,8 +1022,9 @@ void ABaseCharacter::ragdoll_SyncLocation_Implementation() {
 	//	/*UKismetSystemLibrary::PrintString(this, TEXT("ASDAF"));
 	//	GetRootComponent()->SetWorldLocationAndRotationNoPhysics(ragdoll_server_location, FRotator::ZeroRotator);*/
 	//}
-	/*float ease_alpha = replication_delay_count / last_replication_delay;
-	FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	//float ease_alpha = replication_delay_count / last_replication_delay;
+	//FVector predicted_location = UKismetMathLibrary::VEase(prev_ragdoll_server_location, ragdoll_server_location, ease_alpha, EEasingFunc::Linear);
+	/*ragdoll_physics_handle->GrabComponent(GetMesh(), TEXT("pelvis"), GetMesh()->GetSocketLocation(TEXT("pelvis")), true);
 	ragdoll_physics_handle->SetTargetLocation(ragdoll_server_location);
 	stickToTheGround(ragdoll_server_location);
 	last_ragdoll_server_location = ragdoll_server_location;*/
