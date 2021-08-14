@@ -152,6 +152,7 @@ public:
 protected:
 	UPROPERTY()
 		float d_time;
+		bool ragdoll_is_initial;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

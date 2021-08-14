@@ -942,13 +942,22 @@ void ABaseCharacter::ragdoll_ClientOnwer_Implementation() {
 	FVector sock_location = GetMesh()->GetSocketLocation("pelvis");
 	ragdoll_server_location = sock_location;
 	stickToTheGround(sock_location);
-	if (replication_delay_count >= last_replication_delay) {
+	if (!ragdoll_is_initial && FVector::DotProduct( GetMesh()->GetPhysicsLinearVelocity("pelvis").GetSafeNormal(), (ragdoll_server_location - prev_ragdoll_server_location).GetSafeNormal()) < 0.0f) {
+		Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
+		prev_ragdoll_server_location = ragdoll_server_location;
 		replication_delay_count += d_time;
 		replication_delay_count -= last_replication_delay;
 		last_replication_delay = 0.2f;
+		return;
+	}
+	if (replication_delay_count >= last_replication_delay) {
 		//UKismetSystemLibrary::PrintString(this, GetMesh()->GetPhysicsLinearVelocity(TEXT("pelvis")).ToString());
 		if (UKismetMathLibrary::Vector_Distance(prev_ragdoll_server_location, ragdoll_server_location) > 10) {
 			// 래그돌이 이전 동기화 위치에서 10 이상 이동했으면 RPC를 통해 서버로 동기화 될 위치를 보냄
+			replication_delay_count += d_time;
+			replication_delay_count -= last_replication_delay;
+			last_replication_delay = 0.2f;
+			ragdoll_is_initial = false;
 			Cast<ABaseCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn())->CtoS_targetLocation(this, ragdoll_server_location);
 			prev_ragdoll_server_location = ragdoll_server_location;
 		}
@@ -1143,6 +1152,7 @@ void ABaseCharacter::ragdoll_SetMultiCast_Implementation(AActor* responsible_act
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetMesh()->SetAllBodiesBelowSimulatePhysics("pelvis", true, true);
 		is_simulation_responsible = responsible_actor == GetWorld()->GetFirstPlayerController()->GetPawn();
+		ragdoll_is_initial = true;
 		if (is_simulation_responsible) {
 			/*tmpvec.Z = 0;
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&, tmpvec]() {
