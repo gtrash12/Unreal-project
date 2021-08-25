@@ -1058,7 +1058,7 @@ void ABaseCharacter::airboneStart_Implementation(FVector __velocity) {
 	is_on_sprint = false;
 	is_on_action = false;
 	USkeletalMeshComponent* mesh = GetMesh();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	mesh->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
 	//CastChecked<UAnimMontage>(CastChecked<UDynamicClass>(ABP_BaseCharacter_C__pf503790866::StaticClass())->UsedAssets[6]
