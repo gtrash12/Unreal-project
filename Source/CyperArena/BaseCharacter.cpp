@@ -1061,6 +1061,7 @@ void ABaseCharacter::airboneStart_Implementation(FVector __velocity) {
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	mesh->SetAllBodiesBelowSimulatePhysics("pelvis", true, false);
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 	//CastChecked<UAnimMontage>(CastChecked<UDynamicClass>(ABP_BaseCharacter_C__pf503790866::StaticClass())->UsedAssets[6]
 	FVector forward = GetActorForwardVector();
 	float speed_rate = __velocity.Size()/2000;
